@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, Text, Alert, ScrollView } from 'react-native';
-import { useRouter, Link } from 'expo-router';
+import { Link } from 'expo-router';
 import { useAuth } from '../../hooks/useAuth';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
@@ -8,7 +8,6 @@ import { Colors } from '../../constants/theme';
 import { useColorScheme } from '../../hooks/use-color-scheme';
 
 export default function RegisterScreen() {
-  const router = useRouter();
   const { signUp } = useAuth();
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? 'light'];
@@ -80,7 +79,7 @@ export default function RegisterScreen() {
         password_confirmation: confirmPassword,
       });
     } catch (error: any) {
-      console.error('Registration Error Full:', JSON.stringify(error.response?.data, null, 2));
+      // Removed console.error as requested
       const errors = error.response?.data?.errors;
       
       if (errors) {

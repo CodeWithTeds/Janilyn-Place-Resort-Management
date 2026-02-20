@@ -41,12 +41,12 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    console.error('[API] Response Error:', {
-      message: error.message,
-      status: error.response?.status,
-      data: error.response?.data,
-      url: error.config?.url,
-    });
+    // console.error('[API] Response Error:', {
+    //   message: error.message,
+    //   status: error.response?.status,
+    //   data: error.response?.data,
+    //   url: error.config?.url,
+    // });
     return Promise.reject(error);
   }
 );

@@ -1,5 +1,5 @@
 import { Image as ExpoImage } from 'expo-image';
-import { StyleSheet, TouchableOpacity, View, Dimensions, ScrollView, Image, ActivityIndicator } from 'react-native';
+import { StyleSheet, TouchableOpacity, View, Dimensions, ScrollView, Image } from 'react-native';
 import { useRouter, Redirect } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 
@@ -31,7 +31,6 @@ export default function WelcomeScreen() {
   const router = useRouter();
   const primaryColor = useThemeColor({}, 'primary');
   const secondaryColor = useThemeColor({}, 'secondary');
-  const backgroundColor = useThemeColor({}, 'background');
   
   const { user, isLoading } = useAuth();
 
@@ -70,7 +69,7 @@ export default function WelcomeScreen() {
           {/* Intro Section */}
           <View style={styles.headerContainer}>
             <ThemedText type="title" style={[styles.title, { color: primaryColor }]}>
-              Janilyn's Place
+              Janilyn&apos;s Place
             </ThemedText>
             <ThemedText style={[styles.subtitle, { color: secondaryColor }]}>
               The Hidden Gem of Dumaguete City
@@ -135,7 +134,7 @@ export default function WelcomeScreen() {
 
            {/* Footer */}
            <View style={styles.footer}>
-              <ThemedText style={styles.footerText}>© 2026 Janilyn's Place</ThemedText>
+              <ThemedText style={styles.footerText}>© 2026 Janilyn&apos;s Place</ThemedText>
            </View>
 
         </ThemedView>

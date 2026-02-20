@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, Text, Alert } from 'react-native';
-import { useRouter, Link } from 'expo-router';
+import { Link } from 'expo-router';
 import { useAuth } from '../../hooks/useAuth';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
@@ -8,7 +8,6 @@ import { Colors } from '../../constants/theme';
 import { useColorScheme } from '../../hooks/use-color-scheme';
 
 export default function LoginScreen() {
-  const router = useRouter();
   const { signIn } = useAuth();
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? 'light'];
@@ -49,7 +48,7 @@ export default function LoginScreen() {
     try {
       await signIn({ email, password });
     } catch (error: any) {
-      console.error('Login Error Full:', JSON.stringify(error.response?.data, null, 2));
+      // Removed console.error as requested
       const errors = error.response?.data?.errors;
       
       if (errors) {
@@ -103,7 +102,7 @@ export default function LoginScreen() {
         />
 
         <View style={styles.footer}>
-          <Text style={{ color: theme.text }}>Don't have an account? </Text>
+          <Text style={{ color: theme.text }}>Don&apos;t have an account? </Text>
           <Link href="/(auth)/register" style={{ color: theme.primary, fontWeight: 'bold' }}>
             Sign Up
           </Link>
