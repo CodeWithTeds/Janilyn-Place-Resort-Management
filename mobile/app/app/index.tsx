@@ -1,11 +1,12 @@
 import { Image as ExpoImage } from 'expo-image';
-import { StyleSheet, TouchableOpacity, View, Dimensions, ScrollView, Image } from 'react-native';
-import { useRouter } from 'expo-router';
+import { StyleSheet, TouchableOpacity, View, Dimensions, ScrollView, Image, ActivityIndicator } from 'react-native';
+import { useRouter, Redirect } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useThemeColor } from '@/hooks/use-theme-color';
+import { useAuth } from '../hooks/useAuth';
 
 const { width, height } = Dimensions.get('window');
 
@@ -31,6 +32,13 @@ export default function WelcomeScreen() {
   const primaryColor = useThemeColor({}, 'primary');
   const secondaryColor = useThemeColor({}, 'secondary');
   const backgroundColor = useThemeColor({}, 'background');
+  
+  const { user, isLoading } = useAuth();
+
+  // If user is already authenticated, redirect to tabs
+  if (!isLoading && user) {
+    return <Redirect href={'/(tabs)' as any} />;
+  }
 
   return (
     <View style={styles.container}>
@@ -71,13 +79,25 @@ export default function WelcomeScreen() {
               Your exclusive getaway for resort rentals, overnight stays, and memorable events.
             </ThemedText>
             
-            <TouchableOpacity
-              style={[styles.button, { backgroundColor: primaryColor }]}
-              onPress={() => router.replace('/(tabs)')}
-              activeOpacity={0.8}
-            >
-              <ThemedText style={styles.buttonText}>Start Exploring</ThemedText>
-            </TouchableOpacity>
+            {/* Auth Buttons */}
+            <View style={styles.authButtonsContainer}>
+                <TouchableOpacity
+                style={[styles.button, { backgroundColor: primaryColor, marginBottom: 12 }]}
+                onPress={() => router.push('/(auth)/login' as any)}
+                activeOpacity={0.8}
+                >
+                <ThemedText style={styles.buttonText}>Log In</ThemedText>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                style={[styles.button, { backgroundColor: 'transparent', borderWidth: 2, borderColor: primaryColor }]}
+                onPress={() => router.push('/(auth)/register' as any)}
+                activeOpacity={0.8}
+                >
+                <ThemedText style={[styles.buttonText, { color: primaryColor }]}>Create Account</ThemedText>
+                </TouchableOpacity>
+            </View>
+
           </View>
 
           {/* Services Section (Horizontal Scroll) */}
@@ -201,6 +221,10 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     marginBottom: 24,
     paddingHorizontal: 10,
+  },
+  authButtonsContainer: {
+    width: '100%',
+    marginTop: 8,
   },
   button: {
     width: '100%',
