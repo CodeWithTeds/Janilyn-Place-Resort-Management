@@ -33,7 +33,9 @@ class StoreRoomTypeRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
+            'category' => ['nullable', 'string', 'in:DELUXE ROOM,GUEST HOUSE,APARTMENT STYLE'],
             'description' => ['nullable', 'string'],
+            'image' => ['nullable', 'image', 'max:2048'], // 2MB Max
             'min_pax' => ['required', 'integer', 'min:1'],
             'max_pax' => ['required', 'integer', 'gte:min_pax'],
             'max_day_guests' => ['nullable', 'integer', 'min:0'],

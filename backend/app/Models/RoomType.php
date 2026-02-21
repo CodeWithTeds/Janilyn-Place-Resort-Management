@@ -12,7 +12,9 @@ class RoomType extends Model
 
     protected $fillable = [
         'name',
+        'category',
         'description',
+        'image_path',
         'min_pax',
         'max_pax',
         'base_price_weekday',

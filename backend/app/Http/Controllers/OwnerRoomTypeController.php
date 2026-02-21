@@ -23,7 +23,13 @@ class OwnerRoomTypeController extends Controller
 
     public function store(StoreRoomTypeRequest $request): RedirectResponse
     {
-        RoomType::create($request->validated());
+        $data = $request->validated();
+
+        if ($request->hasFile('image')) {
+            $data['image_path'] = $request->file('image')->store('room-types', 'public');
+        }
+
+        RoomType::create($data);
 
         return redirect()->route('owner.resort-management.room-types.index')
             ->with('success', 'Room Type created successfully.');
@@ -36,7 +42,13 @@ class OwnerRoomTypeController extends Controller
 
     public function update(StoreRoomTypeRequest $request, RoomType $roomType): RedirectResponse
     {
-        $roomType->update($request->validated());
+        $data = $request->validated();
+
+        if ($request->hasFile('image')) {
+            $data['image_path'] = $request->file('image')->store('room-types', 'public');
+        }
+
+        $roomType->update($data);
 
         return redirect()->route('owner.resort-management.room-types.index')
             ->with('success', 'Room Type updated successfully.');
