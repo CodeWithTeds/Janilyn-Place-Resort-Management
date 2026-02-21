@@ -1,8 +1,8 @@
-<aside class="flex flex-col w-64 bg-white border-r border-gray-200 min-h-screen">
-    <div class="flex items-center justify-center h-16 border-b border-gray-200">
+<aside class="flex flex-col w-64 bg-brand-600 border-r border-brand-700 min-h-screen">
+    <div class="flex items-center justify-center h-16 border-b border-brand-700">
         <a href="{{ route('dashboard') }}" class="flex items-center space-x-2">
-            <x-application-mark class="block h-9 w-auto" />
-            <span class="font-bold text-lg text-gray-800">Janilyn's Place</span>
+            <x-application-mark class="block h-9 w-auto text-white" />
+            <span class="font-bold text-lg text-white">Janilyn's Place</span>
         </a>
     </div>
 
