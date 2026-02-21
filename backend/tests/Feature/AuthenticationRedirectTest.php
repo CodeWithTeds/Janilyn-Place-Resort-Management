@@ -1,0 +1,55 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Enums\UserRole;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
+
+class AuthenticationRedirectTest extends TestCase
+{
+    use RefreshDatabase;
+
+    public function test_admin_is_redirected_to_admin_dashboard_after_login()
+    {
+        $user = User::factory()->create([
+            'role' => UserRole::ADMIN,
+        ]);
+
+        $response = $this->post('/login', [
+            'email' => $user->email,
+            'password' => 'password',
+        ]);
+
+        $response->assertRedirect('/admin/dashboard');
+    }
+
+    public function test_owner_is_redirected_to_owner_dashboard_after_login()
+    {
+        $user = User::factory()->create([
+            'role' => UserRole::OWNER,
+        ]);
+
+        $response = $this->post('/login', [
+            'email' => $user->email,
+            'password' => 'password',
+        ]);
+
+        $response->assertRedirect('/owner/dashboard');
+    }
+
+    public function test_staff_is_redirected_to_home_after_login()
+    {
+        $user = User::factory()->create([
+            'role' => UserRole::STAFF,
+        ]);
+
+        $response = $this->post('/login', [
+            'email' => $user->email,
+            'password' => 'password',
+        ]);
+
+        $response->assertRedirect('/');
+    }
+}
