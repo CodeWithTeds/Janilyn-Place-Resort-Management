@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Text, Alert } from 'react-native';
-import { Link } from 'expo-router';
+import { View, StyleSheet, Text, Alert, Image, KeyboardAvoidingView, Platform, ScrollView, TouchableOpacity } from 'react-native';
+import { Link, useRouter } from 'expo-router';
 import { useAuth } from '../../hooks/useAuth';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
@@ -9,6 +9,7 @@ import { useColorScheme } from '../../hooks/use-color-scheme';
 
 export default function LoginScreen() {
   const { signIn } = useAuth();
+  const router = useRouter();
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? 'light'];
 
@@ -48,7 +49,6 @@ export default function LoginScreen() {
     try {
       await signIn({ email, password });
     } catch (error: any) {
-      // Removed console.error as requested
       const errors = error.response?.data?.errors;
       
       if (errors) {
@@ -63,91 +63,156 @@ export default function LoginScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.background }]}>
-      <View style={styles.header}>
-        <Text style={[styles.title, { color: theme.text }]}>Welcome Back</Text>
-        <Text style={[styles.subtitle, { color: theme.icon }]}>Sign in to continue</Text>
-      </View>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={[styles.container, { backgroundColor: theme.background }]}
+    >
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <View style={styles.header}>
+          <Image
+            source={require('../../assets/images/logo.png')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
+          <Text style={[styles.appName, { color: theme.primary }]}>Janilyn's Place</Text>
+          <Text style={[styles.title, { color: theme.text }]}>Welcome Back</Text>
+          <Text style={[styles.subtitle, { color: theme.icon }]}>Sign in to your account</Text>
+        </View>
 
-      <View style={styles.form}>
-        <Input
-          label="Email"
-          placeholder="Enter your email"
-          value={email}
-          onChangeText={(text) => {
-            setEmail(text);
-            if (emailError) setEmailError('');
-          }}
-          autoCapitalize="none"
-          keyboardType="email-address"
-          error={emailError}
-        />
-        <Input
-          label="Password"
-          placeholder="Enter your password"
-          value={password}
-          onChangeText={(text) => {
-            setPassword(text);
-            if (passwordError) setPasswordError('');
-          }}
-          secureTextEntry
-          error={passwordError}
-        />
+        <View style={[
+          styles.card, 
+          { 
+            backgroundColor: colorScheme === 'dark' ? '#1e293b' : '#fff',
+            borderColor: colorScheme === 'dark' ? '#334155' : '#e2e8f0',
+          }
+        ]}>
+          <Input
+            label="Email"
+            placeholder="Enter your email"
+            value={email}
+            onChangeText={(text) => {
+              setEmail(text);
+              if (emailError) setEmailError('');
+            }}
+            autoCapitalize="none"
+            keyboardType="email-address"
+            error={emailError}
+          />
+          
+          <View style={styles.passwordContainer}>
+            <Input
+              label="Password"
+              placeholder="Enter your password"
+              value={password}
+              onChangeText={(text) => {
+                setPassword(text);
+                if (passwordError) setPasswordError('');
+              }}
+              secureTextEntry
+              error={passwordError}
+            />
+          </View>
 
-        <Button
-          title="Sign In"
-          onPress={handleLogin}
-          loading={loading}
-          style={styles.button}
-        />
+          <View style={styles.forgotPasswordContainer}>
+            <Link href="/(auth)/forgot-password" asChild>
+              <TouchableOpacity>
+                <Text style={[styles.forgotPasswordText, { color: theme.primary }]}>Forgot Password?</Text>
+              </TouchableOpacity>
+            </Link>
+          </View>
+
+          <Button
+            title="Sign In"
+            onPress={handleLogin}
+            loading={loading}
+            style={styles.signInButton}
+          />
+        </View>
 
         <View style={styles.footer}>
-          <Text style={{ color: theme.text }}>Don&apos;t have an account? </Text>
-          <Link href="/(auth)/register" style={{ color: theme.primary, fontWeight: 'bold' }}>
-            Sign Up
+          <Text style={[styles.footerText, { color: theme.icon }]}>Don't have an account?</Text>
+          <Link href="/(auth)/register" asChild>
+            <TouchableOpacity>
+              <Text style={[styles.footerLink, { color: theme.primary }]}>Sign Up</Text>
+            </TouchableOpacity>
           </Link>
         </View>
-        
-        <View style={styles.forgotPassword}>
-           <Link href="/(auth)/forgot-password" style={{ color: theme.primary }}>
-            Forgot Password?
-          </Link>
-        </View>
-      </View>
-    </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
     padding: 24,
     justifyContent: 'center',
   },
   header: {
+    alignItems: 'center',
     marginBottom: 32,
   },
-  title: {
-    fontSize: 32,
+  logo: {
+    width: 100,
+    height: 100,
+    marginBottom: 16,
+    borderRadius: 20,
+  },
+  appName: {
+    fontSize: 24,
     fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: '600',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
   },
-  form: {
-    gap: 16,
+  card: {
+    borderRadius: 16,
+    padding: 24,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+    borderWidth: 1,
   },
-  button: {
+  passwordContainer: {
+    marginTop: 16,
+  },
+  forgotPasswordContainer: {
+    alignItems: 'flex-end',
+    marginBottom: 24,
+    marginTop: 8,
+  },
+  forgotPasswordText: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  signInButton: {
     marginTop: 8,
   },
   footer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: 16,
+    marginTop: 32,
+    gap: 8,
   },
-  forgotPassword: {
-    alignItems: 'center',
-    marginTop: 16,
-  }
+  footerText: {
+    fontSize: 14,
+  },
+  footerLink: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
 });

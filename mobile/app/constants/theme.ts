@@ -5,33 +5,33 @@
 
 import { Platform } from 'react-native';
 
-const tintColorLight = '#0F766E'; // Lodgify Teal
+const tintColorLight = '#0284c7'; // Sky 600
 const tintColorDark = '#fff';
 
 export const Colors = {
   light: {
-    text: '#11181C',
-    background: '#fff',
+    text: '#0f172a', // Slate 900
+    background: '#f0f9ff', // Sky 50
     tint: tintColorLight,
-    icon: '#687076',
-    tabIconDefault: '#687076',
+    icon: '#64748b', // Slate 500
+    tabIconDefault: '#64748b',
     tabIconSelected: tintColorLight,
-    primary: '#0F766E', // Teal 700
-    secondary: '#F59E0B', // Amber 500
-    accent: '#CCFBF1', // Teal 100
-    backgroundDark: '#131621',
+    primary: '#0284c7', // Sky 600
+    secondary: '#0ea5e9', // Sky 500
+    accent: '#e0f2fe', // Sky 100
+    backgroundDark: '#0f172a',
   },
   dark: {
-    text: '#ECEDEE',
-    background: '#131621',
+    text: '#f1f5f9', // Slate 100
+    background: '#0f172a', // Slate 900
     tint: tintColorDark,
-    icon: '#9BA1A6',
-    tabIconDefault: '#9BA1A6',
+    icon: '#94a3b8', // Slate 400
+    tabIconDefault: '#94a3b8',
     tabIconSelected: tintColorDark,
-    primary: '#14B8A6', // Teal 500
-    secondary: '#FBBF24', // Amber 400
-    accent: '#115E59', // Teal 800
-    backgroundDark: '#131621',
+    primary: '#38bdf8', // Sky 400
+    secondary: '#7dd3fc', // Sky 300
+    accent: '#0c4a6e', // Sky 900
+    backgroundDark: '#0f172a',
   },
 };
 
