@@ -31,8 +31,15 @@ Route::middleware([
     // Owner Resort Management
     Route::middleware(['can:access-owner-dashboard'])->prefix('owner/resort-management')->name('owner.resort-management.')->group(function () {
         Route::get('/bookings', [OwnerResortManagementController::class, 'bookings'])->name('bookings');
+        Route::post('/bookings', [OwnerResortManagementController::class, 'storeBooking'])->name('bookings.store');
+        Route::patch('/bookings/{booking}/approve', [OwnerResortManagementController::class, 'approveBooking'])->name('bookings.approve');
+        Route::patch('/bookings/{booking}/cancel', [OwnerResortManagementController::class, 'cancelBooking'])->name('bookings.cancel');
+
         Route::get('/calendar', [OwnerResortManagementController::class, 'calendar'])->name('calendar');
         Route::get('/check-in-out', [OwnerResortManagementController::class, 'checkInOut'])->name('check-in-out');
         Route::get('/cancellations', [OwnerResortManagementController::class, 'cancellations'])->name('cancellations');
+
+        // Room Types Management
+        Route::resource('room-types', App\Http\Controllers\OwnerRoomTypeController::class);
     });
 });

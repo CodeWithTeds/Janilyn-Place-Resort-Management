@@ -39,6 +39,9 @@
                         <x-sidebar-link href="{{ route('owner.resort-management.cancellations') }}" :active="request()->routeIs('owner.resort-management.cancellations')" class="text-sm">
                             {{ __('Cancellations') }}
                         </x-sidebar-link>
+                        <x-sidebar-link href="{{ route('owner.resort-management.room-types.index') }}" :active="request()->routeIs('owner.resort-management.room-types.*')" class="text-sm">
+                            {{ __('Room Types') }}
+                        </x-sidebar-link>
                     </div>
                 </div>
             @endif
