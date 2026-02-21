@@ -66,4 +66,31 @@ class BookingRepository
             ->latest()
             ->get();
     }
+
+    public function getFilteredBookings(array $filters = [], int $perPage = 10)
+    {
+        $query = Booking::with(['roomType', 'user']);
+
+        if (!empty($filters['search'])) {
+            $search = $filters['search'];
+            $query->where(function($q) use ($search) {
+                $q->where('guest_name', 'like', "%{$search}%")
+                  ->orWhere('guest_email', 'like', "%{$search}%")
+                  ->orWhere('id', 'like', "%{$search}%");
+            });
+        }
+
+        if (!empty($filters['status'])) {
+            $query->where('status', $filters['status']);
+        }
+
+        if (!empty($filters['date'])) {
+            $query->whereDate('check_in', $filters['date']);
+        }
+
+        // Prioritize today's check-ins, then upcoming, then past
+        $query->orderByRaw("CASE WHEN DATE(check_in) = CURDATE() THEN 0 WHEN DATE(check_in) > CURDATE() THEN 1 ELSE 2 END, check_in ASC");
+
+        return $query->paginate($perPage);
+    }
 }

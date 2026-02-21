@@ -94,6 +94,11 @@ class ResortManagementService
         return $this->bookingRepository->getByStatus(BookingStatus::PENDING);
     }
 
+    public function getBookings(array $filters = [], int $perPage = 10)
+    {
+        return $this->bookingRepository->getFilteredBookings($filters, $perPage);
+    }
+
     public function getCheckInsToday(): Collection
     {
         return $this->bookingRepository->getCheckInsForDate(Carbon::today());

@@ -5,7 +5,7 @@
         </h2>
     </x-slot>
 
-    <div class="py-12" x-data="{ tab: 'walk-in' }">
+    <div class="py-12" x-data="{ tab: '{{ $errors->any() || request('tab') == 'walk-in' ? 'walk-in' : 'online' }}' }">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             
             <!-- Tabs -->
@@ -15,7 +15,7 @@
                         Walk-in Booking
                     </button>
                     <button @click="tab = 'online'" :class="{ 'border-brand-500 text-brand-600': tab === 'online', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': tab !== 'online' }" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
-                        Online Reservations
+                        Bookings List
                     </button>
                 </nav>
             </div>
@@ -68,16 +68,51 @@
                 </form>
             </div>
 
-            <!-- Online Reservations List -->
+            <!-- Bookings List -->
             <div x-show="tab === 'online'" class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6" x-cloak>
-                <h3 class="text-lg font-medium text-gray-900 mb-4">Pending Online Reservations</h3>
+                <div class="flex flex-col md:flex-row justify-between items-center mb-6 space-y-4 md:space-y-0">
+                    <h3 class="text-lg font-medium text-gray-900">All Bookings</h3>
+                    
+                    <!-- Filters -->
+                    <form method="GET" action="{{ route('owner.resort-management.bookings') }}" class="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-4 w-full md:w-auto">
+                        <input type="hidden" name="tab" value="online"> <!-- Keep tab active if possible, though this is JS based. We might need to persist tab state via URL param or just default to online if filters are present? -->
+                        <!-- Actually, if we submit form, page reloads. JS defaults to 'walk-in'. We should fix that. -->
+                        
+                        <div>
+                            <x-input type="text" name="search" placeholder="Search Guest..." value="{{ request('search') }}" class="w-full md:w-48" />
+                        </div>
+                        <div>
+                            <select name="status" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm w-full md:w-40">
+                                <option value="">All Status</option>
+                                @foreach(\App\Enums\BookingStatus::cases() as $status)
+                                    <option value="{{ $status->value }}" {{ request('status') == $status->value ? 'selected' : '' }}>
+                                        {{ ucfirst($status->value) }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
+                            <x-input type="date" name="date" value="{{ request('date') }}" class="w-full md:w-40" />
+                        </div>
+                        <div class="flex space-x-2">
+                            <x-button type="submit">Filter</x-button>
+                            @if(request()->hasAny(['search', 'status', 'date']))
+                                <a href="{{ route('owner.resort-management.bookings') }}" class="inline-flex items-center px-4 py-2 bg-gray-200 border border-transparent rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest hover:bg-gray-300 focus:bg-gray-300 active:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
+                                    Clear
+                                </a>
+                            @endif
+                        </div>
+                    </form>
+                </div>
+
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Guest</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Room</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dates</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Check-in</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Check-out</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pax</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
@@ -85,48 +120,71 @@
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
-                            @forelse($pendingBookings as $booking)
-                            <tr>
-                                <td class="px-6 py-4 whitespace-nowrap">{{ $booking->guest_name }}</td>
+                            @forelse($bookings as $booking)
+                            <tr class="{{ \Carbon\Carbon::parse($booking->check_in)->isToday() ? 'bg-indigo-50' : '' }}">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900">{{ $booking->guest_name }}</div>
+                                    <div class="text-sm text-gray-500">{{ $booking->guest_email }}</div>
+                                </td>
                                 <td class="px-6 py-4 whitespace-nowrap">{{ $booking->roomType->name }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    {{ \Carbon\Carbon::parse($booking->check_in)->format('M d') }} - 
-                                    {{ \Carbon\Carbon::parse($booking->check_out)->format('M d') }}
+                                    {{ \Carbon\Carbon::parse($booking->check_in)->format('M d, Y') }}
+                                    @if(\Carbon\Carbon::parse($booking->check_in)->isToday())
+                                        <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">Today</span>
+                                    @endif
                                 </td>
+                                <td class="px-6 py-4 whitespace-nowrap">{{ \Carbon\Carbon::parse($booking->check_out)->format('M d, Y') }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap">{{ $booking->pax_count }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap">₱{{ number_format($booking->total_price, 2) }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                        {{ $booking->status === \App\Enums\BookingStatus::CONFIRMED ? 'bg-green-100 text-green-800' : '' }}
-                                        {{ $booking->status === \App\Enums\BookingStatus::PENDING ? 'bg-yellow-100 text-yellow-800' : '' }}
-                                        {{ $booking->status === \App\Enums\BookingStatus::CANCELLED ? 'bg-red-100 text-red-800' : '' }}
-                                        {{ $booking->status === \App\Enums\BookingStatus::COMPLETED ? 'bg-gray-100 text-gray-800' : '' }}
-                                    ">
+                                        {{ match($booking->status->value) {
+                                            'confirmed' => 'bg-green-100 text-green-800',
+                                            'pending' => 'bg-yellow-100 text-yellow-800',
+                                            'cancelled' => 'bg-red-100 text-red-800',
+                                            'completed' => 'bg-blue-100 text-blue-800',
+                                            default => 'bg-gray-100 text-gray-800'
+                                        } }}">
                                         {{ ucfirst($booking->status->value) }}
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <form action="{{ route('owner.resort-management.bookings.approve', $booking) }}" method="POST" class="inline-block">
-                                        @csrf
-                                        @method('PATCH')
-                                        <button type="submit" class="text-indigo-600 hover:text-indigo-900 mr-3">Approve</button>
-                                    </form>
-                                    <form action="{{ route('owner.resort-management.bookings.cancel', $booking) }}" method="POST" class="inline-block">
-                                        @csrf
-                                        @method('PATCH')
-                                        <button type="submit" class="text-red-600 hover:text-red-900">Reject</button>
-                                    </form>
+                                    @if($booking->status === \App\Enums\BookingStatus::PENDING)
+                                        <form action="{{ route('owner.resort-management.bookings.approve', $booking) }}" method="POST" class="inline-block">
+                                            @csrf
+                                            @method('PATCH')
+                                            <button type="submit" class="text-indigo-600 hover:text-indigo-900 mr-3">Approve</button>
+                                        </form>
+                                        <form action="{{ route('owner.resort-management.bookings.cancel', $booking) }}" method="POST" class="inline-block">
+                                            @csrf
+                                            @method('PATCH')
+                                            <button type="submit" class="text-red-600 hover:text-red-900" onclick="return confirm('Are you sure you want to cancel this booking?')">Cancel</button>
+                                        </form>
+                                    @elseif($booking->status === \App\Enums\BookingStatus::CONFIRMED)
+                                         <form action="{{ route('owner.resort-management.bookings.cancel', $booking) }}" method="POST" class="inline-block">
+                                            @csrf
+                                            @method('PATCH')
+                                            <button type="submit" class="text-red-600 hover:text-red-900" onclick="return confirm('Are you sure you want to cancel this booking?')">Cancel</button>
+                                        </form>
+                                    @endif
                                 </td>
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="7" class="px-6 py-4 text-center text-gray-500">No pending reservations found.</td>
+                                <td colspan="8" class="px-6 py-4 whitespace-nowrap text-center text-gray-500">
+                                    No bookings found.
+                                </td>
                             </tr>
                             @endforelse
                         </tbody>
                     </table>
                 </div>
+                
+                <div class="mt-4">
+                    {{ $bookings->withQueryString()->links() }}
+                </div>
             </div>
+
 
         </div>
     </div>

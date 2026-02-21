@@ -16,12 +16,19 @@ class OwnerResortManagementController extends Controller
         protected ResortManagementService $resortService
     ) {}
 
-    public function bookings(): View
+    public function bookings(Request $request): View
     {
         $roomTypes = $this->resortService->getAllRoomTypes();
-        $pendingBookings = $this->resortService->getPendingBookings();
+        
+        $filters = [
+            'search' => $request->input('search'),
+            'status' => $request->input('status'),
+            'date' => $request->input('date'),
+        ];
 
-        return view('owner.resort-management.bookings', compact('roomTypes', 'pendingBookings'));
+        $bookings = $this->resortService->getBookings($filters);
+
+        return view('owner.resort-management.bookings', compact('roomTypes', 'bookings'));
     }
 
     public function storeBooking(StoreBookingRequest $request): RedirectResponse
