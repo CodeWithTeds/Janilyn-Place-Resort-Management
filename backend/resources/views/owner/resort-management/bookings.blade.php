@@ -115,6 +115,7 @@
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Check-out</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pax</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Occupancy</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                                 <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                             </tr>
@@ -136,6 +137,48 @@
                                 <td class="px-6 py-4 whitespace-nowrap">{{ \Carbon\Carbon::parse($booking->check_out)->format('M d, Y') }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap">{{ $booking->pax_count }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap">₱{{ number_format($booking->total_price, 2) }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    @php
+                                        $status = $booking->status;
+                                        $checkIn = \Carbon\Carbon::parse($booking->check_in)->startOfDay();
+                                        $checkOut = \Carbon\Carbon::parse($booking->check_out)->startOfDay();
+                                        $today = \Carbon\Carbon::today();
+
+                                        if ($status === \App\Enums\BookingStatus::CANCELLED) {
+                                            $occLabel = 'Available';
+                                            $occColor = 'bg-green-100 text-green-800';
+                                        } elseif ($status === \App\Enums\BookingStatus::COMPLETED) {
+                                            $occLabel = 'Vacated';
+                                            $occColor = 'bg-gray-100 text-gray-800';
+                                        } elseif ($status === \App\Enums\BookingStatus::PENDING) {
+                                            $occLabel = 'Pending';
+                                            $occColor = 'bg-yellow-100 text-yellow-800';
+                                        } elseif ($status === \App\Enums\BookingStatus::CONFIRMED) {
+                                            if ($today->lt($checkIn)) {
+                                                $occLabel = 'Reserved';
+                                                $occColor = 'bg-blue-100 text-blue-800';
+                                            } elseif ($today->eq($checkIn)) {
+                                                $occLabel = 'Arriving';
+                                                $occColor = 'bg-indigo-100 text-indigo-800';
+                                            } elseif ($today->gt($checkIn) && $today->lt($checkOut)) {
+                                                $occLabel = 'Occupied';
+                                                $occColor = 'bg-red-100 text-red-800';
+                                            } elseif ($today->eq($checkOut)) {
+                                                $occLabel = 'Due Out';
+                                                $occColor = 'bg-orange-100 text-orange-800';
+                                            } else {
+                                                $occLabel = 'Overstay';
+                                                $occColor = 'bg-red-100 text-red-800';
+                                            }
+                                        } else {
+                                            $occLabel = 'Unknown';
+                                            $occColor = 'bg-gray-100 text-gray-800';
+                                        }
+                                    @endphp
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $occColor }}">
+                                        {{ $occLabel }}
+                                    </span>
+                                </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
                                         {{ match($booking->status->value) {
@@ -171,7 +214,7 @@
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="8" class="px-6 py-4 whitespace-nowrap text-center text-gray-500">
+                                <td colspan="9" class="px-6 py-4 whitespace-nowrap text-center text-gray-500">
                                     No bookings found.
                                 </td>
                             </tr>

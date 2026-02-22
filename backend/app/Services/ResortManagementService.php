@@ -70,6 +70,15 @@ class ResortManagementService
         return $totalPrice;
     }
 
+    public function getAvailableRoomTypes($checkIn, $checkOut): Collection
+    {
+        $occupiedRoomTypeIds = Booking::overlapping($checkIn, $checkOut)
+            ->pluck('room_type_id')
+            ->unique();
+
+        return RoomType::whereNotIn('id', $occupiedRoomTypeIds)->get();
+    }
+
     public function createWalkInBooking(array $data): Booking
     {
         $room = $this->roomTypeRepository->find($data['room_type_id']);

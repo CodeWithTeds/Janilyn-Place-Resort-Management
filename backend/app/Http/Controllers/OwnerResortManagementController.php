@@ -75,4 +75,19 @@ class OwnerResortManagementController extends Controller
 
         return view('owner.resort-management.cancellations', compact('cancellations'));
     }
+
+    public function availableRooms(Request $request)
+    {
+        $request->validate([
+            'check_in' => 'required|date|after_or_equal:today',
+            'check_out' => 'required|date|after:check_in',
+        ]);
+
+        $rooms = $this->resortService->getAvailableRoomTypes(
+            $request->check_in,
+            $request->check_out
+        );
+
+        return response()->json($rooms);
+    }
 }

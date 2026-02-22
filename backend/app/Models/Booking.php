@@ -42,4 +42,13 @@ class Booking extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public function scopeOverlapping($query, $checkIn, $checkOut)
+    {
+        return $query->whereIn('status', [BookingStatus::CONFIRMED, BookingStatus::PENDING])
+                     ->where(function ($q) use ($checkIn, $checkOut) {
+                         $q->where('check_in', '<', $checkOut)
+                           ->where('check_out', '>', $checkIn);
+                     });
+    }
 }
