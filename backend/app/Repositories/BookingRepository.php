@@ -41,7 +41,7 @@ class BookingRepository
     {
         return Booking::with(['roomType', 'user'])
             ->whereDate('check_in', $date)
-            ->where('status', BookingStatus::CONFIRMED)
+            ->whereIn('status', [BookingStatus::CONFIRMED, BookingStatus::PENDING])
             ->get();
     }
 
@@ -49,7 +49,7 @@ class BookingRepository
     {
         return Booking::with(['roomType', 'user'])
             ->whereDate('check_out', $date)
-            ->whereIn('status', [BookingStatus::CONFIRMED, BookingStatus::COMPLETED]) // Assuming confirmed bookings need to check out
+            ->whereIn('status', [BookingStatus::CHECKED_IN, BookingStatus::CONFIRMED]) // Should be CHECKED_IN, but include CONFIRMED as fallback
             ->get();
     }
 
@@ -64,6 +64,21 @@ class BookingRepository
         return Booking::with(['roomType', 'user'])
             ->where('status', BookingStatus::CANCELLED)
             ->latest()
+            ->get();
+    }
+
+    public function getBookingsForPeriod(Carbon $startDate, Carbon $endDate): Collection
+    {
+        return Booking::with(['roomType', 'user'])
+            ->where(function ($query) use ($startDate, $endDate) {
+                $query->whereBetween('check_in', [$startDate, $endDate])
+                    ->orWhereBetween('check_out', [$startDate, $endDate])
+                    ->orWhere(function ($q) use ($startDate, $endDate) {
+                        $q->where('check_in', '<', $startDate)
+                          ->where('check_out', '>', $endDate);
+                    });
+            })
+            ->where('status', '!=', BookingStatus::CANCELLED)
             ->get();
     }
 

@@ -6,6 +6,7 @@ use App\Services\ResortManagementService;
 use App\Http\Requests\StoreBookingRequest;
 use App\Models\Booking;
 use App\Enums\BookingStatus;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
@@ -55,10 +56,33 @@ class OwnerResortManagementController extends Controller
             ->with('success', 'Booking cancelled successfully.');
     }
 
-    public function calendar(): View
+    public function calendar(Request $request): View
     {
-        // Ideally pass bookings to calendar to show occupancy
-        return view('owner.resort-management.calendar');
+        $year = $request->input('year', Carbon::now()->year);
+        $month = $request->input('month', Carbon::now()->month);
+
+        $bookings = $this->resortService->getBookingsForMonth($year, $month);
+        $roomTypes = $this->resortService->getAllRoomTypes();
+
+        $currentDate = Carbon::createFromDate($year, $month, 1);
+        
+        return view('owner.resort-management.calendar', compact('bookings', 'roomTypes', 'currentDate'));
+    }
+
+    public function checkIn(Booking $booking): RedirectResponse
+    {
+        if ($this->resortService->checkInBooking($booking)) {
+            return redirect()->back()->with('success', 'Guest checked in successfully.');
+        }
+        return redirect()->back()->with('error', 'Unable to check in guest.');
+    }
+
+    public function checkOut(Booking $booking): RedirectResponse
+    {
+        if ($this->resortService->checkOutBooking($booking)) {
+            return redirect()->back()->with('success', 'Guest checked out successfully.');
+        }
+        return redirect()->back()->with('error', 'Unable to check out guest.');
     }
 
     public function checkInOut(): View

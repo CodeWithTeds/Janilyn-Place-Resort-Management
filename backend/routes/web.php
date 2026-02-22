@@ -38,6 +38,8 @@ Route::middleware([
 
         Route::get('/calendar', [OwnerResortManagementController::class, 'calendar'])->name('calendar');
         Route::get('/check-in-out', [OwnerResortManagementController::class, 'checkInOut'])->name('check-in-out');
+        Route::patch('/bookings/{booking}/check-in', [OwnerResortManagementController::class, 'checkIn'])->name('bookings.check-in');
+        Route::patch('/bookings/{booking}/check-out', [OwnerResortManagementController::class, 'checkOut'])->name('bookings.check-out');
         Route::get('/cancellations', [OwnerResortManagementController::class, 'cancellations'])->name('cancellations');
 
         // Room Types Management

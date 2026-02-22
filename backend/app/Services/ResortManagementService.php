@@ -108,6 +108,30 @@ class ResortManagementService
         return $this->bookingRepository->getFilteredBookings($filters, $perPage);
     }
 
+    public function getBookingsForMonth($year, $month): Collection
+    {
+        $startDate = Carbon::createFromDate($year, $month, 1)->startOfMonth();
+        $endDate = Carbon::createFromDate($year, $month, 1)->endOfMonth();
+
+        return $this->bookingRepository->getBookingsForPeriod($startDate, $endDate);
+    }
+
+    public function checkInBooking(Booking $booking): bool
+    {
+        if ($booking->status === BookingStatus::CONFIRMED || $booking->status === BookingStatus::PENDING) {
+            return $this->updateBookingStatus($booking, BookingStatus::CHECKED_IN);
+        }
+        return false;
+    }
+
+    public function checkOutBooking(Booking $booking): bool
+    {
+        if ($booking->status === BookingStatus::CHECKED_IN || $booking->status === BookingStatus::CONFIRMED) {
+            return $this->updateBookingStatus($booking, BookingStatus::COMPLETED);
+        }
+        return false;
+    }
+
     public function getCheckInsToday(): Collection
     {
         return $this->bookingRepository->getCheckInsForDate(Carbon::today());

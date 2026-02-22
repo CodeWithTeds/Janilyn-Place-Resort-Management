@@ -153,13 +153,16 @@
                                         } elseif ($status === \App\Enums\BookingStatus::PENDING) {
                                             $occLabel = 'Pending';
                                             $occColor = 'bg-yellow-100 text-yellow-800';
+                                        } elseif ($status === \App\Enums\BookingStatus::CHECKED_IN) {
+                                            $occLabel = 'Occupied';
+                                            $occColor = 'bg-indigo-100 text-indigo-800';
                                         } elseif ($status === \App\Enums\BookingStatus::CONFIRMED) {
                                             if ($today->lt($checkIn)) {
                                                 $occLabel = 'Reserved';
                                                 $occColor = 'bg-blue-100 text-blue-800';
                                             } elseif ($today->eq($checkIn)) {
                                                 $occLabel = 'Arriving';
-                                                $occColor = 'bg-indigo-100 text-indigo-800';
+                                                $occColor = 'bg-green-100 text-green-800';
                                             } elseif ($today->gt($checkIn) && $today->lt($checkOut)) {
                                                 $occLabel = 'Occupied';
                                                 $occColor = 'bg-red-100 text-red-800';
@@ -204,10 +207,21 @@
                                             <button type="submit" class="text-red-600 hover:text-red-900" onclick="return confirm('Are you sure you want to cancel this booking?')">Cancel</button>
                                         </form>
                                     @elseif($booking->status === \App\Enums\BookingStatus::CONFIRMED)
+                                        <form action="{{ route('owner.resort-management.bookings.check-in', $booking) }}" method="POST" class="inline-block">
+                                            @csrf
+                                            @method('PATCH')
+                                            <button type="submit" class="text-green-600 hover:text-green-900 mr-3" onclick="return confirm('Check in this guest?')">Check In</button>
+                                        </form>
                                          <form action="{{ route('owner.resort-management.bookings.cancel', $booking) }}" method="POST" class="inline-block">
                                             @csrf
                                             @method('PATCH')
                                             <button type="submit" class="text-red-600 hover:text-red-900" onclick="return confirm('Are you sure you want to cancel this booking?')">Cancel</button>
+                                        </form>
+                                    @elseif($booking->status === \App\Enums\BookingStatus::CHECKED_IN)
+                                        <form action="{{ route('owner.resort-management.bookings.check-out', $booking) }}" method="POST" class="inline-block">
+                                            @csrf
+                                            @method('PATCH')
+                                            <button type="submit" class="text-gray-600 hover:text-gray-900 mr-3" onclick="return confirm('Check out this guest?')">Check Out</button>
                                         </form>
                                     @endif
                                 </td>
