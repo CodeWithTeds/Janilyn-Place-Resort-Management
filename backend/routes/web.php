@@ -1,6 +1,9 @@
 <?php
 
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\GuestAccommodationController;
+use App\Http\Controllers\OwnerExclusiveResortRentalController;
+use App\Http\Controllers\OwnerHousekeepingController;
 use App\Http\Controllers\OwnerResortManagementController;
 use Illuminate\Support\Facades\Route;
 
@@ -27,6 +30,22 @@ Route::middleware([
     Route::get('/owner/dashboard', [DashboardController::class, 'owner'])
         ->middleware('can:access-owner-dashboard')
         ->name('owner.dashboard');
+
+    // Owner Housekeeping
+    Route::middleware(['can:access-owner-dashboard'])->prefix('owner/housekeeping')->name('owner.housekeeping.')->group(function () {
+        Route::get('/', [OwnerHousekeepingController::class, 'index'])->name('index');
+        Route::post('/tasks', [OwnerHousekeepingController::class, 'store'])->name('tasks.store');
+        Route::put('/tasks/{task}', [OwnerHousekeepingController::class, 'update'])->name('tasks.update');
+        Route::delete('/tasks/{task}', [OwnerHousekeepingController::class, 'destroy'])->name('tasks.destroy');
+        Route::patch('/units/{unit}/status', [OwnerHousekeepingController::class, 'updateUnitStatus'])->name('units.status');
+        
+        Route::get('/staff', [OwnerHousekeepingController::class, 'staff'])->name('staff');
+        Route::get('/staff/create', [OwnerHousekeepingController::class, 'createStaff'])->name('staff.create');
+        Route::post('/staff', [OwnerHousekeepingController::class, 'storeStaff'])->name('staff.store');
+        Route::get('/staff/{staff}/edit', [OwnerHousekeepingController::class, 'editStaff'])->name('staff.edit');
+        Route::put('/staff/{staff}', [OwnerHousekeepingController::class, 'updateStaff'])->name('staff.update');
+        Route::delete('/staff/{staff}', [OwnerHousekeepingController::class, 'destroyStaff'])->name('staff.destroy');
+    });
 
     // Owner Resort Management
     Route::middleware(['can:access-owner-dashboard'])->prefix('owner/resort-management')->name('owner.resort-management.')->group(function () {

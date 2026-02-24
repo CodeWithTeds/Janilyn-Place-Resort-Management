@@ -16,6 +16,26 @@
             </x-sidebar-link>
 
             @if(Auth::check() && Auth::user()->isOwner())
+                <div x-data="{ open: {{ request()->routeIs('owner.housekeeping.*') ? 'true' : 'false' }} }">
+                    <button @click="open = !open" class="flex items-center w-full px-4 py-2 text-brand-100 hover:bg-brand-700 hover:text-white rounded-md group focus:outline-none transition ease-in-out duration-150">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path>
+                        </svg>
+                        <span class="flex-1 text-left font-medium">{{ __('Housekeeping') }}</span>
+                        <svg :class="{'rotate-90': open}" class="w-4 h-4 ml-auto transition-transform duration-200 transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                        </svg>
+                    </button>
+                    <div x-show="open" class="mt-1 space-y-1 pl-4" x-cloak>
+                        <x-sidebar-link href="{{ route('owner.housekeeping.index') }}" :active="request()->routeIs('owner.housekeeping.index')" class="text-sm">
+                            {{ __('Overview & Tasks') }}
+                        </x-sidebar-link>
+                        <x-sidebar-link href="{{ route('owner.housekeeping.staff') }}" :active="request()->routeIs('owner.housekeeping.staff')" class="text-sm">
+                            {{ __('Staff Management') }}
+                        </x-sidebar-link>
+                    </div>
+                </div>
+
                 <div x-data="{ open: {{ request()->routeIs('owner.resort-management.*') ? 'true' : 'false' }} }">
                     <button @click="open = !open" class="flex items-center w-full px-4 py-2 text-brand-100 hover:bg-brand-700 hover:text-white rounded-md group focus:outline-none transition ease-in-out duration-150">
                         <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">

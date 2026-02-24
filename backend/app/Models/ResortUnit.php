@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\UnitCleaningStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -15,7 +16,12 @@ class ResortUnit extends Model
         'room_type_id',
         'name',
         'status',
+        'cleaning_status',
         'notes',
+    ];
+
+    protected $casts = [
+        'cleaning_status' => UnitCleaningStatus::class,
     ];
 
     public function roomType(): BelongsTo
@@ -26,5 +32,10 @@ class ResortUnit extends Model
     public function bookings(): HasMany
     {
         return $this->hasMany(Booking::class);
+    }
+
+    public function housekeepingTasks(): HasMany
+    {
+        return $this->hasMany(HousekeepingTask::class);
     }
 }

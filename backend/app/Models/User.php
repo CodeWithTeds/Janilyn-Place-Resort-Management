@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Enums\UserRole;
+use App\Models\HousekeepingTask;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -29,6 +30,7 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
+        'phone_number',
         'role',
         'password',
     ];
@@ -98,5 +100,21 @@ class User extends Authenticatable
             'password' => 'hashed',
             'role' => UserRole::class,
         ];
+    }
+
+    /**
+     * Get the housekeeping tasks assigned to the user.
+     */
+    public function housekeepingTasks()
+    {
+        return $this->hasMany(HousekeepingTask::class, 'assigned_to');
+    }
+
+    /**
+     * Scope a query to only include staff users.
+     */
+    public function scopeStaff($query)
+    {
+        return $query->where('role', UserRole::STAFF);
     }
 }
