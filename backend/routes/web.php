@@ -72,4 +72,34 @@ Route::middleware([
         // Exclusive Resort Rentals Management
         Route::resource('exclusive-resort-rentals', App\Http\Controllers\OwnerExclusiveResortRentalController::class);
     });
+
+    // Owner Inventory
+    Route::middleware(['can:access-owner-dashboard'])->prefix('owner/inventory')->name('owner.inventory.')->group(function () {
+        Route::get('/', [App\Http\Controllers\OwnerInventoryController::class, 'index'])->name('index');
+        Route::get('/create', [App\Http\Controllers\OwnerInventoryController::class, 'create'])->name('create');
+        Route::post('/', [App\Http\Controllers\OwnerInventoryController::class, 'store'])->name('store');
+        Route::get('/{inventory}/edit', [App\Http\Controllers\OwnerInventoryController::class, 'edit'])->name('edit');
+        Route::put('/{inventory}', [App\Http\Controllers\OwnerInventoryController::class, 'update'])->name('update');
+        Route::delete('/{inventory}', [App\Http\Controllers\OwnerInventoryController::class, 'destroy'])->name('destroy');
+    });
+
+    // Owner Damage Reports
+    Route::middleware(['can:access-owner-dashboard'])->prefix('owner/damage-reports')->name('owner.damage-reports.')->group(function () {
+        Route::get('/', [App\Http\Controllers\OwnerDamageReportController::class, 'index'])->name('index');
+        Route::get('/create', [App\Http\Controllers\OwnerDamageReportController::class, 'create'])->name('create');
+        Route::post('/', [App\Http\Controllers\OwnerDamageReportController::class, 'store'])->name('store');
+        Route::get('/{damageReport}/edit', [App\Http\Controllers\OwnerDamageReportController::class, 'edit'])->name('edit');
+        Route::put('/{damageReport}', [App\Http\Controllers\OwnerDamageReportController::class, 'update'])->name('update');
+        Route::delete('/{damageReport}', [App\Http\Controllers\OwnerDamageReportController::class, 'destroy'])->name('destroy');
+    });
+
+    // Owner Room Inspections
+    Route::middleware(['can:access-owner-dashboard'])->prefix('owner/room-inspections')->name('owner.room-inspections.')->group(function () {
+        Route::get('/', [App\Http\Controllers\OwnerRoomInspectionController::class, 'index'])->name('index');
+        Route::get('/create', [App\Http\Controllers\OwnerRoomInspectionController::class, 'create'])->name('create');
+        Route::post('/', [App\Http\Controllers\OwnerRoomInspectionController::class, 'store'])->name('store');
+        Route::get('/{roomInspection}/edit', [App\Http\Controllers\OwnerRoomInspectionController::class, 'edit'])->name('edit');
+        Route::put('/{roomInspection}', [App\Http\Controllers\OwnerRoomInspectionController::class, 'update'])->name('update');
+        Route::delete('/{roomInspection}', [App\Http\Controllers\OwnerRoomInspectionController::class, 'destroy'])->name('destroy');
+    });
 });
