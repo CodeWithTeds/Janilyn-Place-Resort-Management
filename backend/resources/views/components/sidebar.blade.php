@@ -16,7 +16,7 @@
             </x-sidebar-link>
 
             @if(Auth::check() && Auth::user()->isOwner())
-                <div x-data="{ open: {{ request()->routeIs('owner.resort-management.room-types.*') || request()->routeIs('owner.housekeeping.*') || request()->routeIs('owner.inventory.*') || request()->routeIs('owner.damage-reports.*') || request()->routeIs('owner.room-inspections.*') ? 'true' : 'false' }} }">
+                <div x-data="{ open: {{ request()->routeIs('owner.inventory.*') || request()->routeIs('owner.damage-reports.*') || request()->routeIs('owner.room-inspections.*') ? 'true' : 'false' }} }">
                     <button @click="open = !open" class="flex items-center w-full px-4 py-2 text-brand-100 hover:bg-brand-700 hover:text-white rounded-md group focus:outline-none transition ease-in-out duration-150">
                         <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
@@ -27,12 +27,6 @@
                         </svg>
                     </button>
                     <div x-show="open" class="mt-1 space-y-1 pl-4" x-cloak>
-                        <x-sidebar-link href="{{ route('owner.resort-management.room-types.index') }}" :active="request()->routeIs('owner.resort-management.room-types.*')" class="text-sm">
-                            {{ __('Room type and pricing setup') }}
-                        </x-sidebar-link>
-                        <x-sidebar-link href="{{ route('owner.housekeeping.index') }}" :active="request()->routeIs('owner.housekeeping.*')" class="text-sm">
-                            {{ __('Maintenance and housekeeping tracking') }}
-                        </x-sidebar-link>
                         <x-sidebar-link href="{{ route('owner.inventory.index') }}" :active="request()->routeIs('owner.inventory.*')" class="text-sm">
                             {{ __('Inventory and amenity tracking') }}
                         </x-sidebar-link>

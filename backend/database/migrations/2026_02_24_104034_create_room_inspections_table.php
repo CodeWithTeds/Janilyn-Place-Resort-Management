@@ -15,8 +15,8 @@ return new class extends Migration
             $table->id();
             $table->foreignId('resort_unit_id')->constrained()->cascadeOnDelete();
             $table->foreignId('inspector_id')->constrained('users')->cascadeOnDelete();
-            $table->enum('type', ['Pre-Arrival', 'Post-Departure', 'Routine'])->default('Routine');
-            $table->enum('status', ['Passed', 'Failed', 'Pending Fix'])->default('Passed');
+            $table->string('type')->default('Routine'); // Check-in, Check-out, Routine, Deep Clean
+            $table->string('status')->default('Passed'); // Passed, Failed, Needs Cleaning
             $table->json('checklist_data')->nullable(); // Stores checklist items and their status
             $table->text('notes')->nullable();
             $table->json('images')->nullable();

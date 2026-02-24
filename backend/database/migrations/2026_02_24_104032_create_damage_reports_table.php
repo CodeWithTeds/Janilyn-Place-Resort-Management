@@ -17,8 +17,8 @@ return new class extends Migration
             $table->foreignId('reported_by')->constrained('users')->cascadeOnDelete();
             $table->string('item_name');
             $table->text('description');
-            $table->enum('severity', ['Minor', 'Moderate', 'Severe'])->default('Minor');
-            $table->enum('status', ['Pending', 'In Progress', 'Resolved', 'Written Off'])->default('Pending');
+            $table->string('severity')->default('Low'); // Low, Medium, High, Critical
+            $table->string('status')->default('Reported'); // Reported, In Progress, Resolved
             $table->decimal('cost_estimate', 10, 2)->nullable();
             $table->json('images')->nullable();
             $table->timestamp('resolved_at')->nullable();
