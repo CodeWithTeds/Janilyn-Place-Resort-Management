@@ -5,13 +5,7 @@
         </h2>
     </x-slot>
 
-    <div class="py-12" x-data="{ 
-        deleteUrl: '',
-        openDelete(staffId) {
-            this.deleteUrl = '{{ route('owner.housekeeping.staff.destroy', ':id') }}'.replace(':id', staffId);
-            $dispatch('open-modal', 'delete-staff-modal');
-        }
-    }">
+    <div class="py-12" x-data="staffManagement('{{ route('owner.housekeeping.staff.destroy', 'PLACEHOLDER') }}')">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="flex justify-between mb-6">
                 <a href="{{ route('owner.housekeeping.index') }}" class="text-indigo-600 hover:text-indigo-900 font-medium">
@@ -109,7 +103,7 @@
                     <form method="POST" :action="deleteUrl" class="inline">
                         @csrf
                         @method('DELETE')
-                        <x-danger-button>
+                        <x-danger-button type="submit">
                             {{ __('Delete Staff') }}
                         </x-danger-button>
                     </form>

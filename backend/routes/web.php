@@ -40,6 +40,7 @@ Route::middleware([
         Route::patch('/units/{unit}/status', [OwnerHousekeepingController::class, 'updateUnitStatus'])->name('units.status');
         
         Route::get('/staff', [OwnerHousekeepingController::class, 'staff'])->name('staff');
+        Route::get('/schedules', [OwnerHousekeepingController::class, 'schedules'])->name('schedules');
         Route::get('/staff/create', [OwnerHousekeepingController::class, 'createStaff'])->name('staff.create');
         Route::post('/staff', [OwnerHousekeepingController::class, 'storeStaff'])->name('staff.store');
         Route::get('/staff/{staff}/edit', [OwnerHousekeepingController::class, 'editStaff'])->name('staff.edit');

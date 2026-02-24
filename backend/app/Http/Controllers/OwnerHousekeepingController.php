@@ -70,6 +70,18 @@ class OwnerHousekeepingController extends Controller
         return redirect()->back()->with('success', 'Unit cleaning status updated.');
     }
 
+    public function schedules(): View
+    {
+        $units = ResortUnit::with(['housekeepingTasks' => function ($query) {
+            $query->where('status', '!=', \App\Enums\HousekeepingStatus::COMPLETED)
+                  ->orderBy('due_date', 'asc');
+        }])->get();
+
+        $staffMembers = $this->housekeepingService->getStaffMembers();
+
+        return view('owner.housekeeping.schedules', compact('units', 'staffMembers'));
+    }
+
     public function staff(): View
     {
         $staffMembers = $this->housekeepingService->getStaffMembers();
