@@ -42,6 +42,9 @@
                         <x-sidebar-link href="{{ route('owner.resort-management.room-types.index') }}" :active="request()->routeIs('owner.resort-management.room-types.*')" class="text-sm">
                             {{ __('Room Types') }}
                         </x-sidebar-link>
+                        <x-sidebar-link href="{{ route('owner.resort-management.exclusive-resort-rentals.index') }}" :active="request()->routeIs('owner.resort-management.exclusive-resort-rentals.*')" class="text-sm">
+                            {{ __('Exclusive Rentals') }}
+                        </x-sidebar-link>
                     </div>
                 </div>
             @endif

@@ -82,10 +82,14 @@
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <form action="{{ route('owner.resort-management.bookings.check-out', $booking) }}" method="POST" class="inline-block">
+                                    <form action="{{ route('owner.resort-management.bookings.check-out', $booking) }}" method="POST" class="inline-block confirm-action"
+                                          data-confirm-title="Check Out Guest?"
+                                          data-confirm-text="This will complete the booking. Continue?"
+                                          data-confirm-icon="info"
+                                          data-confirm-button-text="Yes, check out!">
                                         @csrf
                                         @method('PATCH')
-                                        <button type="submit" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-1 px-3 rounded text-xs" onclick="return confirm('Check out this guest? This will complete the booking.')">Check Out</button>
+                                        <button type="submit" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-1 px-3 rounded text-xs">Check Out</button>
                                     </form>
                                 </td>
                             </tr>

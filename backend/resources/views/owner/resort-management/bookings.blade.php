@@ -201,27 +201,43 @@
                                             @method('PATCH')
                                             <button type="submit" class="text-indigo-600 hover:text-indigo-900 mr-3">Approve</button>
                                         </form>
-                                        <form action="{{ route('owner.resort-management.bookings.cancel', $booking) }}" method="POST" class="inline-block">
+                                        <form action="{{ route('owner.resort-management.bookings.cancel', $booking) }}" method="POST" class="inline-block confirm-action"
+                                              data-confirm-title="Cancel Booking?"
+                                              data-confirm-text="Are you sure you want to cancel this booking?"
+                                              data-confirm-icon="warning"
+                                              data-confirm-button-text="Yes, cancel it!">
                                             @csrf
                                             @method('PATCH')
-                                            <button type="submit" class="text-red-600 hover:text-red-900" onclick="return confirm('Are you sure you want to cancel this booking?')">Cancel</button>
+                                            <button type="submit" class="text-red-600 hover:text-red-900">Cancel</button>
                                         </form>
                                     @elseif($booking->status === \App\Enums\BookingStatus::CONFIRMED)
-                                        <form action="{{ route('owner.resort-management.bookings.check-in', $booking) }}" method="POST" class="inline-block">
+                                        <form action="{{ route('owner.resort-management.bookings.check-in', $booking) }}" method="POST" class="inline-block confirm-action"
+                                              data-confirm-title="Check In Guest?"
+                                              data-confirm-text="Are you sure you want to check in this guest?"
+                                              data-confirm-icon="info"
+                                              data-confirm-button-text="Yes, check in!">
                                             @csrf
                                             @method('PATCH')
-                                            <button type="submit" class="text-green-600 hover:text-green-900 mr-3" onclick="return confirm('Check in this guest?')">Check In</button>
+                                            <button type="submit" class="text-green-600 hover:text-green-900 mr-3">Check In</button>
                                         </form>
-                                         <form action="{{ route('owner.resort-management.bookings.cancel', $booking) }}" method="POST" class="inline-block">
+                                         <form action="{{ route('owner.resort-management.bookings.cancel', $booking) }}" method="POST" class="inline-block confirm-action"
+                                               data-confirm-title="Cancel Booking?"
+                                               data-confirm-text="Are you sure you want to cancel this booking?"
+                                               data-confirm-icon="warning"
+                                               data-confirm-button-text="Yes, cancel it!">
                                             @csrf
                                             @method('PATCH')
-                                            <button type="submit" class="text-red-600 hover:text-red-900" onclick="return confirm('Are you sure you want to cancel this booking?')">Cancel</button>
+                                            <button type="submit" class="text-red-600 hover:text-red-900">Cancel</button>
                                         </form>
                                     @elseif($booking->status === \App\Enums\BookingStatus::CHECKED_IN)
-                                        <form action="{{ route('owner.resort-management.bookings.check-out', $booking) }}" method="POST" class="inline-block">
+                                        <form action="{{ route('owner.resort-management.bookings.check-out', $booking) }}" method="POST" class="inline-block confirm-action"
+                                              data-confirm-title="Check Out Guest?"
+                                              data-confirm-text="Are you sure you want to check out this guest?"
+                                              data-confirm-icon="info"
+                                              data-confirm-button-text="Yes, check out!">
                                             @csrf
                                             @method('PATCH')
-                                            <button type="submit" class="text-gray-600 hover:text-gray-900 mr-3" onclick="return confirm('Check out this guest?')">Check Out</button>
+                                            <button type="submit" class="text-gray-600 hover:text-gray-900 mr-3">Check Out</button>
                                         </form>
                                     @endif
                                 </td>

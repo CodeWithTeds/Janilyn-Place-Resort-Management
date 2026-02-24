@@ -44,5 +44,8 @@ Route::middleware([
 
         // Room Types Management
         Route::resource('room-types', App\Http\Controllers\OwnerRoomTypeController::class);
+
+        // Exclusive Resort Rentals Management
+        Route::resource('exclusive-resort-rentals', App\Http\Controllers\OwnerExclusiveResortRentalController::class);
     });
 });

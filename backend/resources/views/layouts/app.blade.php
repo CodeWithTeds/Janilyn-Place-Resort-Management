@@ -47,5 +47,14 @@
         @stack('modals')
 
         @livewireScripts
+
+        {{-- Flash Messages Data Container --}}
+        <div id="flash-messages" 
+             data-success="{{ session('success') }}" 
+             data-error="{{ session('error') }}" 
+             data-warning="{{ session('warning') }}" 
+             data-info="{{ session('info') }}" 
+             style="display: none;">
+        </div>
     </body>
 </html>
