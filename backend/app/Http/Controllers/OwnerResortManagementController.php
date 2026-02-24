@@ -20,6 +20,7 @@ class OwnerResortManagementController extends Controller
     public function bookings(Request $request): View
     {
         $roomTypes = $this->resortService->getAllRoomTypes();
+        $exclusiveRentals = $this->resortService->getAllExclusiveRentals();
         
         $filters = [
             'search' => $request->input('search'),
@@ -29,7 +30,7 @@ class OwnerResortManagementController extends Controller
 
         $bookings = $this->resortService->getBookings($filters);
 
-        return view('owner.resort-management.bookings', compact('roomTypes', 'bookings'));
+        return view('owner.resort-management.bookings', compact('roomTypes', 'exclusiveRentals', 'bookings'));
     }
 
     public function storeBooking(StoreBookingRequest $request): RedirectResponse

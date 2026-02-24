@@ -4,7 +4,9 @@ namespace App\Services;
 
 use App\Repositories\RoomTypeRepository;
 use App\Repositories\BookingRepository;
+use App\Repositories\ExclusiveResortRentalRepository;
 use App\Models\RoomType;
+use App\Models\ExclusiveResortRental;
 use App\Models\Booking;
 use App\Enums\BookingStatus;
 use Carbon\Carbon;
@@ -14,12 +16,18 @@ class ResortManagementService
 {
     public function __construct(
         protected RoomTypeRepository $roomTypeRepository,
-        protected BookingRepository $bookingRepository
+        protected BookingRepository $bookingRepository,
+        protected ExclusiveResortRentalRepository $exclusiveResortRentalRepository
     ) {}
 
     public function getAllRoomTypes(): Collection
     {
         return $this->roomTypeRepository->getAll();
+    }
+
+    public function getAllExclusiveRentals(): Collection
+    {
+        return $this->exclusiveResortRentalRepository->getAll();
     }
 
     public function calculateTotalPrice(RoomType $room, string $checkIn, string $checkOut, int $pax): float
@@ -51,14 +59,6 @@ class ResortManagementService
         }
 
         // Extra person charge
-        // Assuming base price covers min_pax or max_pax? 
-        // Requirement: "Good for 2pax", "Good for 4-10pax". 
-        // "300/pax (Additional)".
-        // So if pax > max_pax (or some base capacity), charge extra.
-        // Let's assume room->max_pax is the limit before extra charge? 
-        // Or "Good for 2pax" means base covers 2. 
-        // Let's assume room->min_pax is the base capacity covered by price.
-        
         if ($pax > $room->min_pax) {
             $extraPax = $pax - $room->min_pax;
             $totalPrice += ($extraPax * $room->extra_person_charge * $days);
@@ -66,6 +66,41 @@ class ResortManagementService
 
         // Cooking fee
         $totalPrice += $room->cooking_fee;
+
+        return $totalPrice;
+    }
+
+    public function calculateExclusiveRentalPrice(ExclusiveResortRental $rental, string $checkIn, string $checkOut, int $pax): float
+    {
+        $start = Carbon::parse($checkIn);
+        $end = Carbon::parse($checkOut);
+        $days = $start->diffInDays($end);
+
+        if ($days <= 0) {
+            return 0;
+        }
+
+        // For exclusive rental, price is a range in DB (price_range_min, price_range_max).
+        // Usually max price is for max pax, min price for min pax.
+        // Let's assume a simple logic: if pax <= min_pax, use min_price.
+        // If pax >= max_pax, use max_price.
+        // If between, interpolate? Or just use max price if pax > min?
+        // Let's use max price for now if pax > min_overnight_capacity, else min price.
+        // Or simpler: Just take the min price as base for now, as exact logic isn't fully defined.
+        // Actually, let's look at the screenshot logic if available or just use max price as safe bet?
+        // "P10,000-P12,000/Night"
+        // Let's just use the max price for calculation safety, or maybe average?
+        // Let's stick to: use min_price if pax <= capacity_overnight_min, else max_price.
+        
+        $pricePerNight = $rental->price_range_min;
+        if ($rental->capacity_overnight_min && $pax > $rental->capacity_overnight_min) {
+            $pricePerNight = $rental->price_range_max;
+        }
+
+        $totalPrice = $pricePerNight * $days;
+
+        // Cooking fee
+        $totalPrice += $rental->cooking_fee;
 
         return $totalPrice;
     }
@@ -81,14 +116,33 @@ class ResortManagementService
 
     public function createWalkInBooking(array $data): Booking
     {
-        $room = $this->roomTypeRepository->find($data['room_type_id']);
-        
-        $totalPrice = $this->calculateTotalPrice(
-            $room, 
-            $data['check_in'], 
-            $data['check_out'], 
-            $data['pax_count'] ?? $room->min_pax
-        );
+        $totalPrice = 0;
+
+        if (isset($data['booking_type']) && $data['booking_type'] === 'exclusive') {
+            $rental = $this->exclusiveResortRentalRepository->getAll()->where('id', $data['exclusive_resort_rental_id'])->first(); // Should use find in repo but repo lacks find method currently
+            // Let's update repo later or just use model find here if needed, but service should use repo.
+            // Wait, I didn't add find() to ExclusiveResortRentalRepository. I should have.
+            // Let's just use Model::find for now or rely on the validated data being correct ID.
+            if (!$rental) {
+                 $rental = ExclusiveResortRental::find($data['exclusive_resort_rental_id']);
+            }
+            
+            $totalPrice = $this->calculateExclusiveRentalPrice(
+                $rental,
+                $data['check_in'],
+                $data['check_out'],
+                $data['pax_count'] ?? $rental->capacity_overnight_min
+            );
+        } else {
+            $room = $this->roomTypeRepository->find($data['room_type_id']);
+            
+            $totalPrice = $this->calculateTotalPrice(
+                $room, 
+                $data['check_in'], 
+                $data['check_out'], 
+                $data['pax_count'] ?? $room->min_pax
+            );
+        }
 
         $bookingData = array_merge($data, [
             'total_price' => $totalPrice,

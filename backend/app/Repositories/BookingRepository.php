@@ -11,7 +11,7 @@ class BookingRepository
 {
     public function getAll(): Collection
     {
-        return Booking::with(['roomType', 'user'])->latest()->get();
+        return Booking::with(['roomType', 'exclusiveResortRental', 'user'])->latest()->get();
     }
 
     public function create(array $data): Booking
@@ -31,7 +31,7 @@ class BookingRepository
 
     public function getByStatus(BookingStatus $status): Collection
     {
-        return Booking::with(['roomType', 'user'])
+        return Booking::with(['roomType', 'exclusiveResortRental', 'user'])
             ->where('status', $status)
             ->latest()
             ->get();
@@ -39,7 +39,7 @@ class BookingRepository
 
     public function getCheckInsForDate(Carbon $date): Collection
     {
-        return Booking::with(['roomType', 'user'])
+        return Booking::with(['roomType', 'exclusiveResortRental', 'user'])
             ->whereDate('check_in', $date)
             ->whereIn('status', [BookingStatus::CONFIRMED, BookingStatus::PENDING])
             ->get();
@@ -47,7 +47,7 @@ class BookingRepository
 
     public function getCheckOutsForDate(Carbon $date): Collection
     {
-        return Booking::with(['roomType', 'user'])
+        return Booking::with(['roomType', 'exclusiveResortRental', 'user'])
             ->whereDate('check_out', $date)
             ->whereIn('status', [BookingStatus::CHECKED_IN, BookingStatus::CONFIRMED]) // Should be CHECKED_IN, but include CONFIRMED as fallback
             ->get();
@@ -61,7 +61,7 @@ class BookingRepository
         // The requirement mentions "Cancellation Requests", so maybe we need a REQUESTED_CANCELLATION status.
         // But for simplicity based on current Enums, let's just fetch CANCELLED ones or PENDING ones that might be rejected.
         // Let's stick to returning all for the controller to filter or just cancelled ones.
-        return Booking::with(['roomType', 'user'])
+        return Booking::with(['roomType', 'exclusiveResortRental', 'user'])
             ->where('status', BookingStatus::CANCELLED)
             ->latest()
             ->get();
@@ -69,7 +69,7 @@ class BookingRepository
 
     public function getBookingsForPeriod(Carbon $startDate, Carbon $endDate): Collection
     {
-        return Booking::with(['roomType', 'user'])
+        return Booking::with(['roomType', 'exclusiveResortRental', 'user'])
             ->where(function ($query) use ($startDate, $endDate) {
                 $query->whereBetween('check_in', [$startDate, $endDate])
                     ->orWhereBetween('check_out', [$startDate, $endDate])
@@ -84,7 +84,7 @@ class BookingRepository
 
     public function getFilteredBookings(array $filters = [], int $perPage = 10)
     {
-        $query = Booking::with(['roomType', 'user']);
+        $query = Booking::with(['roomType', 'exclusiveResortRental', 'user']);
 
         if (!empty($filters['search'])) {
             $search = $filters['search'];

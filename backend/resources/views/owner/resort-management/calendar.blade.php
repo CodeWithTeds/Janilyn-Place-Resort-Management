@@ -66,9 +66,16 @@
                                         // Highlight check-in/out days visually if needed
                                         $isCheckIn = \Carbon\Carbon::parse($booking->check_in)->isSameDay($date);
                                     @endphp
-                                    <div class="text-xs px-2 py-1 rounded truncate {{ $statusClass }}" title="{{ $booking->guest_name }} ({{ $booking->roomType->name }})">
+                                    <div class="text-xs px-2 py-1 rounded truncate {{ $statusClass }}" 
+                                         title="{{ $booking->guest_name }} ({{ $booking->roomType ? $booking->roomType->name : ($booking->exclusiveResortRental ? $booking->exclusiveResortRental->name : 'N/A') }})">
                                         @if($isCheckIn) <span class="font-bold">↳</span> @endif
-                                        {{ $booking->roomType->name }}
+                                        @if($booking->roomType)
+                                            {{ $booking->roomType->name }}
+                                        @elseif($booking->exclusiveResortRental)
+                                            <span class="text-purple-800 font-bold">★ {{ $booking->exclusiveResortRental->name }}</span>
+                                        @else
+                                            Unknown Room
+                                        @endif
                                         <span class="hidden sm:inline opacity-75">- {{ $booking->guest_name }}</span>
                                     </div>
                                 @endforeach
