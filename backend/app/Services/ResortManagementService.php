@@ -12,6 +12,8 @@ use App\Enums\BookingStatus;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 
+use App\Models\ResortUnit;
+
 class ResortManagementService
 {
     public function __construct(
@@ -107,11 +109,41 @@ class ResortManagementService
 
     public function getAvailableRoomTypes($checkIn, $checkOut): Collection
     {
-        $occupiedRoomTypeIds = Booking::overlapping($checkIn, $checkOut)
-            ->pluck('room_type_id')
+        // Get all room types with their unit counts
+        $roomTypes = RoomType::withCount('units')->get();
+
+        // Get booking counts per room type for the period
+        $bookingsCounts = Booking::overlapping($checkIn, $checkOut)
+            ->selectRaw('room_type_id, count(*) as count')
+            ->groupBy('room_type_id')
+            ->pluck('count', 'room_type_id');
+
+        // Filter room types where bookings < units
+        // If no units are defined (units_count == 0), we treat it as capacity 1 (legacy/simple mode)
+        return $roomTypes->filter(function ($roomType) use ($bookingsCounts) {
+            $bookedCount = $bookingsCounts->get($roomType->id, 0);
+            $totalUnits = $roomType->units_count;
+            $capacity = $totalUnits > 0 ? $totalUnits : 1;
+            
+            return $bookedCount < $capacity;
+        })->values(); // Reset keys
+    }
+
+    public function getAvailableUnits($roomTypeId, $checkIn, $checkOut): Collection
+    {
+        // Get all units for the room type
+        $units = ResortUnit::where('room_type_id', $roomTypeId)
+            ->where('status', 'available') // Only consider active units
+            ->get();
+
+        // Get bookings overlapping the period for this room type
+        $occupiedUnitIds = Booking::overlapping($checkIn, $checkOut)
+            ->where('room_type_id', $roomTypeId)
+            ->whereNotNull('resort_unit_id')
+            ->pluck('resort_unit_id')
             ->unique();
 
-        return RoomType::whereNotIn('id', $occupiedRoomTypeIds)->get();
+        return $units->whereNotIn('id', $occupiedUnitIds)->values();
     }
 
     public function createWalkInBooking(array $data): Booking
@@ -170,9 +202,13 @@ class ResortManagementService
         return $this->bookingRepository->getBookingsForPeriod($startDate, $endDate);
     }
 
-    public function checkInBooking(Booking $booking): bool
+    public function checkInBooking(Booking $booking, $resortUnitId = null): bool
     {
         if ($booking->status === BookingStatus::CONFIRMED || $booking->status === BookingStatus::PENDING) {
+            if ($resortUnitId) {
+                $booking->resort_unit_id = $resortUnitId;
+                $booking->save();
+            }
             return $this->updateBookingStatus($booking, BookingStatus::CHECKED_IN);
         }
         return false;

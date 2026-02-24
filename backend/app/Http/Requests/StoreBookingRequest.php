@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 use App\Models\Booking;
 use App\Enums\BookingStatus;
+use App\Models\RoomType;
 use Illuminate\Validation\Validator;
 
 class StoreBookingRequest extends FormRequest
@@ -55,24 +56,45 @@ class StoreBookingRequest extends FormRequest
 
     protected function validateRoomOverlap(Validator $validator)
     {
-        // Check overlap with other room bookings for the same room type
-        $overlap = Booking::where('room_type_id', $this->room_type_id)
+        // Get total units for this room type
+        $roomType = RoomType::withCount('units')->find($this->room_type_id);
+        
+        if (!$roomType) {
+            return; // Validated by 'exists' rule already
+        }
+
+        $totalUnits = $roomType->units_count;
+
+        // If no units are defined, fallback to old logic (single booking per room type? or assume unlimited? 
+        // User said "Availability Check : Instead of checking if any booking exists... check if bookings < units".
+        // If 0 units defined, technically capacity is 0. But for backward compatibility if they haven't added units yet, 
+        // maybe we should assume 1? Or just strictly 0?
+        // Let's assume if 0 units, it's not bookable if we follow strict "units" logic.
+        // But maybe the user hasn't added units yet.
+        // Let's assume if units_count > 0, we use unit logic. If 0, we might fallback to checking if ANY booking exists (legacy behavior) 
+        // OR better, treat it as "1 generic unit".
+        // Let's stick to the requested logic: check bookings < units. If units=0, then 0 < 0 is false, so full.
+        // However, I should probably check if units exist. If not, maybe treat as 1 for now so system doesn't break immediately.
+        // But the prompt says "Availability Check... check if bookings < units". 
+        // I will assume strictly following units. But to be safe for existing data, 
+        // I'll check if units are > 0. If 0, I'll warn or assume 1? 
+        // Let's assume 1 if count is 0, to act as a "virtual unit".
+        
+        $capacity = $totalUnits > 0 ? $totalUnits : 1; 
+
+        // Check overlap count
+        $overlappingBookingsCount = Booking::where('room_type_id', $this->room_type_id)
             ->whereIn('status', [BookingStatus::CONFIRMED, BookingStatus::PENDING])
             ->where(function ($query) {
                 $query->where('check_in', '<', $this->check_out)
                       ->where('check_out', '>', $this->check_in);
             })
-            ->exists();
+            ->count();
 
-        // ALSO CHECK: If there is an exclusive rental booking during this time, we probably can't book a room
-        // Assuming "Exclusive Rental" means they rent the WHOLE resort or a significant part that conflicts with individual rooms.
-        // If Exclusive Rental + 3 Apartments means they take everything, then we shouldn't allow room bookings.
-        // For now, let's keep it simple: check room type overlap only, unless specified otherwise.
-        
-        if ($overlap) {
+        if ($overlappingBookingsCount >= $capacity) {
             $validator->errors()->add(
                 'room_type_id',
-                'This room type is already occupied for the selected dates.'
+                'No units available for this room type on the selected dates.'
             );
         }
     }

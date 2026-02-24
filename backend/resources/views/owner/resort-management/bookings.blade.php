@@ -5,10 +5,7 @@
         </h2>
     </x-slot>
 
-    <div class="py-12" x-data="{ 
-        tab: '{{ $errors->any() || request('tab') == 'walk-in' ? 'walk-in' : 'online' }}',
-        bookingType: 'room'
-    }">
+    <div class="py-12" x-data="bookingForm('{{ $errors->any() || request('tab') == 'walk-in' ? 'walk-in' : 'online' }}')">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             
             <!-- Tabs -->
@@ -41,7 +38,7 @@
                     </div>
                 </div>
 
-                <form action="{{ route('owner.resort-management.bookings.store') }}" method="POST" x-data="bookingForm()" @submit.prevent="submitForm">
+                <form action="{{ route('owner.resort-management.bookings.store') }}" method="POST" @submit.prevent="submitForm">
                     @csrf
                     <input type="hidden" name="booking_type" :value="bookingType">
 
@@ -56,7 +53,7 @@
                         <!-- Room Type Select -->
                         <div x-show="bookingType === 'room'">
                             <x-label for="room_type" value="{{ __('Room Type') }}" />
-                            <select id="room_type" name="room_type_id" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm block mt-1 w-full" x-model="formData.room_type_id">
+                            <select id="room_type" name="room_type_id" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm block mt-1 w-full" x-model="formData.room_type_id" @change="fetchUnits()">
                                 <option value="">Select Room Type</option>
                                 @foreach($roomTypes as $roomType)
                                     <option value="{{ $roomType->id }}" {{ old('room_type_id') == $roomType->id ? 'selected' : '' }}>
@@ -67,6 +64,18 @@
                             </select>
                             <x-input-error for="room_type_id" class="mt-2" />
                             <span class="text-red-500 text-xs" x-show="errors.room_type_id" x-text="errors.room_type_id"></span>
+
+                            <!-- Resort Unit Select (Optional) -->
+                            <div class="mt-4" x-show="availableUnits.length > 0">
+                                <x-label for="resort_unit_id" value="{{ __('Specific Unit (Optional)') }}" />
+                                <select id="resort_unit_id" name="resort_unit_id" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm block mt-1 w-full" x-model="formData.resort_unit_id">
+                                    <option value="">Any Available Unit</option>
+                                    <template x-for="unit in availableUnits" :key="unit.id">
+                                        <option :value="unit.id" x-text="unit.name"></option>
+                                    </template>
+                                </select>
+                                <p class="text-xs text-gray-500 mt-1">Select a specific unit if preferred.</p>
+                            </div>
                         </div>
 
                         <!-- Exclusive Rental Select -->
@@ -87,13 +96,13 @@
 
                         <div>
                             <x-label for="check_in" value="{{ __('Check-in Date') }}" />
-                            <x-input id="check_in" class="block mt-1 w-full" type="date" name="check_in" :value="old('check_in')" x-model="formData.check_in" required />
+                            <x-input id="check_in" class="block mt-1 w-full" type="date" name="check_in" :value="old('check_in')" x-model="formData.check_in" required @change="fetchUnits()" />
                             <x-input-error for="check_in" class="mt-2" />
                             <span class="text-red-500 text-xs" x-show="errors.check_in" x-text="errors.check_in"></span>
                         </div>
                         <div>
                             <x-label for="check_out" value="{{ __('Check-out Date') }}" />
-                            <x-input id="check_out" class="block mt-1 w-full" type="date" name="check_out" :value="old('check_out')" x-model="formData.check_out" required />
+                            <x-input id="check_out" class="block mt-1 w-full" type="date" name="check_out" :value="old('check_out')" x-model="formData.check_out" required @change="fetchUnits()" />
                             <x-input-error for="check_out" class="mt-2" />
                             <span class="text-red-500 text-xs" x-show="errors.check_out" x-text="errors.check_out"></span>
                         </div>
@@ -223,15 +232,11 @@
                                             <button type="submit" class="text-red-600 hover:text-red-900">Cancel</button>
                                         </form>
                                     @elseif($booking->status === \App\Enums\BookingStatus::CONFIRMED)
-                                        <form action="{{ route('owner.resort-management.bookings.check-in', $booking) }}" method="POST" class="inline-block confirm-action"
-                                              data-confirm-title="Check In Guest?"
-                                              data-confirm-text="Are you sure you want to check in this guest?"
-                                              data-confirm-icon="info"
-                                              data-confirm-button-text="Yes, check in!">
-                                            @csrf
-                                            @method('PATCH')
-                                            <button type="submit" class="text-green-600 hover:text-green-900 mr-3">Check In</button>
-                                        </form>
+                                        <button type="button" 
+                                            @click="openCheckInModal('{{ $booking->id }}', '{{ $booking->room_type_id }}', '{{ $booking->check_in->format('Y-m-d') }}', '{{ $booking->check_out->format('Y-m-d') }}')" 
+                                            class="text-green-600 hover:text-green-900 mr-3">
+                                            Check In
+                                        </button>
                                          <form action="{{ route('owner.resort-management.bookings.cancel', $booking) }}" method="POST" class="inline-block confirm-action"
                                                data-confirm-title="Cancel Booking?"
                                                data-confirm-text="Are you sure you want to cancel this booking?"
@@ -274,18 +279,124 @@
         </div>
     </div>
 
+    <!-- Check In Modal -->
+    <div x-show="showCheckInModal" class="fixed z-10 inset-0 overflow-y-auto" style="display: none;">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 transition-opacity" aria-hidden="true">
+                <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
+            </div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <form :action="checkInAction" method="POST">
+                    @csrf
+                    @method('PATCH')
+                    <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                        <div class="sm:flex sm:items-start">
+                            <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-green-100 sm:mx-0 sm:h-10 sm:w-10">
+                                <svg class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                </svg>
+                            </div>
+                            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                                <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+                                    Check In Guest
+                                </h3>
+                                <div class="mt-2">
+                                    <p class="text-sm text-gray-500">
+                                        Please assign a unit for this booking.
+                                    </p>
+                                    <div class="mt-4">
+                                        <div x-show="isRoomBooking">
+                                            <label for="check_in_unit_id" class="block text-sm font-medium text-gray-700">Assign Unit (Required)</label>
+                                            <select id="check_in_unit_id" name="resort_unit_id" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md" :required="isRoomBooking">
+                                                <option value="">Select a Unit</option>
+                                                <template x-for="unit in checkInAvailableUnits" :key="unit.id">
+                                                    <option :value="unit.id" x-text="unit.name"></option>
+                                                </template>
+                                            </select>
+                                            <p x-show="checkInAvailableUnits.length === 0 && !loadingUnits" class="text-red-500 text-xs mt-1">No available units found for these dates.</p>
+                                            <p x-show="loadingUnits" class="text-gray-500 text-xs mt-1">Loading available units...</p>
+                                        </div>
+                                        <div x-show="!isRoomBooking">
+                                            <p class="text-sm text-gray-500 italic">Exclusive Rental - No specific unit assignment required.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                        <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:ml-3 sm:w-auto sm:text-sm" :disabled="isRoomBooking && checkInAvailableUnits.length === 0">
+                            Confirm Check In
+                        </button>
+                        <button type="button" @click="showCheckInModal = false" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <script>
-        function bookingForm() {
+        function bookingForm(initialTab = 'online') {
             return {
+                tab: initialTab,
+                bookingType: 'room',
                 formData: {
                     guest_name: '',
                     room_type_id: '',
                     exclusive_resort_rental_id: '',
+                    resort_unit_id: '',
                     check_in: '',
                     check_out: '',
                     pax_count: ''
                 },
+                availableUnits: [],
                 errors: {},
+                showCheckInModal: false,
+                isRoomBooking: false,
+                checkInAction: '',
+                checkInAvailableUnits: [],
+                loadingUnits: false,
+                async openCheckInModal(bookingId, roomTypeId, checkIn, checkOut) {
+                    this.checkInAction = `{{ url('owner/resort-management/bookings') }}/${bookingId}/check-in`;
+                    this.showCheckInModal = true;
+                    this.checkInAvailableUnits = [];
+                    this.loadingUnits = true;
+
+                    if (roomTypeId && roomTypeId !== 'null') {
+                        this.isRoomBooking = true;
+                        try {
+                            const response = await fetch(`{{ route('owner.resort-management.bookings.available-units') }}?room_type_id=${roomTypeId}&check_in=${checkIn}&check_out=${checkOut}`);
+                            if (response.ok) {
+                                this.checkInAvailableUnits = await response.json();
+                            }
+                        } catch (error) {
+                            console.error('Error fetching units:', error);
+                        }
+                    } else {
+                        this.isRoomBooking = false;
+                    }
+                    this.loadingUnits = false;
+                },
+                async fetchUnits() {
+                    if (this.bookingType === 'room' && this.formData.room_type_id && this.formData.check_in && this.formData.check_out) {
+                        try {
+                            const response = await fetch(`{{ route('owner.resort-management.bookings.available-units') }}?room_type_id=${this.formData.room_type_id}&check_in=${this.formData.check_in}&check_out=${this.formData.check_out}`);
+                            if (response.ok) {
+                                this.availableUnits = await response.json();
+                            } else {
+                                this.availableUnits = [];
+                            }
+                        } catch (error) {
+                            console.error('Error fetching units:', error);
+                            this.availableUnits = [];
+                        }
+                    } else {
+                        this.availableUnits = [];
+                    }
+                },
                 submitForm() {
                     this.errors = {};
                     let hasError = false;

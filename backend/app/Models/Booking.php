@@ -18,6 +18,7 @@ class Booking extends Model
         'guest_phone',
         'room_type_id',
         'exclusive_resort_rental_id',
+        'resort_unit_id',
         'check_in',
         'check_out',
         'pax_count',
@@ -42,6 +43,11 @@ class Booking extends Model
     public function exclusiveResortRental(): BelongsTo
     {
         return $this->belongsTo(ExclusiveResortRental::class);
+    }
+
+    public function resortUnit(): BelongsTo
+    {
+        return $this->belongsTo(ResortUnit::class);
     }
 
     public function user(): BelongsTo

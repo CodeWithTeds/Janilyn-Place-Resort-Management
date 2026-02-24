@@ -70,9 +70,13 @@ class OwnerResortManagementController extends Controller
         return view('owner.resort-management.calendar', compact('bookings', 'roomTypes', 'currentDate'));
     }
 
-    public function checkIn(Booking $booking): RedirectResponse
+    public function checkIn(Request $request, Booking $booking): RedirectResponse
     {
-        if ($this->resortService->checkInBooking($booking)) {
+        $request->validate([
+            'resort_unit_id' => 'nullable|exists:resort_units,id',
+        ]);
+
+        if ($this->resortService->checkInBooking($booking, $request->resort_unit_id)) {
             return redirect()->back()->with('success', 'Guest checked in successfully.');
         }
         return redirect()->back()->with('error', 'Unable to check in guest.');
@@ -114,5 +118,22 @@ class OwnerResortManagementController extends Controller
         );
 
         return response()->json($rooms);
+    }
+
+    public function availableUnits(Request $request)
+    {
+        $request->validate([
+            'room_type_id' => 'required|exists:room_types,id',
+            'check_in' => 'required|date|after_or_equal:today',
+            'check_out' => 'required|date|after:check_in',
+        ]);
+
+        $units = $this->resortService->getAvailableUnits(
+            $request->room_type_id,
+            $request->check_in,
+            $request->check_out
+        );
+
+        return response()->json($units);
     }
 }
