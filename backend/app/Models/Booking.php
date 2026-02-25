@@ -25,6 +25,9 @@ class Booking extends Model
         'total_price',
         'status',
         'notes',
+        'payment_status',
+        'payment_id',
+        'payment_method',
     ];
 
     protected $casts = [
@@ -33,6 +36,8 @@ class Booking extends Model
         'pax_count' => 'integer',
         'total_price' => 'decimal:2',
         'status' => BookingStatus::class,
+        'payment_status' => \App\Enums\PaymentStatus::class,
+        'payment_method' => \App\Enums\PaymentMethod::class,
     ];
 
     public function roomType(): BelongsTo

@@ -33,6 +33,7 @@ class StoreBookingRequest extends FormRequest
             'check_in' => ['required', 'date', 'after_or_equal:today'],
             'check_out' => ['required', 'date', 'after:check_in'],
             'pax_count' => ['required', 'integer', 'min:1'],
+            'payment_method' => ['nullable', 'string', 'in:cash,paymongo'],
         ];
     }
 

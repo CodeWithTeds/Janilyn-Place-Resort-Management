@@ -112,6 +112,22 @@
                             <x-input-error for="pax_count" class="mt-2" />
                             <span class="text-red-500 text-xs" x-show="errors.pax_count" x-text="errors.pax_count"></span>
                         </div>
+
+                        <div class="col-span-1 md:col-span-2">
+                            <x-label value="{{ __('Payment Method') }}" />
+                            <div class="mt-2 space-y-2">
+                                <label class="inline-flex items-center">
+                                    <input type="radio" name="payment_method" value="cash" class="form-radio text-indigo-600" x-model="formData.payment_method">
+                                    <span class="ml-2">Cash Payment</span>
+                                </label>
+                                <div class="block"></div>
+                                <label class="inline-flex items-center">
+                                    <input type="radio" name="payment_method" value="paymongo" class="form-radio text-indigo-600" x-model="formData.payment_method">
+                                    <span class="ml-2">PayMongo (Card)</span>
+                                </label>
+                            </div>
+                            <x-input-error for="payment_method" class="mt-2" />
+                        </div>
                     </div>
                     <div class="mt-6 flex justify-end">
                         <x-button>
@@ -350,7 +366,8 @@
                     resort_unit_id: '',
                     check_in: '',
                     check_out: '',
-                    pax_count: ''
+                    pax_count: '',
+                    payment_method: 'cash'
                 },
                 availableUnits: [],
                 errors: {},
