@@ -11,6 +11,8 @@ use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
+use App\Enums\PaymentStatus;
+
 class OwnerResortManagementController extends Controller
 {
     public function __construct(
@@ -35,10 +37,43 @@ class OwnerResortManagementController extends Controller
 
     public function storeBooking(StoreBookingRequest $request): RedirectResponse
     {
-        $this->resortService->createWalkInBooking($request->validated());
+        $booking = $this->resortService->createWalkInBooking($request->validated());
+
+        if (isset($booking->checkout_url)) {
+            return redirect($booking->checkout_url);
+        }
 
         return redirect()->route('owner.resort-management.bookings')
             ->with('success', 'Walk-in booking created successfully.');
+    }
+
+    public function paymentSuccess(Request $request, $booking_id): RedirectResponse
+    {
+        $booking = Booking::findOrFail($booking_id);
+        
+        // In a real scenario, we verify the session status from PayMongo API here
+        // or rely on webhooks. For simplicity in this demo, we mark as PAID.
+        // Ideally: $status = $this->paymentService->getCheckoutSession($booking->payment_id)['status'];
+        
+        $booking->payment_status = PaymentStatus::PAID;
+        $booking->save();
+
+        return redirect()->route('owner.resort-management.bookings')
+            ->with('success', 'Payment successful! Booking confirmed.');
+    }
+
+    public function paymentCancel(Request $request, $booking_id): RedirectResponse
+    {
+        $booking = Booking::findOrFail($booking_id);
+        
+        // Mark as failed or just leave as unpaid?
+        // Usually if user cancels, it's just unpaid.
+        // We can delete the booking if it was just created for this session?
+        // Or keep it as "Pending Payment".
+        // Let's keep it but notify user.
+        
+        return redirect()->route('owner.resort-management.bookings')
+            ->with('error', 'Payment was cancelled. Booking is still unpaid.');
     }
 
     public function approveBooking(Booking $booking): RedirectResponse

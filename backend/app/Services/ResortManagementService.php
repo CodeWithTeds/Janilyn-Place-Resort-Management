@@ -179,31 +179,12 @@ class ResortManagementService
         // Handle Payment
         $paymentStatus = PaymentStatus::UNPAID;
         $paymentId = null;
+        $checkoutUrl = null;
 
         if (isset($data['payment_method'])) {
             if ($data['payment_method'] === PaymentMethod::PAYMONGO->value) {
-                try {
-                    $description = "Walk-in Booking - " . ($data['guest_name'] ?? 'Guest');
-                    $paymentResult = $this->paymentService->processTestPayment(
-                        $totalPrice,
-                        $description
-                    );
-                    
-                    $paymentId = $paymentResult['id'];
-                    if ($paymentResult['status'] === 'succeeded' || $paymentResult['status'] === 'processing') {
-                        $paymentStatus = PaymentStatus::PAID;
-                    } else {
-                        $paymentStatus = PaymentStatus::FAILED;
-                    }
-                } catch (\Exception $e) {
-                    // For demo/test, we fail the booking if payment fails?
-                    // Or we create it as UNPAID?
-                    // Let's create it as UNPAID and log error, but maybe rethrow to alert user?
-                    // The prompt implies we want to see it work.
-                    // Let's allow creating booking but mark as FAILED payment status if error.
-                    $paymentStatus = PaymentStatus::FAILED;
-                    // throw $e; // Uncomment to stop booking creation on payment fail
-                }
+                // For PayMongo, we create the booking as UNPAID first, then redirect to checkout
+                $paymentStatus = PaymentStatus::UNPAID;
             } elseif ($data['payment_method'] === PaymentMethod::CASH->value) {
                 $paymentStatus = PaymentStatus::PAID;
             }
@@ -217,7 +198,38 @@ class ResortManagementService
             'payment_method' => $data['payment_method'] ?? null,
         ]);
 
-        return $this->bookingRepository->create($bookingData);
+        $booking = $this->bookingRepository->create($bookingData);
+
+        // If PayMongo, generate checkout session now using the booking ID for reference
+        if (isset($data['payment_method']) && $data['payment_method'] === PaymentMethod::PAYMONGO->value) {
+            try {
+                $description = "Booking #{$booking->id} - " . ($data['guest_name'] ?? 'Guest');
+                $checkoutSession = $this->paymentService->createCheckoutSession([
+                    'amount' => $totalPrice,
+                    'description' => $description,
+                    'name' => $data['guest_name'],
+                    'email' => $data['guest_email'] ?? 'no-email@example.com',
+                    'phone' => $data['guest_phone'] ?? '0000000000',
+                    'reference_number' => (string) $booking->id,
+                    'success_url' => route('owner.resort-management.bookings.payment-success', ['booking_id' => $booking->id]),
+                    'cancel_url' => route('owner.resort-management.bookings.payment-cancel', ['booking_id' => $booking->id]),
+                ]);
+                
+                $booking->payment_id = $checkoutSession['id'];
+                $booking->save();
+
+                // Attach checkout URL to the booking object for the controller to use
+                $booking->checkout_url = $checkoutSession['checkout_url'];
+            } catch (\Exception $e) {
+                // If checkout creation fails, we might want to fail the booking or just warn?
+                // Let's keep the booking but maybe set status to pending payment?
+                // For now, let's just log and user can try again later (though UI doesn't support retry yet)
+                // Or throw to show error
+                throw $e;
+            }
+        }
+
+        return $booking;
     }
 
     public function getPendingBookings(): Collection

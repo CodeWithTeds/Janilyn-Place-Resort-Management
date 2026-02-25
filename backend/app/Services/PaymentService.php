@@ -4,90 +4,91 @@ namespace App\Services;
 
 use Paymongo\PaymongoClient;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Http;
 
 class PaymentService
 {
     protected $client;
+    protected $secretKey;
 
     public function __construct()
     {
-        $this->client = new PaymongoClient(config('services.paymongo.secret_key'));
+        $this->secretKey = config('services.paymongo.secret_key');
+        $this->client = new PaymongoClient($this->secretKey);
     }
 
-    public function createPaymentIntent(float $amount, string $description): string
+    public function createCheckoutSession(array $data): array
     {
         try {
-            // PayMongo amounts are in centavos (integer)
-            $amountInCents = (int) ($amount * 100);
+            // Using HTTP Client because the SDK might not fully support Checkout Sessions
+            $response = Http::withBasicAuth($this->secretKey, '')
+                ->post('https://api.paymongo.com/v1/checkout_sessions', [
+                    'data' => [
+                        'attributes' => [
+                            'billing' => [
+                                'name' => $data['name'],
+                                'email' => $data['email'],
+                                'phone' => $data['phone'],
+                            ],
+                            'line_items' => [
+                                [
+                                    'currency' => 'PHP',
+                                    'amount' => (int) ($data['amount'] * 100),
+                                    'description' => $data['description'],
+                                    'name' => $data['description'], // Using description as name for simplicity
+                                    'quantity' => 1,
+                                ]
+                            ],
+                            'payment_method_types' => ['card', 'gcash', 'paymaya', 'grab_pay', 'dob'],
+                            'reference_number' => (string) $data['reference_number'],
+                            'send_email_receipt' => false,
+                            'show_description' => true,
+                            'show_line_items' => true,
+                            'cancel_url' => $data['cancel_url'],
+                            'success_url' => $data['success_url'],
+                            'description' => $data['description'],
+                        ]
+                    ]
+                ]);
 
-            // Create a Payment Intent
-            $paymentIntent = $this->client->paymentIntent->create([
-                'amount' => $amountInCents,
-                'payment_method_allowed' => ['card'],
-                'currency' => 'PHP',
-                'description' => $description,
-                'capture_type' => 'automatic',
-            ]);
+            if ($response->failed()) {
+                throw new \Exception('PayMongo API Error: ' . $response->body());
+            }
 
-            return $paymentIntent->id;
+            $body = $response->json();
+            
+            return [
+                'checkout_url' => $body['data']['attributes']['checkout_url'],
+                'id' => $body['data']['id'],
+            ];
+
         } catch (\Exception $e) {
-            Log::error('PayMongo Payment Intent Creation Failed: ' . $e->getMessage());
+            Log::error('PayMongo Checkout Session Creation Failed: ' . $e->getMessage());
             throw $e;
         }
     }
 
-    public function processTestPayment(float $amount, string $description): array
+    public function getCheckoutSession(string $sessionId): array
     {
         try {
-            $amountInCents = (int) ($amount * 100);
+            $response = Http::withBasicAuth($this->secretKey, '')
+                ->get("https://api.paymongo.com/v1/checkout_sessions/{$sessionId}");
 
-            // 1. Create Payment Method (Test Card)
-            // Note: In production, this should come from the frontend (PayMongo.js)
-            // But for this demo/test requirement, we use backend creation with test credentials.
-            $paymentMethod = $this->client->paymentMethod->create([
-                'type' => 'card',
-                'details' => [
-                    'card_number' => '4111111111111111', // Test Visa
-                    'exp_month' => 12,
-                    'exp_year' => 2030,
-                    'cvc' => '123',
-                ],
-                'billing' => [
-                    'address' => [
-                        'line1' => 'Test Address',
-                        'city' => 'Manila',
-                        'postal_code' => '1000',
-                        'country' => 'PH'
-                    ],
-                    'name' => 'Test User',
-                    'email' => 'test@example.com',
-                    'phone' => '09123456789'
-                ]
-            ]);
+            if ($response->failed()) {
+                throw new \Exception('PayMongo API Error: ' . $response->body());
+            }
 
-            // 2. Create Payment Intent
-            $paymentIntent = $this->client->paymentIntent->create([
-                'amount' => $amountInCents,
-                'payment_method_allowed' => ['card'],
-                'currency' => 'PHP',
-                'description' => $description,
-                'capture_type' => 'automatic',
-            ]);
-
-            // 3. Attach Payment Method to Payment Intent
-            $attachedIntent = $this->client->paymentIntent->attach($paymentIntent->id, [
-                'payment_method' => $paymentMethod->id,
-                'return_url' => route('dashboard'), // Placeholder
-            ]);
-
+            $body = $response->json();
+            
             return [
-                'id' => $attachedIntent->id,
-                'status' => $attachedIntent->status,
+                'id' => $body['data']['id'],
+                'status' => $body['data']['attributes']['payment_intent']['attributes']['status'] ?? 'unpaid',
+                'payments' => $body['data']['attributes']['payments'] ?? [],
             ];
-
         } catch (\Exception $e) {
-            Log::error('PayMongo Test Payment Failed: ' . $e->getMessage());
+            Log::error('PayMongo Get Checkout Session Failed: ' . $e->getMessage());
             throw $e;
         }
     }
 }
+
