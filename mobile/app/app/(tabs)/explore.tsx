@@ -1,112 +1,126 @@
+import { useEffect } from 'react';
+import { StyleSheet, FlatList, TouchableOpacity, View, ImageBackground } from 'react-native';
+import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
 
-import { Collapsible } from '@/components/ui/collapsible';
-import { ExternalLink } from '@/components/external-link';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Fonts } from '@/constants/theme';
+import { useRooms } from '@/hooks/use-rooms';
+import { Palette as Colors, Spacing, Fonts } from '@/constants/theme';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-export default function TabTwoScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
-      headerImage={
-        <IconSymbol
-          size={310}
-          color="#808080"
-          name="chevron.left.forwardslash.chevron.right"
-          style={styles.headerImage}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText
-          type="title"
-          style={{
-            fontFamily: Fonts.rounded,
-          }}>
-          Explore
+export default function ExploreScreen() {
+  const { rooms, rentals, loading, fetchRooms } = useRooms();
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+
+  useEffect(() => {
+    fetchRooms();
+  }, [fetchRooms]);
+
+  const renderItem = ({ item, type }: { item: any, type: 'room' | 'exclusive' }) => (
+    <TouchableOpacity
+      style={styles.card}
+      onPress={() => router.push({ pathname: '/room/[id]', params: { id: item.id, type } })}
+    >
+      <Image
+        source={item.image ? { uri: item.image } : require('@/assets/images/reservation/service-option1.png')}
+        style={styles.cardImage}
+        contentFit="cover"
+      />
+      <View style={styles.cardContent}>
+        <ThemedText type="subtitle" style={styles.cardTitle}>{item.name}</ThemedText>
+        <ThemedText style={styles.cardPrice}>
+          {type === 'room' 
+            ? `₱${item.base_price_weekday.toLocaleString()}/night`
+            : `₱${item.price_range_min.toLocaleString()} - ₱${item.price_range_max.toLocaleString()}`}
         </ThemedText>
-      </ThemedView>
-      <ThemedText>This app includes example code to help you get started.</ThemedText>
-      <Collapsible title="File-based routing">
-        <ThemedText>
-          This app has two screens:{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/explore.tsx</ThemedText>
-        </ThemedText>
-        <ThemedText>
-          The layout file in <ThemedText type="defaultSemiBold">app/(tabs)/_layout.tsx</ThemedText>{' '}
-          sets up the tab navigator.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/router/introduction">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Android, iOS, and web support">
-        <ThemedText>
-          You can open this project on Android, iOS, and the web. To open the web version, press{' '}
-          <ThemedText type="defaultSemiBold">w</ThemedText> in the terminal running this project.
-        </ThemedText>
-      </Collapsible>
-      <Collapsible title="Images">
-        <ThemedText>
-          For static images, you can use the <ThemedText type="defaultSemiBold">@2x</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">@3x</ThemedText> suffixes to provide files for
-          different screen densities
-        </ThemedText>
-        <Image
-          source={require('@/assets/images/react-logo.png')}
-          style={{ width: 100, height: 100, alignSelf: 'center' }}
-        />
-        <ExternalLink href="https://reactnative.dev/docs/images">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Light and dark mode components">
-        <ThemedText>
-          This template has light and dark mode support. The{' '}
-          <ThemedText type="defaultSemiBold">useColorScheme()</ThemedText> hook lets you inspect
-          what the user&apos;s current color scheme is, and so you can adjust UI colors accordingly.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Animations">
-        <ThemedText>
-          This template includes an example of an animated component. The{' '}
-          <ThemedText type="defaultSemiBold">components/HelloWave.tsx</ThemedText> component uses
-          the powerful{' '}
-          <ThemedText type="defaultSemiBold" style={{ fontFamily: Fonts.mono }}>
-            react-native-reanimated
-          </ThemedText>{' '}
-          library to create a waving hand animation.
-        </ThemedText>
-        {Platform.select({
-          ios: (
-            <ThemedText>
-              The <ThemedText type="defaultSemiBold">components/ParallaxScrollView.tsx</ThemedText>{' '}
-              component provides a parallax effect for the header image.
+        <View style={styles.badgeContainer}>
+          <View style={styles.badge}>
+            <ThemedText style={styles.badgeText}>
+              {type === 'room' ? `${item.min_pax}-${item.max_pax} Pax` : `${item.capacity_overnight_min}-${item.capacity_overnight_max} Pax`}
             </ThemedText>
-          ),
-        })}
-      </Collapsible>
-    </ParallaxScrollView>
+          </View>
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
+
+  return (
+    <ThemedView style={[styles.container, { paddingTop: insets.top }]}>
+      <View style={styles.header}>
+        <ThemedText type="title" style={{ fontFamily: Fonts.rounded }}>Explore Stays</ThemedText>
+        <ThemedText style={styles.subtitle}>Find your perfect getaway</ThemedText>
+      </View>
+
+      <FlatList
+        data={[...rooms.map(r => ({ ...r, type: 'room' })), ...rentals.map(r => ({ ...r, type: 'exclusive' }))]}
+        keyExtractor={(item) => `${item.type}-${item.id}`}
+        renderItem={({ item }) => renderItem({ item, type: item.type as any })}
+        contentContainerStyle={styles.listContent}
+        refreshing={loading}
+        onRefresh={fetchRooms}
+      />
+    </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
-  headerImage: {
-    color: '#808080',
-    bottom: -90,
-    left: -35,
-    position: 'absolute',
+  container: {
+    flex: 1,
   },
-  titleContainer: {
+  header: {
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.md,
+  },
+  subtitle: {
+    color: Colors.gray,
+    marginTop: Spacing.xs,
+  },
+  listContent: {
+    padding: Spacing.lg,
+    gap: Spacing.lg,
+  },
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+    marginBottom: Spacing.sm,
+  },
+  cardImage: {
+    width: '100%',
+    height: 200,
+  },
+  cardContent: {
+    padding: Spacing.md,
+  },
+  cardTitle: {
+    fontFamily: Fonts.rounded,
+    fontSize: 18,
+    marginBottom: Spacing.xs,
+  },
+  cardPrice: {
+    color: Colors.primary,
+    fontWeight: 'bold',
+    fontSize: 16,
+    marginBottom: Spacing.sm,
+  },
+  badgeContainer: {
     flexDirection: 'row',
-    gap: 8,
+  },
+  badge: {
+    backgroundColor: '#f0f0f0',
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  badgeText: {
+    fontSize: 12,
+    color: Colors.gray,
   },
 });
