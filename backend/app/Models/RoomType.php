@@ -22,7 +22,6 @@ class RoomType extends Model
         'extra_person_charge',
         'cooking_fee',
         'bedroom_count',
-        'max_day_guests',
         'is_package',
         'amenities',
     ];
@@ -32,7 +31,6 @@ class RoomType extends Model
         'min_pax' => 'integer',
         'max_pax' => 'integer',
         'bedroom_count' => 'integer',
-        'max_day_guests' => 'integer',
         'base_price_weekday' => 'decimal:2',
         'base_price_weekend' => 'decimal:2',
         'extra_person_charge' => 'decimal:2',
@@ -47,5 +45,10 @@ class RoomType extends Model
     public function units(): HasMany
     {
         return $this->hasMany(ResortUnit::class);
+    }
+
+    public function pricingTiers(): HasMany
+    {
+        return $this->hasMany(RoomTypePricingTier::class);
     }
 }

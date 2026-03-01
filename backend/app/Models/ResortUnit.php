@@ -38,4 +38,9 @@ class ResortUnit extends Model
     {
         return $this->hasMany(HousekeepingTask::class);
     }
+
+    public function pricingTiers(): HasMany
+    {
+        return $this->hasMany(RoomTypePricingTier::class);
+    }
 }

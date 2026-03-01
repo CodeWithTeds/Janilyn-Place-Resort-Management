@@ -37,9 +37,25 @@ class OwnerResortUnitController extends Controller
             'room_type_id' => 'required|exists:room_types,id',
             'status' => 'required|in:available,maintenance,occupied',
             'notes' => 'nullable|string',
+            'pricing_tiers' => ['nullable', 'array'],
+            'pricing_tiers.*.min_guests' => ['required_with:pricing_tiers', 'integer', 'min:1'],
+            'pricing_tiers.*.max_guests' => ['required_with:pricing_tiers', 'integer', 'gte:pricing_tiers.*.min_guests'],
+            'pricing_tiers.*.price_weekday' => ['required_with:pricing_tiers', 'numeric', 'min:0'],
+            'pricing_tiers.*.price_weekend' => ['required_with:pricing_tiers', 'numeric', 'min:0'],
         ]);
 
-        ResortUnit::create($validated);
+        $resortUnit = ResortUnit::create($validated);
+
+        // Handle Pricing Tiers
+        if ($request->has('pricing_tiers') && !empty($validated['pricing_tiers'])) {
+            // Add room_type_id to each tier (required by schema, even if it's unit-specific)
+            // We use the unit's room_type_id
+            $tiers = collect($validated['pricing_tiers'])->map(function ($tier) use ($resortUnit) {
+                $tier['room_type_id'] = $resortUnit->room_type_id;
+                return $tier;
+            });
+            $resortUnit->pricingTiers()->createMany($tiers);
+        }
 
         return redirect()->route('resort-management.resort-units.index')
             ->with('success', 'Resort unit created successfully.');
@@ -72,9 +88,28 @@ class OwnerResortUnitController extends Controller
             'room_type_id' => 'required|exists:room_types,id',
             'status' => 'required|in:available,maintenance,occupied',
             'notes' => 'nullable|string',
+            'pricing_tiers' => ['nullable', 'array'],
+            'pricing_tiers.*.min_guests' => ['required_with:pricing_tiers', 'integer', 'min:1'],
+            'pricing_tiers.*.max_guests' => ['required_with:pricing_tiers', 'integer', 'gte:pricing_tiers.*.min_guests'],
+            'pricing_tiers.*.price_weekday' => ['required_with:pricing_tiers', 'numeric', 'min:0'],
+            'pricing_tiers.*.price_weekend' => ['required_with:pricing_tiers', 'numeric', 'min:0'],
         ]);
 
         $resortUnit->update($validated);
+
+        // Handle Pricing Tiers
+        if ($request->has('pricing_tiers')) {
+            $resortUnit->pricingTiers()->delete();
+            if (!empty($validated['pricing_tiers'])) {
+                // Add room_type_id to each tier (required by schema, even if it's unit-specific)
+                // We use the unit's room_type_id
+                $tiers = collect($validated['pricing_tiers'])->map(function ($tier) use ($resortUnit) {
+                    $tier['room_type_id'] = $resortUnit->room_type_id;
+                    return $tier;
+                });
+                $resortUnit->pricingTiers()->createMany($tiers);
+            }
+        }
 
         return redirect()->route('resort-management.resort-units.index')
             ->with('success', 'Resort unit updated successfully.');
@@ -87,7 +122,7 @@ class OwnerResortUnitController extends Controller
     {
         $resortUnit->delete();
 
-        return redirect()->route('owner.resort-management.resort-units.index')
+        return redirect()->route('resort-management.resort-units.index')
             ->with('success', 'Resort unit deleted successfully.');
     }
 }

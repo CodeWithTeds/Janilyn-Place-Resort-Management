@@ -34,6 +34,8 @@ class StoreBookingRequest extends FormRequest
             'check_out' => ['required', 'date', 'after:check_in'],
             'pax_count' => ['required', 'integer', 'min:1'],
             'payment_method' => ['nullable', 'string', 'in:cash,paymongo'],
+            'resort_unit_id' => ['nullable', 'exists:resort_units,id'],
+            'pricing_tier_id' => ['nullable', 'exists:room_type_pricing_tiers,id'],
         ];
     }
 

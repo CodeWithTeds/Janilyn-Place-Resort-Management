@@ -9,11 +9,11 @@ class RoomTypeRepository
 {
     public function getAll(): Collection
     {
-        return RoomType::all();
+        return RoomType::with('pricingTiers')->get();
     }
 
     public function find(int $id): ?RoomType
     {
-        return RoomType::find($id);
+        return RoomType::with('pricingTiers')->find($id);
     }
 }

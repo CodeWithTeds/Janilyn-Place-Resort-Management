@@ -35,7 +35,7 @@ class ResortManagementService
         return $this->exclusiveResortRentalRepository->getAll();
     }
 
-    public function calculateTotalPrice(RoomType $room, string $checkIn, string $checkOut, int $pax): float
+    public function calculateTotalPrice(RoomType $room, string $checkIn, string $checkOut, int $pax, ?int $resortUnitId = null, ?int $manualPricingTierId = null): float
     {
         $start = Carbon::parse($checkIn);
         $end = Carbon::parse($checkOut);
@@ -43,6 +43,43 @@ class ResortManagementService
         
         if ($days <= 0) {
             return 0;
+        }
+
+        // Initialize tier as null
+        $tier = null;
+
+        // 0. Check for Manual Pricing Tier ID
+        if ($manualPricingTierId) {
+            $tier = \App\Models\RoomTypePricingTier::find($manualPricingTierId);
+            // Verify it belongs to the room type
+            if ($tier && $tier->room_type_id !== $room->id) {
+                $tier = null; // Invalid tier for this room type
+            }
+            // Verify it belongs to the unit if a unit is selected (and tier is unit-specific)
+            if ($tier && $resortUnitId && $tier->resort_unit_id && $tier->resort_unit_id !== $resortUnitId) {
+                $tier = null; // Invalid tier for this unit
+            }
+        }
+
+        if (!$tier) {
+            // 1. Check for Unit-Specific Pricing Tier if a unit is selected
+            if ($resortUnitId) {
+                $unit = ResortUnit::with('pricingTiers')->find($resortUnitId);
+                if ($unit) {
+                    $tier = $unit->pricingTiers->first(function($tier) use ($pax) {
+                        return $pax >= $tier->min_guests && $pax <= $tier->max_guests;
+                    });
+                }
+            }
+
+            // 2. If no unit-specific tier found (or no unit selected), check Room Type Pricing Tiers
+            if (!$tier) {
+                // Filter room type tiers that are NOT bound to a specific unit (global room type tiers)
+                // Assuming room type tiers have resort_unit_id as null
+                $tier = $room->pricingTiers->first(function($tier) use ($pax) {
+                    return $tier->resort_unit_id === null && $pax >= $tier->min_guests && $pax <= $tier->max_guests;
+                });
+            }
         }
 
         $totalPrice = 0;
@@ -54,17 +91,26 @@ class ResortManagementService
             // So Friday, Saturday, Sunday are Weekend/Standard rates.
             $isWeekend = in_array($currentDate->dayOfWeek, [Carbon::FRIDAY, Carbon::SATURDAY, Carbon::SUNDAY]);
             
-            if ($isWeekend) {
-                $totalPrice += $room->base_price_weekend;
+            if ($tier) {
+                // Use tier prices
+                if ($isWeekend) {
+                    $totalPrice += $tier->price_weekend;
+                } else {
+                    $totalPrice += $tier->price_weekday;
+                }
             } else {
-                $totalPrice += $room->base_price_weekday;
+                if ($isWeekend) {
+                    $totalPrice += $room->base_price_weekend;
+                } else {
+                    $totalPrice += $room->base_price_weekday;
+                }
             }
             
             $currentDate->addDay();
         }
 
-        // Extra person charge
-        if ($pax > $room->min_pax) {
+        // Extra person charge (only if no tier matched)
+        if (!$tier && $pax > $room->min_pax) {
             $extraPax = $pax - $room->min_pax;
             $totalPrice += ($extraPax * $room->extra_person_charge * $days);
         }
@@ -172,7 +218,9 @@ class ResortManagementService
                 $room, 
                 $data['check_in'], 
                 $data['check_out'], 
-                $data['pax_count'] ?? $room->min_pax
+                $data['pax_count'] ?? $room->min_pax,
+                $data['resort_unit_id'] ?? null,
+                $data['pricing_tier_id'] ?? null
             );
         }
 
@@ -211,8 +259,8 @@ class ResortManagementService
                     'email' => $data['guest_email'] ?? 'no-email@example.com',
                     'phone' => $data['guest_phone'] ?? '0000000000',
                     'reference_number' => (string) $booking->id,
-                    'success_url' => route('owner.resort-management.bookings.payment-success', ['booking_id' => $booking->id]),
-                    'cancel_url' => route('owner.resort-management.bookings.payment-cancel', ['booking_id' => $booking->id]),
+                    'success_url' => route('resort-management.bookings.payment-success', ['booking_id' => $booking->id]),
+                    'cancel_url' => route('resort-management.bookings.payment-cancel', ['booking_id' => $booking->id]),
                 ]);
                 
                 $booking->payment_id = $checkoutSession['id'];

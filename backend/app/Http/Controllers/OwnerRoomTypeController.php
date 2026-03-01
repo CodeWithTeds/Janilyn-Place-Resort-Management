@@ -29,9 +29,13 @@ class OwnerRoomTypeController extends Controller
             $data['image_path'] = $request->file('image')->store('room-types', 'public');
         }
 
-        RoomType::create($data);
+        $roomType = RoomType::create($data);
 
-        return redirect()->route('owner.resort-management.room-types.index')
+        if (!empty($data['pricing_tiers'])) {
+            $roomType->pricingTiers()->createMany($data['pricing_tiers']);
+        }
+
+        return redirect()->route('resort-management.room-types.index')
             ->with('success', 'Room Type created successfully.');
     }
 
@@ -49,6 +53,13 @@ class OwnerRoomTypeController extends Controller
         }
 
         $roomType->update($data);
+
+        if ($request->has('pricing_tiers')) {
+            $roomType->pricingTiers()->delete();
+            if (!empty($data['pricing_tiers'])) {
+                $roomType->pricingTiers()->createMany($data['pricing_tiers']);
+            }
+        }
 
         return redirect()->route('resort-management.room-types.index')
             ->with('success', 'Room Type updated successfully.');

@@ -38,7 +38,6 @@ class StoreRoomTypeRequest extends FormRequest
             'image' => ['nullable', 'image', 'max:2048'], // 2MB Max
             'min_pax' => ['required', 'integer', 'min:1'],
             'max_pax' => ['required', 'integer', 'gte:min_pax'],
-            'max_day_guests' => ['nullable', 'integer', 'min:0'],
             'bedroom_count' => ['nullable', 'integer', 'min:0'],
             'base_price_weekday' => ['required', 'numeric', 'min:0'],
             'base_price_weekend' => ['required', 'numeric', 'min:0'],
@@ -46,6 +45,11 @@ class StoreRoomTypeRequest extends FormRequest
             'cooking_fee' => ['required', 'numeric', 'min:0'],
             'is_package' => ['nullable', 'boolean'],
             'amenities' => ['nullable', 'string'],
+            'pricing_tiers' => ['nullable', 'array'],
+            'pricing_tiers.*.min_guests' => ['required_with:pricing_tiers', 'integer', 'min:1'],
+            'pricing_tiers.*.max_guests' => ['required_with:pricing_tiers', 'integer', 'gte:pricing_tiers.*.min_guests'],
+            'pricing_tiers.*.price_weekday' => ['required_with:pricing_tiers', 'numeric', 'min:0'],
+            'pricing_tiers.*.price_weekend' => ['required_with:pricing_tiers', 'numeric', 'min:0'],
         ];
     }
 }
