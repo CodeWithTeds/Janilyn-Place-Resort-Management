@@ -65,7 +65,7 @@ class OwnerExclusiveResortRentalController extends Controller
     {
         $this->repository->delete($exclusiveResortRental);
 
-        return redirect()->route('owner.resort-management.exclusive-resort-rentals.index')
+        return redirect()->route('resort-management.exclusive-resort-rentals.index')
             ->with('success', 'Exclusive Resort Rental deleted successfully.');
     }
 }
