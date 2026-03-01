@@ -41,7 +41,7 @@ class OwnerResortUnitController extends Controller
 
         ResortUnit::create($validated);
 
-        return redirect()->route('owner.resort-management.resort-units.index')
+        return redirect()->route('resort-management.resort-units.index')
             ->with('success', 'Resort unit created successfully.');
     }
 
@@ -76,7 +76,7 @@ class OwnerResortUnitController extends Controller
 
         $resortUnit->update($validated);
 
-        return redirect()->route('owner.resort-management.resort-units.index')
+        return redirect()->route('resort-management.resort-units.index')
             ->with('success', 'Resort unit updated successfully.');
     }
 

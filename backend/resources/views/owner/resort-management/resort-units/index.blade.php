@@ -10,9 +10,11 @@
             <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6">
                 <div class="flex justify-between items-center mb-6">
                     <h3 class="text-lg font-medium text-gray-900">List of Resort Units</h3>
-                    <a href="{{ route('owner.resort-management.resort-units.create') }}" class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 active:bg-gray-900 focus:outline-none focus:border-gray-900 focus:ring ring-gray-300 disabled:opacity-25 transition ease-in-out duration-150">
-                        Add New Unit
-                    </a>
+                    @can('access-owner-dashboard')
+                        <a href="{{ route('resort-management.resort-units.create') }}" class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 active:bg-gray-900 focus:outline-none focus:border-gray-900 focus:ring ring-gray-300 disabled:opacity-25 transition ease-in-out duration-150">
+                            Add New Unit
+                        </a>
+                    @endcan
                 </div>
 
                 @if (session('success'))
@@ -64,12 +66,14 @@
                                         {{ Str::limit($unit->notes, 30) }}
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        <a href="{{ route('owner.resort-management.resort-units.edit', $unit) }}" class="text-indigo-600 hover:text-indigo-900 mr-3">Edit</a>
-                                        <form action="{{ route('owner.resort-management.resort-units.destroy', $unit) }}" method="POST" class="inline-block" onsubmit="return confirm('Are you sure you want to delete this unit?');">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="text-red-600 hover:text-red-900">Delete</button>
-                                        </form>
+                                        @can('access-owner-dashboard')
+                                            <a href="{{ route('resort-management.resort-units.edit', $unit) }}" class="text-indigo-600 hover:text-indigo-900 mr-3">Edit</a>
+                                            <form action="{{ route('resort-management.resort-units.destroy', $unit) }}" method="POST" class="inline-block" onsubmit="return confirm('Are you sure you want to delete this unit?');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="text-red-600 hover:text-red-900">Delete</button>
+                                            </form>
+                                        @endcan
                                     </td>
                                 </tr>
                             @empty

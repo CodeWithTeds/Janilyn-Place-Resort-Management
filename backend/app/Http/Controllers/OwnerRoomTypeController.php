@@ -50,7 +50,7 @@ class OwnerRoomTypeController extends Controller
 
         $roomType->update($data);
 
-        return redirect()->route('owner.resort-management.room-types.index')
+        return redirect()->route('resort-management.room-types.index')
             ->with('success', 'Room Type updated successfully.');
     }
 
@@ -58,7 +58,7 @@ class OwnerRoomTypeController extends Controller
     {
         $roomType->delete();
 
-        return redirect()->route('owner.resort-management.room-types.index')
+        return redirect()->route('resort-management.room-types.index')
             ->with('success', 'Room Type deleted successfully.');
     }
 }

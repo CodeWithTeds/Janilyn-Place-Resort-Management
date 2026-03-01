@@ -12,7 +12,24 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        $middleware->redirectUsersTo(function () {
+            /** @var \App\Models\User|null $user */
+            $user = Illuminate\Support\Facades\Auth::user();
+
+            if ($user && $user->isAdmin()) {
+                return '/admin/dashboard';
+            }
+
+            if ($user && $user->isOwner()) {
+                return '/owner/dashboard';
+            }
+
+            if ($user && $user->isStaff()) {
+                return '/staff/dashboard';
+            }
+
+            return '/dashboard';
+        });
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

@@ -36,7 +36,7 @@ class OwnerExclusiveResortRentalController extends Controller
 
         $this->repository->create($data);
 
-        return redirect()->route('owner.resort-management.exclusive-resort-rentals.index')
+        return redirect()->route('resort-management.exclusive-resort-rentals.index')
             ->with('success', 'Exclusive Resort Rental created successfully.');
     }
 
@@ -57,7 +57,7 @@ class OwnerExclusiveResortRentalController extends Controller
 
         $this->repository->update($exclusiveResortRental, $data);
 
-        return redirect()->route('owner.resort-management.exclusive-resort-rentals.index')
+        return redirect()->route('resort-management.exclusive-resort-rentals.index')
             ->with('success', 'Exclusive Resort Rental updated successfully.');
     }
 

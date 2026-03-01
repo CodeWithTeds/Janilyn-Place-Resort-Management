@@ -15,7 +15,7 @@ class StoreBookingRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user()->can('access-owner-dashboard');
+        return $this->user()->can('access-resort-management');
     }
 
     /**

@@ -62,7 +62,10 @@
                     </div>
                 </div>
 
-                <div x-data="{ open: {{ request()->routeIs('owner.resort-management.*') ? 'true' : 'false' }} }">
+            @endif
+
+            @if(Auth::check() && (Auth::user()->isOwner() || Auth::user()->isStaff()))
+                <div x-data="{ open: {{ request()->routeIs('resort-management.*') ? 'true' : 'false' }} }">
                     <button @click="open = !open" class="flex items-center w-full px-4 py-2 text-brand-100 hover:bg-brand-700 hover:text-white rounded-md group focus:outline-none transition ease-in-out duration-150">
                         <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
@@ -73,25 +76,25 @@
                         </svg>
                     </button>
                     <div x-show="open" class="mt-1 space-y-1 pl-4" x-cloak>
-                        <x-sidebar-link href="{{ route('owner.resort-management.bookings') }}" :active="request()->routeIs('owner.resort-management.bookings')" class="text-sm">
+                        <x-sidebar-link href="{{ route('resort-management.bookings') }}" :active="request()->routeIs('resort-management.bookings')" class="text-sm">
                             {{ __('Bookings') }}
                         </x-sidebar-link>
-                        <x-sidebar-link href="{{ route('owner.resort-management.calendar') }}" :active="request()->routeIs('owner.resort-management.calendar')" class="text-sm">
+                        <x-sidebar-link href="{{ route('resort-management.calendar') }}" :active="request()->routeIs('resort-management.calendar')" class="text-sm">
                             {{ __('Calendar') }}
                         </x-sidebar-link>
-                        <x-sidebar-link href="{{ route('owner.resort-management.check-in-out') }}" :active="request()->routeIs('owner.resort-management.check-in-out')" class="text-sm">
+                        <x-sidebar-link href="{{ route('resort-management.check-in-out') }}" :active="request()->routeIs('resort-management.check-in-out')" class="text-sm">
                             {{ __('Check In/Out') }}
                         </x-sidebar-link>
-                        <x-sidebar-link href="{{ route('owner.resort-management.cancellations') }}" :active="request()->routeIs('owner.resort-management.cancellations')" class="text-sm">
+                        <x-sidebar-link href="{{ route('resort-management.cancellations') }}" :active="request()->routeIs('resort-management.cancellations')" class="text-sm">
                             {{ __('Cancellations') }}
                         </x-sidebar-link>
-                        <x-sidebar-link href="{{ route('owner.resort-management.room-types.index') }}" :active="request()->routeIs('owner.resort-management.room-types.*')" class="text-sm">
+                        <x-sidebar-link href="{{ route('resort-management.room-types.index') }}" :active="request()->routeIs('resort-management.room-types.*')" class="text-sm">
                             {{ __('Room Types') }}
                         </x-sidebar-link>
-                        <x-sidebar-link href="{{ route('owner.resort-management.resort-units.index') }}" :active="request()->routeIs('owner.resort-management.resort-units.*')" class="text-sm">
+                        <x-sidebar-link href="{{ route('resort-management.resort-units.index') }}" :active="request()->routeIs('resort-management.resort-units.*')" class="text-sm">
                             {{ __('Resort Units') }}
                         </x-sidebar-link>
-                        <x-sidebar-link href="{{ route('owner.resort-management.exclusive-resort-rentals.index') }}" :active="request()->routeIs('owner.resort-management.exclusive-resort-rentals.*')" class="text-sm">
+                        <x-sidebar-link href="{{ route('resort-management.exclusive-resort-rentals.index') }}" :active="request()->routeIs('resort-management.exclusive-resort-rentals.*')" class="text-sm">
                             {{ __('Exclusive Rentals') }}
                         </x-sidebar-link>
                     </div>

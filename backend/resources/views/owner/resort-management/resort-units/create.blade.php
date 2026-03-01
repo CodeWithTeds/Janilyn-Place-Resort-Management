@@ -8,9 +8,9 @@
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6">
-                <form action="{{ route('owner.resort-management.resort-units.store') }}" method="POST">
+                <form action="{{ route('resort-management.resort-units.store') }}" method="POST">
                     @csrf
-
+                    
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <!-- Name -->
                         <div class="col-span-1 md:col-span-2">

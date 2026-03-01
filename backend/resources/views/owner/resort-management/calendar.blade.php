@@ -19,8 +19,8 @@
                 <div class="flex items-center justify-between mb-4">
                     <h3 class="text-lg font-medium text-gray-900">{{ $currentDate->format('F Y') }}</h3>
                     <div class="flex space-x-2">
-                        <a href="{{ route('owner.resort-management.calendar', ['year' => $prevMonth->year, 'month' => $prevMonth->month]) }}" class="px-3 py-1 border rounded hover:bg-gray-100 text-gray-700">&lt; Prev</a>
-                        <a href="{{ route('owner.resort-management.calendar', ['year' => $nextMonth->year, 'month' => $nextMonth->month]) }}" class="px-3 py-1 border rounded hover:bg-gray-100 text-gray-700">Next &gt;</a>
+                        <a href="{{ route('resort-management.calendar', ['year' => $prevMonth->year, 'month' => $prevMonth->month]) }}" class="px-3 py-1 border rounded hover:bg-gray-100 text-gray-700">&lt; Prev</a>
+                        <a href="{{ route('resort-management.calendar', ['year' => $nextMonth->year, 'month' => $nextMonth->month]) }}" class="px-3 py-1 border rounded hover:bg-gray-100 text-gray-700">Next &gt;</a>
                     </div>
                 </div>
 

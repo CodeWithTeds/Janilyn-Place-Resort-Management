@@ -28,7 +28,7 @@ class LoginResponse implements LoginResponseContract
             }
 
             if ($user->isStaff()) {
-                return redirect()->intended('/');
+                return redirect()->intended('/staff/dashboard');
             }
         }
 

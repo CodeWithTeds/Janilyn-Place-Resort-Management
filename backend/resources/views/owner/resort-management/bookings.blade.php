@@ -38,7 +38,7 @@
                     </div>
                 </div>
 
-                <form action="{{ route('owner.resort-management.bookings.store') }}" method="POST" @submit.prevent="submitForm">
+                <form action="{{ route('resort-management.bookings.store') }}" method="POST" @submit.prevent="submitForm">
                     @csrf
                     <input type="hidden" name="booking_type" :value="bookingType">
 
@@ -143,7 +143,7 @@
                     <h3 class="text-lg font-medium text-gray-900">All Bookings</h3>
                     
                     <!-- Filters -->
-                    <form method="GET" action="{{ route('owner.resort-management.bookings') }}" class="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-4 w-full md:w-auto">
+                    <form method="GET" action="{{ route('resort-management.bookings') }}" class="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-4 w-full md:w-auto">
                         <input type="hidden" name="tab" value="online"> <!-- Keep tab active if possible, though this is JS based. We might need to persist tab state via URL param or just default to online if filters are present? -->
                         <!-- Actually, if we submit form, page reloads. JS defaults to 'walk-in'. We should fix that. -->
                         
@@ -166,7 +166,7 @@
                         <div class="flex space-x-2">
                             <x-button type="submit">Filter</x-button>
                             @if(request()->hasAny(['search', 'status', 'date']))
-                                <a href="{{ route('owner.resort-management.bookings') }}" class="inline-flex items-center px-4 py-2 bg-gray-200 border border-transparent rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest hover:bg-gray-300 focus:bg-gray-300 active:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
+                                <a href="{{ route('resort-management.bookings') }}" class="inline-flex items-center px-4 py-2 bg-gray-200 border border-transparent rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest hover:bg-gray-300 focus:bg-gray-300 active:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
                                     Clear
                                 </a>
                             @endif
@@ -246,12 +246,12 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     @if($booking->status === \App\Enums\BookingStatus::PENDING)
-                                        <form action="{{ route('owner.resort-management.bookings.approve', $booking) }}" method="POST" class="inline-block">
+                                        <form action="{{ route('resort-management.bookings.approve', $booking) }}" method="POST" class="inline-block">
                                             @csrf
                                             @method('PATCH')
                                             <button type="submit" class="text-indigo-600 hover:text-indigo-900 mr-3">Approve</button>
                                         </form>
-                                        <form action="{{ route('owner.resort-management.bookings.cancel', $booking) }}" method="POST" class="inline-block confirm-action"
+                                        <form action="{{ route('resort-management.bookings.cancel', $booking) }}" method="POST" class="inline-block confirm-action"
                                               data-confirm-title="Cancel Booking?"
                                               data-confirm-text="Are you sure you want to cancel this booking?"
                                               data-confirm-icon="warning"
@@ -266,7 +266,7 @@
                                             class="text-green-600 hover:text-green-900 mr-3">
                                             Check In
                                         </button>
-                                         <form action="{{ route('owner.resort-management.bookings.cancel', $booking) }}" method="POST" class="inline-block confirm-action"
+                                         <form action="{{ route('resort-management.bookings.cancel', $booking) }}" method="POST" class="inline-block confirm-action"
                                                data-confirm-title="Cancel Booking?"
                                                data-confirm-text="Are you sure you want to cancel this booking?"
                                                data-confirm-icon="warning"
@@ -276,7 +276,7 @@
                                             <button type="submit" class="text-red-600 hover:text-red-900">Cancel</button>
                                         </form>
                                     @elseif($booking->status === \App\Enums\BookingStatus::CHECKED_IN)
-                                        <form action="{{ route('owner.resort-management.bookings.check-out', $booking) }}" method="POST" class="inline-block confirm-action"
+                                        <form action="{{ route('resort-management.bookings.check-out', $booking) }}" method="POST" class="inline-block confirm-action"
                                               data-confirm-title="Check Out Guest?"
                                               data-confirm-text="Are you sure you want to check out this guest?"
                                               data-confirm-icon="info"
@@ -390,7 +390,7 @@
                 checkInAvailableUnits: [],
                 loadingUnits: false,
                 async openCheckInModal(bookingId, roomTypeId, checkIn, checkOut) {
-                    this.checkInAction = `{{ url('owner/resort-management/bookings') }}/${bookingId}/check-in`;
+                    this.checkInAction = `{{ url('resort-management/bookings') }}/${bookingId}/check-in`;
                     this.showCheckInModal = true;
                     this.checkInAvailableUnits = [];
                     this.loadingUnits = true;
@@ -398,7 +398,7 @@
                     if (roomTypeId && roomTypeId !== 'null') {
                         this.isRoomBooking = true;
                         try {
-                            const response = await fetch(`{{ route('owner.resort-management.bookings.available-units') }}?room_type_id=${roomTypeId}&check_in=${checkIn}&check_out=${checkOut}`);
+                            const response = await fetch(`{{ route('resort-management.bookings.available-units') }}?room_type_id=${roomTypeId}&check_in=${checkIn}&check_out=${checkOut}`);
                             if (response.ok) {
                                 this.checkInAvailableUnits = await response.json();
                             }
@@ -413,7 +413,7 @@
                 async fetchUnits() {
                     if (this.bookingType === 'room' && this.formData.room_type_id && this.formData.check_in && this.formData.check_out) {
                         try {
-                            const response = await fetch(`{{ route('owner.resort-management.bookings.available-units') }}?room_type_id=${this.formData.room_type_id}&check_in=${this.formData.check_in}&check_out=${this.formData.check_out}`);
+                            const response = await fetch(`{{ route('resort-management.bookings.available-units') }}?room_type_id=${this.formData.room_type_id}&check_in=${this.formData.check_in}&check_out=${this.formData.check_out}`);
                             if (response.ok) {
                                 this.availableUnits = await response.json();
                             } else {

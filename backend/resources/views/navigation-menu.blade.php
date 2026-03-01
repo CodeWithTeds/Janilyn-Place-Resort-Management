@@ -5,7 +5,7 @@
             <div class="flex">
                 <!-- Logo -->
                 <div class="shrink-0 flex items-center md:hidden">
-                    <a href="{{ route('dashboard') }}" class="flex items-center space-x-2">
+                    <a href="{{ Auth::user()->isStaff() ? route('staff.dashboard') : route('dashboard') }}" class="flex items-center space-x-2">
                         <x-application-mark class="block h-9 w-auto" />
                         <span class="font-bold text-lg text-gray-800">Janilyn's Place</span>
                     </a>
@@ -133,9 +133,24 @@
     <!-- Responsive Navigation Menu -->
     <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden">
         <div class="pt-2 pb-3 space-y-1">
-            <x-responsive-nav-link href="{{ route('dashboard') }}" :active="request()->routeIs('dashboard')">
+            <x-responsive-nav-link href="{{ Auth::user()->isStaff() ? route('staff.dashboard') : route('dashboard') }}" :active="request()->routeIs('dashboard') || request()->routeIs('staff.dashboard')">
                 {{ __('Dashboard') }}
             </x-responsive-nav-link>
+
+            @if(Auth::check() && Auth::user()->isStaff())
+                <x-responsive-nav-link href="{{ route('staff.guests.index') }}" :active="request()->routeIs('staff.guests.*')">
+                    {{ __('Guest Registration') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link href="{{ route('staff.rooms.index') }}" :active="request()->routeIs('staff.rooms.*')">
+                    {{ __('Room Allocation') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link href="{{ route('staff.check-in.index') }}" :active="request()->routeIs('staff.check-in.*')">
+                    {{ __('Check-in / Check-out') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link href="{{ route('staff.requests.index') }}" :active="request()->routeIs('staff.requests.*')">
+                    {{ __('Special Requests') }}
+                </x-responsive-nav-link>
+            @endif
         </div>
 
         <!-- Responsive Settings Options -->

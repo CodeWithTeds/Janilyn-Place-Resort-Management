@@ -6,6 +6,8 @@ use App\Http\Controllers\OwnerExclusiveResortRentalController;
 use App\Http\Controllers\OwnerHousekeepingController;
 use App\Http\Controllers\OwnerResortManagementController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\OwnerRoomTypeController;
+use App\Http\Controllers\OwnerResortUnitController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -49,7 +51,7 @@ Route::middleware([
     });
 
     // Owner Resort Management
-    Route::middleware(['can:access-owner-dashboard'])->prefix('owner/resort-management')->name('owner.resort-management.')->group(function () {
+    Route::middleware(['can:access-resort-management'])->prefix('resort-management')->name('resort-management.')->group(function () {
         Route::get('/bookings', [OwnerResortManagementController::class, 'bookings'])->name('bookings');
         Route::post('/bookings', [OwnerResortManagementController::class, 'storeBooking'])->name('bookings.store');
         Route::get('/bookings/available-rooms', [OwnerResortManagementController::class, 'availableRooms'])->name('bookings.available-rooms');
@@ -67,13 +69,34 @@ Route::middleware([
         Route::get('/cancellations', [OwnerResortManagementController::class, 'cancellations'])->name('cancellations');
 
         // Room Types Management
-        Route::resource('room-types', App\Http\Controllers\OwnerRoomTypeController::class);
+        Route::get('/room-types', [OwnerRoomTypeController::class, 'index'])->name('room-types.index');
+        Route::middleware(['can:access-owner-dashboard'])->group(function () {
+            Route::get('/room-types/create', [OwnerRoomTypeController::class, 'create'])->name('room-types.create');
+            Route::post('/room-types', [OwnerRoomTypeController::class, 'store'])->name('room-types.store');
+            Route::get('/room-types/{room_type}/edit', [OwnerRoomTypeController::class, 'edit'])->name('room-types.edit');
+            Route::put('/room-types/{room_type}', [OwnerRoomTypeController::class, 'update'])->name('room-types.update');
+            Route::delete('/room-types/{room_type}', [OwnerRoomTypeController::class, 'destroy'])->name('room-types.destroy');
+        });
 
         // Resort Units Management
-        Route::resource('resort-units', App\Http\Controllers\OwnerResortUnitController::class);
+        Route::get('/resort-units', [OwnerResortUnitController::class, 'index'])->name('resort-units.index');
+        Route::middleware(['can:access-owner-dashboard'])->group(function () {
+            Route::get('/resort-units/create', [OwnerResortUnitController::class, 'create'])->name('resort-units.create');
+            Route::post('/resort-units', [OwnerResortUnitController::class, 'store'])->name('resort-units.store');
+            Route::get('/resort-units/{resort_unit}/edit', [OwnerResortUnitController::class, 'edit'])->name('resort-units.edit');
+            Route::put('/resort-units/{resort_unit}', [OwnerResortUnitController::class, 'update'])->name('resort-units.update');
+            Route::delete('/resort-units/{resort_unit}', [OwnerResortUnitController::class, 'destroy'])->name('resort-units.destroy');
+        });
 
         // Exclusive Resort Rentals Management
-        Route::resource('exclusive-resort-rentals', App\Http\Controllers\OwnerExclusiveResortRentalController::class);
+        Route::get('/exclusive-resort-rentals', [OwnerExclusiveResortRentalController::class, 'index'])->name('exclusive-resort-rentals.index');
+        Route::middleware(['can:access-owner-dashboard'])->group(function () {
+            Route::get('/exclusive-resort-rentals/create', [OwnerExclusiveResortRentalController::class, 'create'])->name('exclusive-resort-rentals.create');
+            Route::post('/exclusive-resort-rentals', [OwnerExclusiveResortRentalController::class, 'store'])->name('exclusive-resort-rentals.store');
+            Route::get('/exclusive-resort-rentals/{exclusive_resort_rental}/edit', [OwnerExclusiveResortRentalController::class, 'edit'])->name('exclusive-resort-rentals.edit');
+            Route::put('/exclusive-resort-rentals/{exclusive_resort_rental}', [OwnerExclusiveResortRentalController::class, 'update'])->name('exclusive-resort-rentals.update');
+            Route::delete('/exclusive-resort-rentals/{exclusive_resort_rental}', [OwnerExclusiveResortRentalController::class, 'destroy'])->name('exclusive-resort-rentals.destroy');
+        });
     });
 
     // Owner Inventory
@@ -104,5 +127,30 @@ Route::middleware([
         Route::get('/{roomInspection}/edit', [App\Http\Controllers\OwnerRoomInspectionController::class, 'edit'])->name('edit');
         Route::put('/{roomInspection}', [App\Http\Controllers\OwnerRoomInspectionController::class, 'update'])->name('update');
         Route::delete('/{roomInspection}', [App\Http\Controllers\OwnerRoomInspectionController::class, 'destroy'])->name('destroy');
+    });
+
+    // Staff Dashboard
+    Route::get('/staff/dashboard', [DashboardController::class, 'staff'])
+        ->middleware('can:access-staff-dashboard')
+        ->name('staff.dashboard');
+
+    // Staff Routes
+    Route::middleware(['can:access-staff-dashboard'])->prefix('staff')->name('staff.')->group(function () {
+        // Guest Management
+        Route::resource('guests', App\Http\Controllers\StaffGuestController::class)->except(['show', 'destroy']);
+
+        // Room Allocation
+        Route::get('/rooms', [App\Http\Controllers\StaffRoomController::class, 'index'])->name('rooms.index');
+        Route::get('/rooms/{booking}/allocate', [App\Http\Controllers\StaffRoomController::class, 'allocate'])->name('rooms.allocate');
+        Route::post('/rooms/{booking}', [App\Http\Controllers\StaffRoomController::class, 'storeAllocation'])->name('rooms.store');
+
+        // Check-in / Check-out
+        Route::get('/check-in', [App\Http\Controllers\StaffCheckInController::class, 'index'])->name('check-in.index');
+        Route::post('/check-in/{booking}', [App\Http\Controllers\StaffCheckInController::class, 'checkIn'])->name('check-in.store');
+        Route::post('/check-out/{booking}', [App\Http\Controllers\StaffCheckInController::class, 'checkOut'])->name('check-out.store');
+
+        // Special Requests
+        Route::get('/requests', [App\Http\Controllers\StaffRequestController::class, 'index'])->name('requests.index');
+        Route::post('/requests/{booking}', [App\Http\Controllers\StaffRequestController::class, 'store'])->name('requests.store');
     });
 });

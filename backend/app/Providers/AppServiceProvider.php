@@ -32,5 +32,13 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('access-owner-dashboard', function (User $user) {
             return $user->isOwner();
         });
+
+        Gate::define('access-staff-dashboard', function (User $user) {
+            return $user->isStaff();
+        });
+
+        Gate::define('access-resort-management', function (User $user) {
+            return $user->isOwner() || $user->isStaff();
+        });
     }
 }

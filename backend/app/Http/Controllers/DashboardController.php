@@ -30,4 +30,12 @@ class DashboardController extends Controller
     {
         return view('dashboard'); // Or a specific owner dashboard view
     }
+
+    /**
+     * Display the staff specific dashboard.
+     */
+    public function staff(): View
+    {
+        return view('dashboard'); // Or a specific staff dashboard view
+    }
 }

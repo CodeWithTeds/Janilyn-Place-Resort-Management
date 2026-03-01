@@ -9,9 +9,11 @@
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="flex justify-between mb-6">
                 <h3 class="text-lg font-medium text-gray-900">All Exclusive Rentals</h3>
-                <a href="{{ route('owner.resort-management.exclusive-resort-rentals.create') }}" class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 active:bg-gray-900 focus:outline-none focus:border-gray-900 focus:ring ring-gray-300 disabled:opacity-25 transition ease-in-out duration-150">
-                    {{ __('Add New Exclusive Rental') }}
-                </a>
+                @can('access-owner-dashboard')
+                    <a href="{{ route('owner.resort-management.exclusive-resort-rentals.create') }}" class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 active:bg-gray-900 focus:outline-none focus:border-gray-900 focus:ring ring-gray-300 disabled:opacity-25 transition ease-in-out duration-150">
+                        {{ __('Add New Exclusive Rental') }}
+                    </a>
+                @endcan
             </div>
 
             <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg border border-gray-100">
@@ -88,27 +90,29 @@
                                         </div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        <div class="flex items-center justify-end space-x-3">
-                                            <a href="{{ route('owner.resort-management.exclusive-resort-rentals.edit', $rental) }}" class="text-indigo-600 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 p-2 rounded-full transition-colors duration-200" title="Edit">
-                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                                </svg>
-                                            </a>
-                                            
-                                            <form action="{{ route('owner.resort-management.exclusive-resort-rentals.destroy', $rental) }}" method="POST" class="inline-block confirm-action" 
-                                                  data-confirm-title="Delete Exclusive Rental?" 
-                                                  data-confirm-text="Are you sure you want to delete this rental package? This action cannot be undone." 
-                                                  data-confirm-icon="warning" 
-                                                  data-confirm-button-text="Yes, delete it!">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 p-2 rounded-full transition-colors duration-200" title="Delete">
+                                        @can('access-owner-dashboard')
+                                            <div class="flex items-center justify-end space-x-3">
+                                                <a href="{{ route('resort-management.exclusive-resort-rentals.edit', $rental) }}" class="text-indigo-600 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 p-2 rounded-full transition-colors duration-200" title="Edit">
                                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                                     </svg>
-                                                </button>
-                                            </form>
-                                        </div>
+                                                </a>
+                                                
+                                                <form action="{{ route('resort-management.exclusive-resort-rentals.destroy', $rental) }}" method="POST" class="inline-block confirm-action" 
+                                                      data-confirm-title="Delete Exclusive Rental?" 
+                                                      data-confirm-text="Are you sure you want to delete this rental package? This action cannot be undone." 
+                                                      data-confirm-icon="warning" 
+                                                      data-confirm-button-text="Yes, delete it!">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 p-2 rounded-full transition-colors duration-200" title="Delete">
+                                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                        </svg>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        @endcan
                                     </td>
                                 </tr>
                             @empty

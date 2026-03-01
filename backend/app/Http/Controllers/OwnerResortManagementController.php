@@ -43,7 +43,7 @@ class OwnerResortManagementController extends Controller
             return redirect($booking->checkout_url);
         }
 
-        return redirect()->route('owner.resort-management.bookings')
+        return redirect()->route('resort-management.bookings')
             ->with('success', 'Walk-in booking created successfully.');
     }
 
@@ -58,7 +58,7 @@ class OwnerResortManagementController extends Controller
         $booking->payment_status = PaymentStatus::PAID;
         $booking->save();
 
-        return redirect()->route('owner.resort-management.bookings')
+        return redirect()->route('resort-management.bookings')
             ->with('success', 'Payment successful! Booking confirmed.');
     }
 
@@ -72,7 +72,7 @@ class OwnerResortManagementController extends Controller
         // Or keep it as "Pending Payment".
         // Let's keep it but notify user.
         
-        return redirect()->route('owner.resort-management.bookings')
+        return redirect()->route('resort-management.bookings')
             ->with('error', 'Payment was cancelled. Booking is still unpaid.');
     }
 
