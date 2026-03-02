@@ -87,11 +87,17 @@ export default function CreateBookingScreen() {
       setSelectedUnitId(null);
       setSelectedTierId(null);
       
+      const checkInDate = checkIn.toISOString().split('T')[0];
+      const checkOutDate = checkOut.toISOString().split('T')[0];
+
+      // Avoid API call if dates are invalid
+      if (checkInDate >= checkOutDate) return;
+
       // Fetch available units
       const units = await RoomService.getAvailableUnits({
         room_type_id: roomId,
-        check_in: checkIn.toISOString().split('T')[0],
-        check_out: checkOut.toISOString().split('T')[0]
+        check_in: checkInDate,
+        check_out: checkOutDate
       });
       setAvailableUnits(units);
       
