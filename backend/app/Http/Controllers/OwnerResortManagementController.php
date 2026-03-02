@@ -47,7 +47,7 @@ class OwnerResortManagementController extends Controller
             ->with('success', 'Walk-in booking created successfully.');
     }
 
-    public function paymentSuccess(Request $request, $booking_id): RedirectResponse
+    public function paymentSuccess(Request $request, $booking_id)
     {
         $booking = Booking::findOrFail($booking_id);
         
@@ -58,11 +58,18 @@ class OwnerResortManagementController extends Controller
         $booking->payment_status = PaymentStatus::PAID;
         $booking->save();
 
-        return redirect()->route('resort-management.bookings')
-            ->with('success', 'Payment successful! Booking confirmed.');
+        /** @var \App\Models\User $user */
+        $user = \Illuminate\Support\Facades\Auth::user();
+
+        if (\Illuminate\Support\Facades\Auth::check() && $user->can('access-resort-management')) {
+             return redirect()->route('resort-management.bookings')
+                ->with('success', 'Payment successful! Booking confirmed.');
+        }
+
+        return view('payment.success', compact('booking'));
     }
 
-    public function paymentCancel(Request $request, $booking_id): RedirectResponse
+    public function paymentCancel(Request $request, $booking_id)
     {
         $booking = Booking::findOrFail($booking_id);
         
@@ -72,8 +79,15 @@ class OwnerResortManagementController extends Controller
         // Or keep it as "Pending Payment".
         // Let's keep it but notify user.
         
-        return redirect()->route('resort-management.bookings')
-            ->with('error', 'Payment was cancelled. Booking is still unpaid.');
+        /** @var \App\Models\User $user */
+        $user = \Illuminate\Support\Facades\Auth::user();
+
+        if (\Illuminate\Support\Facades\Auth::check() && $user->can('access-resort-management')) {
+            return redirect()->route('resort-management.bookings')
+                ->with('error', 'Payment was cancelled. Booking is still unpaid.');
+        }
+
+        return view('payment.cancel', compact('booking'));
     }
 
     public function approveBooking(Booking $booking): RedirectResponse

@@ -21,4 +21,9 @@ export const RoomService = {
     const response = await api.post<RoomAvailability>('/check-availability', params);
     return response.data;
   },
+
+  async getAvailableUnits(params: { room_type_id: number; check_in: string; check_out: string }) {
+    const response = await api.get<{ id: number; name: string }[]>('/available-units', { params });
+    return response.data;
+  },
 };

@@ -59,8 +59,8 @@ Route::middleware([
         Route::patch('/bookings/{booking}/approve', [OwnerResortManagementController::class, 'approveBooking'])->name('bookings.approve');
         Route::patch('/bookings/{booking}/cancel', [OwnerResortManagementController::class, 'cancelBooking'])->name('bookings.cancel');
 
-        Route::get('/bookings/payment-success/{booking_id}', [OwnerResortManagementController::class, 'paymentSuccess'])->name('bookings.payment-success');
-        Route::get('/bookings/payment-cancel/{booking_id}', [OwnerResortManagementController::class, 'paymentCancel'])->name('bookings.payment-cancel');
+        Route::get('/bookings/payment-success/{booking_id}', [OwnerResortManagementController::class, 'paymentSuccess'])->name('bookings.payment-success')->withoutMiddleware(['auth:sanctum', 'verified', 'can:access-resort-management']);
+        Route::get('/bookings/payment-cancel/{booking_id}', [OwnerResortManagementController::class, 'paymentCancel'])->name('bookings.payment-cancel')->withoutMiddleware(['auth:sanctum', 'verified', 'can:access-resort-management']);
 
         Route::get('/calendar', [OwnerResortManagementController::class, 'calendar'])->name('calendar');
         Route::get('/check-in-out', [OwnerResortManagementController::class, 'checkInOut'])->name('check-in-out');

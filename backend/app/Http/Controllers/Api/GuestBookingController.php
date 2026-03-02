@@ -32,6 +32,8 @@ class GuestBookingController extends Controller
             'booking_type' => ['required', 'in:room,exclusive'],
             'room_type_id' => ['required_if:booking_type,room', 'nullable', 'exists:room_types,id'],
             'exclusive_resort_rental_id' => ['required_if:booking_type,exclusive', 'nullable', 'exists:exclusive_resort_rentals,id'],
+            'resort_unit_id' => ['nullable', 'exists:resort_units,id'],
+            'pricing_tier_id' => ['nullable', 'exists:room_type_pricing_tiers,id'],
             'check_in' => ['required', 'date', 'after_or_equal:today'],
             'check_out' => ['required', 'date', 'after:check_in'],
             'pax_count' => ['required', 'integer', 'min:1'],

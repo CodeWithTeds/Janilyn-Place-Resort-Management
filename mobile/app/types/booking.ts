@@ -17,6 +17,8 @@ export interface CreateBookingData {
   booking_type: 'room' | 'exclusive';
   room_type_id?: number;
   exclusive_resort_rental_id?: number;
+  resort_unit_id?: number | null;
+  pricing_tier_id?: number | null;
   check_in: string;
   check_out: string;
   pax_count: number;

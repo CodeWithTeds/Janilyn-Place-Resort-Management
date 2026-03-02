@@ -9,6 +9,7 @@ export interface RoomType {
   extra_person_charge: number;
   image: string | null;
   category: string;
+  pricing_tiers?: any[]; // Allow pricing tiers
 }
 
 export interface ExclusiveResortRental {

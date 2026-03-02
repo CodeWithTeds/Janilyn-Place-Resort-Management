@@ -31,7 +31,7 @@ class GuestRoomController extends Controller
     public function showRoom(string $id): JsonResponse
     {
         $room = $this->resortService->getAllRoomTypes()->find($id);
-        
+
         if (!$room) {
             return response()->json(['message' => 'Room type not found'], 404);
         }
@@ -50,6 +50,30 @@ class GuestRoomController extends Controller
         return response()->json($rental);
     }
 
+    public function getAvailableUnits(Request $request): JsonResponse
+    {
+        $request->validate([
+            'room_type_id' => 'required',
+            'check_in' => 'required|date',
+            'check_out' => 'required|date|after:check_in',
+        ]);
+
+        $checkIn = $request->check_in;
+        $checkOut = $request->check_out;
+
+        $units = \App\Models\ResortUnit::where('room_type_id', $request->room_type_id)
+            ->whereDoesntHave('bookings', function ($query) use ($checkIn, $checkOut) {
+                $query->where('status', '!=', 'cancelled')
+                    ->where(function ($q) use ($checkIn, $checkOut) {
+                        $q->where('check_in', '<', $checkOut)
+                            ->where('check_out', '>', $checkIn);
+                    });
+            })
+            ->get();
+
+        return response()->json($units);
+    }
+
     public function checkAvailability(Request $request): JsonResponse
     {
         $request->validate([
@@ -66,13 +90,7 @@ class GuestRoomController extends Controller
             );
             $isAvailable = $availableRooms->contains('id', $request->id);
         } else {
-            // For exclusive, we assume 1 unit per rental type usually, or logic needs to be checked.
-            // ResortManagementService doesn't have explicit getAvailableRentals, but we can check overlapping.
-            // Let's implement a simple check or assume if it exists in getAll, we need to check bookings.
-            // The service has getAvailableUnits but that's for rooms.
-            // Let's assume for now we check if any booking exists for this rental.
-            // Actually, GuestBookingController will validate again.
-            // For now, let's return true to allow proceeding, or improve service later.
+         
             $isAvailable = true; // Placeholder for exclusive availability logic
         }
 
