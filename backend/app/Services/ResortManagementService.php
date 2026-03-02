@@ -197,6 +197,50 @@ class ResortManagementService
 
     public function createWalkInBooking(array $data): Booking
     {
+        // 1. Availability Check (Strict)
+        if (isset($data['booking_type']) && $data['booking_type'] === 'room') {
+            $checkIn = $data['check_in'];
+            $checkOut = $data['check_out'];
+            $roomTypeId = $data['room_type_id'];
+            $resortUnitId = $data['resort_unit_id'] ?? null;
+
+            // Check specific unit availability if selected
+            if ($resortUnitId) {
+                // If specific unit selected, check if THAT unit is booked
+                $isUnitOccupied = Booking::where('resort_unit_id', $resortUnitId)
+                    ->where('status', '!=', BookingStatus::CANCELLED->value)
+                    ->where(function ($query) use ($checkIn, $checkOut) {
+                         $query->where('check_in', '<', $checkOut)
+                               ->where('check_out', '>', $checkIn);
+                    })
+                    ->exists();
+
+                if ($isUnitOccupied) {
+                    throw new \Exception('The selected unit is already booked for these dates.');
+                }
+            } else {
+                // Check general room type availability (capacity)
+                $roomType = RoomType::withCount('units')->find($roomTypeId);
+                $totalUnits = $roomType->units_count;
+                
+                // Count bookings for this room type in this period
+                $overlappingBookingsCount = Booking::where('room_type_id', $roomTypeId)
+                    ->where('status', '!=', BookingStatus::CANCELLED->value)
+                    ->where(function ($query) use ($checkIn, $checkOut) {
+                         $query->where('check_in', '<', $checkOut)
+                               ->where('check_out', '>', $checkIn);
+                    })
+                    ->count();
+
+                if ($overlappingBookingsCount >= $totalUnits) {
+                    throw new \Exception('No rooms available for the selected dates.');
+                }
+            }
+        } elseif (isset($data['booking_type']) && $data['booking_type'] === 'exclusive') {
+             // Exclusive rental check (assuming single instance or similar logic)
+             // ...
+        }
+
         $totalPrice = 0;
 
         if (isset($data['booking_type']) && $data['booking_type'] === 'exclusive') {

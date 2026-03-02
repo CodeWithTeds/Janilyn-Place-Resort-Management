@@ -146,7 +146,37 @@ export default function CreateBookingScreen() {
     try {
       setLoading(true);
       
-      const bookingData = {
+      // Check Availability First
+      const availabilityCheck = await RoomService.checkAvailability({
+        check_in: checkIn.toISOString().split('T')[0],
+        check_out: checkOut.toISOString().split('T')[0],
+        type: type,
+        id: selectedRoomTypeId || Number(id)
+      });
+
+      if (!availabilityCheck.available) {
+         Alert.alert('Unavailable', 'The selected dates are no longer available for this accommodation. Please choose different dates.');
+         setLoading(false);
+         return;
+       }
+
+       // Check Unit Availability if specific unit selected
+       if (selectedUnitId) {
+         const units = await RoomService.getAvailableUnits({
+            room_type_id: selectedRoomTypeId || Number(id),
+            check_in: checkIn.toISOString().split('T')[0],
+            check_out: checkOut.toISOString().split('T')[0]
+         });
+         
+         const isUnitAvailable = units.some(u => u.id === selectedUnitId);
+         if (!isUnitAvailable) {
+             Alert.alert('Unit Unavailable', 'The selected unit is no longer available. Please select another unit or "Any Unit".');
+             setLoading(false);
+             return;
+         }
+       }
+ 
+       const bookingData = {
         booking_type: type,
         [type === 'room' ? 'room_type_id' : 'exclusive_resort_rental_id']: selectedRoomTypeId || Number(id),
         check_in: checkIn.toISOString().split('T')[0],
