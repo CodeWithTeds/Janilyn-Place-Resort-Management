@@ -2,6 +2,7 @@ import { Image as ExpoImage } from 'expo-image';
 import { StyleSheet, TouchableOpacity, View, Dimensions, ScrollView, Image } from 'react-native';
 import { useRouter, Redirect } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { WebView } from 'react-native-webview';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -26,6 +27,8 @@ const HIGHLIGHTS = [
   { id: 'h3', title: 'Happy Memories', subtitle: 'Our Guests', source: require('@/assets/images/reservation/customer.png'), height: 220 },
   { id: 'h4', title: 'Our Stories', subtitle: 'Read the Blog', source: require('@/assets/images/reservation/blog.png'), height: 180 },
 ];
+
+const USER_MAP_URL = 'https://www.bing.com/maps/search?v=2&pc=FACEBK&mid=8100&mkt=en-US&fbclid=IwY2xjawQSpXRleHRuA2FlbQIxMABicmlkETFkd2RZdk9RRTVaV3VJaDVkc3J0YwZhcHBfaWQQMjIyMDM5MTc4ODIwMDg5MgABHpm_hbHmON4aMmPln14UMtVaKhEmBYLNlIznejGrVsQyvH4knMOrr7HP6_zn_aem_YaxTNXtYBAMR8nDBgB_WXg&FORM=FBKPL1&style=r&q=Janilyn%27s+Place&ss=id.ypid%3A8144x12560190181312123740&cp=9.324567%7E123.302886&lvl=22';
 
 export default function WelcomeScreen() {
   const router = useRouter();
@@ -129,6 +132,20 @@ export default function WelcomeScreen() {
                   </View>
                 </View>
               ))}
+            </View>
+          </View>
+
+          {/* Location Map */}
+          <View style={styles.sectionContainer}>
+            <ThemedText type="subtitle" style={styles.sectionTitle}>Our Location</ThemedText>
+            <ThemedText style={{ color: secondaryColor, fontSize: 14, marginBottom: 8 }}>48 DB Catapusan St., Piapi, Dumaguete City</ThemedText>
+            <View style={styles.mapContainer}>
+               <WebView
+                source={{ uri: USER_MAP_URL }}
+                style={styles.map}
+                scrollEnabled={false}
+                scalesPageToFit={true}
+              />
             </View>
           </View>
 
@@ -324,6 +341,19 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   footerText: {
+    color: '#9CA3AF',
     fontSize: 12,
-  }
+  },
+  mapContainer: {
+    height: 300,
+    borderRadius: 16,
+    overflow: 'hidden',
+    backgroundColor: '#f0f0f0',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    marginTop: 12,
+  },
+  map: {
+    flex: 1,
+  },
 });

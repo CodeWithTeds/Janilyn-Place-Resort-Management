@@ -2,6 +2,7 @@ import { StyleSheet, View, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { WebView } from 'react-native-webview';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -14,6 +15,12 @@ const FEATURED_SERVICES = [
   { id: '2', title: 'Events', image: require('@/assets/images/reservation/service-option2.png'), route: '/(tabs)/explore' },
   { id: '3', title: 'Pool', image: require('@/assets/images/reservation/service-option4.png'), route: '/(tabs)/explore' },
 ];
+
+const MAP_URL = 'https://www.bing.com/maps/embed?h=400&w=500&cp=9.324678~123.302822&lvl=16&typ=d&sty=r&src=SHELL&FORM=MBEDV8';
+// Using the embed version or similar for better display if possible, but the user gave a full search URL.
+// The user's URL: https://www.bing.com/maps/search?v=2&pc=FACEBK&mid=8100&mkt=en-US&fbclid=IwY2xjawQSpXRleHRuA2FlbQIxMABicmlkETFkd2RZdk9RRTVaV3VJaDVkc3J0YwZhcHBfaWQQMjIyMDM5MTc4ODIwMDg5MgABHpm_hbHmON4aMmPln14UMtVaKhEmBYLNlIznejGrVsQyvH4knMOrr7HP6_zn_aem_YaxTNXtYBAMR8nDBgB_WXg&FORM=FBKPL1&q=48+DB+Catapusan+St.%2C+Piapi%2C+Dumaguete+City%2C+Philippines%2C+6200&cp=9.324678%7E123.302822&lvl=16&style=r
+// Let's use the provided URL directly as requested.
+const USER_MAP_URL = 'https://www.bing.com/maps?cp=9.324678~123.302822&lvl=18&sp=point.9.324678_123.302822_Janilyn%27s%20Place&sty=r';
 
 export default function HomeScreen() {
   const { user, signOut } = useAuth();
@@ -87,6 +94,20 @@ export default function HomeScreen() {
           </View>
         </View>
 
+        {/* Location Map */}
+        <View style={styles.section}>
+          <ThemedText type="subtitle" style={styles.sectionTitle}>Our Location</ThemedText>
+          <ThemedText style={styles.addressText}>48 DB Catapusan St., Piapi, Dumaguete City</ThemedText>
+          <View style={styles.mapContainer}>
+             <WebView
+              source={{ uri: USER_MAP_URL }}
+              style={styles.map}
+              scrollEnabled={false}
+              scalesPageToFit={true}
+            />
+          </View>
+        </View>
+
       </ScrollView>
     </ThemedView>
   );
@@ -98,6 +119,22 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingBottom: Spacing.xl,
+  },
+  addressText: {
+    fontSize: 14,
+    color: Colors.gray,
+    marginBottom: Spacing.sm,
+  },
+  mapContainer: {
+    height: 300,
+    borderRadius: 16,
+    overflow: 'hidden',
+    backgroundColor: '#f0f0f0',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  map: {
+    flex: 1,
   },
   header: {
     flexDirection: 'row',
