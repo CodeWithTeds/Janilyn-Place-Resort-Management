@@ -88,7 +88,7 @@ export default function HomeScreen() {
              <Button 
               title="My Bookings" 
               variant="outline" 
-              onPress={() => { /* Navigate to bookings list if implemented */ }} 
+              onPress={() => router.push('/booking' as any)} 
               style={styles.actionButton}
             />
           </View>

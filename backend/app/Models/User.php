@@ -102,6 +102,11 @@ class User extends Authenticatable
         ];
     }
 
+    public function bookings()
+    {
+        return $this->hasMany(Booking::class);
+    }
+
     /**
      * Get the housekeeping tasks assigned to the user.
      */

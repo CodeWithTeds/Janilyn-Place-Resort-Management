@@ -21,6 +21,10 @@ export const Colors = {
     accent: '#e0f2fe', // Sky 100
     backgroundDark: '#0f172a',
     gray: '#64748b', // Added for compatibility
+    success: '#10b981', // Emerald 500
+    warning: '#f59e0b', // Amber 500
+    error: '#ef4444', // Red 500
+    info: '#3b82f6', // Blue 500
   },
   dark: {
     text: '#f1f5f9', // Slate 100
@@ -34,6 +38,10 @@ export const Colors = {
     accent: '#0c4a6e', // Sky 900
     backgroundDark: '#0f172a',
     gray: '#94a3b8', // Added for compatibility
+    success: '#34d399', // Emerald 400
+    warning: '#fbbf24', // Amber 400
+    error: '#f87171', // Red 400
+    info: '#60a5fa', // Blue 400
   },
 };
 

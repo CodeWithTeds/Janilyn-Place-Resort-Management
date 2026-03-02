@@ -11,6 +11,16 @@ export interface Booking {
   payment_status: string;
   payment_method: string;
   created_at: string;
+  room_type?: {
+    id: number;
+    name: string;
+    image: string;
+  };
+  exclusive_resort_rental?: {
+    id: number;
+    name: string;
+    image: string;
+  };
 }
 
 export interface CreateBookingData {
