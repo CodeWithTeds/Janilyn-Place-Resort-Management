@@ -103,6 +103,14 @@ class BookingRepository
             $query->whereDate('check_in', $filters['date']);
         }
 
+        if (!empty($filters['with_trashed']) && $filters['with_trashed']) {
+            $query->withTrashed();
+        }
+
+        if (!empty($filters['only_trashed']) && $filters['only_trashed']) {
+            $query->onlyTrashed();
+        }
+
         // Prioritize today's check-ins, then upcoming, then past
         $query->orderByRaw("CASE WHEN DATE(check_in) = CURDATE() THEN 0 WHEN DATE(check_in) > CURDATE() THEN 1 ELSE 2 END, check_in ASC");
 

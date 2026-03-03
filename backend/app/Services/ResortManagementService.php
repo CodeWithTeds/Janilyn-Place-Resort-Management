@@ -348,7 +348,7 @@ class ResortManagementService
         return $this->bookingRepository->getByStatus(BookingStatus::PENDING);
     }
 
-    public function getBookings(array $filters = [], int $perPage = 10)
+    public function getBookings(array $filters = [], int $perPage = 10): \Illuminate\Contracts\Pagination\LengthAwarePaginator
     {
         return $this->bookingRepository->getFilteredBookings($filters, $perPage);
     }

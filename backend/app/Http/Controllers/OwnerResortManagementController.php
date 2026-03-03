@@ -28,6 +28,8 @@ class OwnerResortManagementController extends Controller
             'search' => $request->input('search'),
             'status' => $request->input('status'),
             'date' => $request->input('date'),
+            'with_trashed' => $request->boolean('with_trashed'),
+            'only_trashed' => $request->boolean('only_trashed'),
         ];
 
         $bookings = $this->resortService->getBookings($filters);
@@ -101,9 +103,10 @@ class OwnerResortManagementController extends Controller
     public function cancelBooking(Booking $booking): RedirectResponse
     {
         $this->resortService->updateBookingStatus($booking, BookingStatus::CANCELLED);
+        $booking->delete(); // Soft delete the booking
 
         return redirect()->back()
-            ->with('success', 'Booking cancelled successfully.');
+            ->with('success', 'Booking cancelled and moved to trash.');
     }
 
     public function calendar(Request $request): View

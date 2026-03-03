@@ -345,8 +345,12 @@
                             <x-input type="date" name="date" value="{{ request('date') }}" class="w-full md:w-40" />
                         </div>
                         <div class="flex space-x-2">
+                            <label class="inline-flex items-center">
+                                <input type="checkbox" name="with_trashed" value="1" {{ request('with_trashed') ? 'checked' : '' }} class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                                <span class="ml-2 text-sm text-gray-600">Include Deleted</span>
+                            </label>
                             <x-button type="submit">Filter</x-button>
-                            @if(request()->hasAny(['search', 'status', 'date']))
+                            @if(request()->hasAny(['search', 'status', 'date', 'with_trashed']))
                             <a href="{{ route('resort-management.bookings') }}" class="inline-flex items-center px-4 py-2 bg-gray-200 border border-transparent rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest hover:bg-gray-300 focus:bg-gray-300 active:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
                                 Clear
                             </a>
@@ -413,20 +417,28 @@
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                        {{ match($booking->status->value) {
-                                            'confirmed' => 'bg-green-100 text-green-800',
-                                            'pending' => 'bg-yellow-100 text-yellow-800',
-                                            'cancelled' => 'bg-red-100 text-red-800',
-                                            'checked_in' => 'bg-blue-100 text-blue-800',
-                                            'completed' => 'bg-gray-100 text-gray-800',
-                                            default => 'bg-gray-100 text-gray-800'
-                                        } }}">
-                                        {{ ucfirst($booking->status->value) }}
-                                    </span>
+                                    @if($booking->trashed())
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-800 text-white">
+                                            Deleted
+                                        </span>
+                                    @else
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                            {{ match($booking->status->value) {
+                                                'confirmed' => 'bg-green-100 text-green-800',
+                                                'pending' => 'bg-yellow-100 text-yellow-800',
+                                                'cancelled' => 'bg-red-100 text-red-800',
+                                                'checked_in' => 'bg-blue-100 text-blue-800',
+                                                'completed' => 'bg-gray-100 text-gray-800',
+                                                default => 'bg-gray-100 text-gray-800'
+                                            } }}">
+                                            {{ ucfirst($booking->status->value) }}
+                                        </span>
+                                    @endif
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    @if($booking->status === \App\Enums\BookingStatus::PENDING)
+                                    @if($booking->trashed())
+                                        <!-- No actions for deleted bookings yet, or restore could be added -->
+                                    @elseif($booking->status === \App\Enums\BookingStatus::PENDING)
                                     <form action="{{ route('resort-management.bookings.approve', $booking) }}" method="POST" class="inline-block">
                                         @csrf
                                         @method('PATCH')
