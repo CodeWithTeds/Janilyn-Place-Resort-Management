@@ -21,7 +21,7 @@
         }
     )">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            
+
             <!-- Tabs -->
             <div class="mb-6 border-b border-gray-200">
                 <nav class="-mb-px flex space-x-8" aria-label="Tabs">
@@ -37,7 +37,7 @@
             <!-- Walk-in Booking Form -->
             <div x-show="tab === 'walk-in'" class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6">
                 <h3 class="text-lg font-medium text-gray-900 mb-4">New Walk-in Reservation</h3>
-                
+
                 <!-- Booking Type Selection -->
                 <div class="mb-6">
                     <div class="flex space-x-4">
@@ -80,11 +80,15 @@
                                 <span class="text-red-500 text-xs" x-show="errors.check_out" x-text="errors.check_out"></span>
                             </div>
 
-                            <div>
+                            <div x-show="bookingType === 'exclusive' || canAddExtraPerson">
                                 <x-label for="pax_count" value="{{ __('Pax Count') }}" />
-                                <x-input id="pax_count" class="block mt-1 w-full" type="number" name="pax_count" min="1" :value="old('pax_count')" x-model="formData.pax_count" required />
+                                <x-input id="pax_count" class="block mt-1 w-full" type="number" name="pax_count" min="1" :value="old('pax_count')" x-model="formData.pax_count" x-bind:required="bookingType === 'exclusive' || canAddExtraPerson"
+                                    x-bind:placeholder="maxCapacity ? `Max ${maxCapacity} guests` : 'e.g. 2'" />
                                 <x-input-error for="pax_count" class="mt-2" />
                                 <span class="text-red-500 text-xs" x-show="errors.pax_count" x-text="errors.pax_count"></span>
+                                <p x-show="canAddExtraPerson" class="text-xs text-gray-500 mt-1 italic" style="display: none;">
+                                    * You can add 1 extra person beyond standard capacity (Total Max: <span x-text="maxCapacity"></span>). Extra charges apply.
+                                </p>
                             </div>
 
                             <div>
@@ -115,33 +119,33 @@
                             <!-- Room Type Selection (Modern UI) -->
                             <div x-show="bookingType === 'room'">
                                 <x-label value="{{ __('Select Room Type') }}" class="mb-2" />
-                                <input type="hidden" name="room_type_id" :value="formData.room_type_id">
-                                
+                                <input type="hidden" name="room_type_id" x-model="formData.room_type_id">
+
                                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                                     @foreach($roomTypes as $roomType)
-                                        <div @click="formData.room_type_id = '{{ $roomType->id }}'; formData.resort_unit_id = ''; formData.pricing_tier_id = ''; fetchUnits()"
-                                             class="cursor-pointer border rounded-xl p-4 transition-all duration-200 relative group"
-                                             :class="formData.room_type_id == '{{ $roomType->id }}' ? 'border-indigo-500 bg-indigo-50 shadow-md ring-1 ring-indigo-500' : 'border-gray-200 bg-white hover:border-indigo-300 hover:shadow-sm'">
-                                            
-                                            <div class="flex items-center justify-between">
-                                                <div>
-                                                    <span class="block text-sm font-semibold text-gray-900">{{ $roomType->name }}</span>
-                                                    <div class="mt-1 flex flex-col space-y-0.5">
-                                                         <span class="text-xs text-gray-500">
-                                                            Weekday: <span class="font-medium text-gray-900">₱{{ number_format($roomType->base_price_weekday, 2) }}</span>
-                                                         </span>
-                                                         <span class="text-xs text-gray-500">
-                                                            Weekend: <span class="font-medium text-gray-900">₱{{ number_format($roomType->base_price_weekend, 2) }}</span>
-                                                         </span>
-                                                    </div>
-                                                </div>
-                                                <div x-show="formData.room_type_id == '{{ $roomType->id }}'" class="text-indigo-600">
-                                                    <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 20 20">
-                                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                                                    </svg>
+                                    <div @click="formData.room_type_id = '{{ $roomType->id }}'; formData.resort_unit_id = ''; formData.pricing_tier_id = ''; fetchUnits(); fetchTiers();"
+                                        class="cursor-pointer border rounded-xl p-4 transition-all duration-200 relative group"
+                                        :class="formData.room_type_id == '{{ $roomType->id }}' ? 'border-indigo-500 bg-indigo-50 shadow-md ring-1 ring-indigo-500' : 'border-gray-200 bg-white hover:border-indigo-300 hover:shadow-sm'">
+
+                                        <div class="flex items-center justify-between">
+                                            <div>
+                                                <span class="block text-sm font-semibold text-gray-900">{{ $roomType->name }}</span>
+                                                <div class="mt-1 flex flex-col space-y-0.5">
+                                                    <span class="text-xs text-gray-500">
+                                                        Weekday: <span class="font-medium text-gray-900">₱{{ number_format($roomType->base_price_weekday, 2) }}</span>
+                                                    </span>
+                                                    <span class="text-xs text-gray-500">
+                                                        Weekend: <span class="font-medium text-gray-900">₱{{ number_format($roomType->base_price_weekend, 2) }}</span>
+                                                    </span>
                                                 </div>
                                             </div>
+                                            <div x-show="formData.room_type_id == '{{ $roomType->id }}'" class="text-indigo-600">
+                                                <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                                </svg>
+                                            </div>
                                         </div>
+                                    </div>
                                     @endforeach
                                 </div>
                                 <x-input-error for="room_type_id" class="mt-2" />
@@ -150,17 +154,17 @@
                                 <!-- Resort Unit Selection (Modern UI) -->
                                 <div class="mt-6" x-show="availableUnits.length > 0">
                                     <x-label value="{{ __('Select Unit (Optional)') }}" class="mb-2" />
-                                    <input type="hidden" name="resort_unit_id" :value="formData.resort_unit_id">
-                                    
+                                    <input type="hidden" name="resort_unit_id" x-model="formData.resort_unit_id">
+
                                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                                         <!-- Any Unit Option -->
                                         <div @click="formData.resort_unit_id = ''; filterTiers(); calculatePrice()"
-                                             class="cursor-pointer border rounded-xl p-4 transition-all duration-200 relative group"
-                                             :class="formData.resort_unit_id === '' ? 'border-indigo-500 bg-indigo-50 shadow-md ring-1 ring-indigo-500' : 'border-gray-200 bg-white hover:border-indigo-300 hover:shadow-sm'">
+                                            class="cursor-pointer border rounded-xl p-4 transition-all duration-200 relative group"
+                                            :class="formData.resort_unit_id === '' ? 'border-indigo-500 bg-indigo-50 shadow-md ring-1 ring-indigo-500' : 'border-gray-200 bg-white hover:border-indigo-300 hover:shadow-sm'">
                                             <div class="flex items-center justify-between">
                                                 <div class="flex items-center">
-                                                    <div class="h-8 w-8 rounded-full flex items-center justify-center" 
-                                                         :class="formData.resort_unit_id === '' ? 'bg-indigo-100 text-indigo-600' : 'bg-gray-100 text-gray-500 group-hover:bg-indigo-50 group-hover:text-indigo-500'">
+                                                    <div class="h-8 w-8 rounded-full flex items-center justify-center"
+                                                        :class="formData.resort_unit_id === '' ? 'bg-indigo-100 text-indigo-600' : 'bg-gray-100 text-gray-500 group-hover:bg-indigo-50 group-hover:text-indigo-500'">
                                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                                                         </svg>
@@ -181,12 +185,12 @@
                                         <!-- Specific Units -->
                                         <template x-for="unit in availableUnits" :key="unit.id">
                                             <div @click="formData.resort_unit_id = unit.id; filterTiers(); calculatePrice()"
-                                                 class="cursor-pointer border rounded-xl p-4 transition-all duration-200 relative group"
-                                                 :class="formData.resort_unit_id == unit.id ? 'border-indigo-500 bg-indigo-50 shadow-md ring-1 ring-indigo-500' : 'border-gray-200 bg-white hover:border-indigo-300 hover:shadow-sm'">
+                                                class="cursor-pointer border rounded-xl p-4 transition-all duration-200 relative group"
+                                                :class="formData.resort_unit_id == unit.id ? 'border-indigo-500 bg-indigo-50 shadow-md ring-1 ring-indigo-500' : 'border-gray-200 bg-white hover:border-indigo-300 hover:shadow-sm'">
                                                 <div class="flex items-center justify-between">
                                                     <div class="flex items-center">
-                                                        <div class="h-8 w-8 rounded-full flex items-center justify-center" 
-                                                             :class="formData.resort_unit_id == unit.id ? 'bg-indigo-100 text-indigo-600' : 'bg-gray-100 text-gray-500 group-hover:bg-indigo-50 group-hover:text-indigo-500'">
+                                                        <div class="h-8 w-8 rounded-full flex items-center justify-center"
+                                                            :class="formData.resort_unit_id == unit.id ? 'bg-indigo-100 text-indigo-600' : 'bg-gray-100 text-gray-500 group-hover:bg-indigo-50 group-hover:text-indigo-500'">
                                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                                                             </svg>
@@ -209,18 +213,18 @@
 
                                 <!-- Pricing Tier Selection (Modern UI) -->
                                 <div class="mt-6" x-show="availableTiers.length > 0 && availableUnits.length > 0">
-                                    <x-label value="{{ __('Select Pricing Tier (Optional)') }}" class="mb-2" />
+                                    <x-label class="mb-2" x-text="canAddExtraPerson ? '{{ __('Select Pricing Tier (Optional)') }}' : '{{ __('Select Pricing Tier') }}'" />
                                     <input type="hidden" name="pricing_tier_id" :value="formData.pricing_tier_id">
 
                                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                         <!-- Auto-calculate Option -->
-                                        <div @click="formData.pricing_tier_id = ''; calculatePrice()"
-                                             class="cursor-pointer border rounded-xl p-4 transition-all duration-200 relative group"
-                                             :class="formData.pricing_tier_id === '' ? 'border-indigo-500 bg-indigo-50 shadow-md ring-1 ring-indigo-500' : 'border-gray-200 bg-white hover:border-indigo-300 hover:shadow-sm'">
+                                        <div x-show="canAddExtraPerson" @click="formData.pricing_tier_id = ''; calculatePrice()"
+                                            class="cursor-pointer border rounded-xl p-4 transition-all duration-200 relative group"
+                                            :class="formData.pricing_tier_id === '' ? 'border-indigo-500 bg-indigo-50 shadow-md ring-1 ring-indigo-500' : 'border-gray-200 bg-white hover:border-indigo-300 hover:shadow-sm'">
                                             <div class="flex justify-between items-start">
                                                 <div class="flex items-start">
                                                     <div class="mt-0.5 h-5 w-5 rounded-full border flex items-center justify-center flex-shrink-0"
-                                                         :class="formData.pricing_tier_id === '' ? 'border-indigo-600 bg-indigo-600' : 'border-gray-300 bg-transparent'">
+                                                        :class="formData.pricing_tier_id === '' ? 'border-indigo-600 bg-indigo-600' : 'border-gray-300 bg-transparent'">
                                                         <div class="h-2 w-2 rounded-full bg-white" x-show="formData.pricing_tier_id === ''"></div>
                                                     </div>
                                                     <div class="ml-3">
@@ -236,14 +240,14 @@
 
                                         <!-- Tiers -->
                                         <template x-for="tier in availableTiers" :key="tier.id">
-                                            <div @click="formData.pricing_tier_id = tier.id; calculatePrice()"
-                                                 class="cursor-pointer border rounded-xl p-4 transition-all duration-200 relative group"
-                                                 :class="formData.pricing_tier_id == tier.id ? 'border-indigo-500 bg-indigo-50 shadow-md ring-1 ring-indigo-500' : 'border-gray-200 bg-white hover:border-indigo-300 hover:shadow-sm'">
-                                                
+                                            <div @click="formData.pricing_tier_id = tier.id; if(!canAddExtraPerson) { formData.pax_count = tier.max_guests; } calculatePrice()"
+                                                class="cursor-pointer border rounded-xl p-4 transition-all duration-200 relative group"
+                                                :class="formData.pricing_tier_id == tier.id ? 'border-indigo-500 bg-indigo-50 shadow-md ring-1 ring-indigo-500' : 'border-gray-200 bg-white hover:border-indigo-300 hover:shadow-sm'">
+
                                                 <div class="flex justify-between items-start">
                                                     <div class="flex items-start">
                                                         <div class="mt-0.5 h-5 w-5 rounded-full border flex items-center justify-center flex-shrink-0"
-                                                             :class="formData.pricing_tier_id == tier.id ? 'border-indigo-600 bg-indigo-600' : 'border-gray-300 bg-transparent'">
+                                                            :class="formData.pricing_tier_id == tier.id ? 'border-indigo-600 bg-indigo-600' : 'border-gray-300 bg-transparent'">
                                                             <div class="h-2 w-2 rounded-full bg-white" x-show="formData.pricing_tier_id == tier.id"></div>
                                                         </div>
                                                         <div class="ml-3">
@@ -267,6 +271,8 @@
                                             </div>
                                         </template>
                                     </div>
+                                    <x-input-error for="pricing_tier_id" class="mt-2" />
+                                    <span class="text-red-500 text-xs" x-show="errors.pricing_tier_id" x-text="errors.pricing_tier_id"></span>
                                 </div>
                             </div>
 
@@ -277,26 +283,26 @@
 
                                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                                     @foreach($exclusiveRentals as $rental)
-                                        <div @click="formData.exclusive_resort_rental_id = '{{ $rental->id }}'"
-                                             class="cursor-pointer border rounded-xl p-4 transition-all duration-200 relative group"
-                                             :class="formData.exclusive_resort_rental_id == '{{ $rental->id }}' ? 'border-indigo-500 bg-indigo-50 shadow-md ring-1 ring-indigo-500' : 'border-gray-200 bg-white hover:border-indigo-300 hover:shadow-sm'">
-                                            
-                                            <div class="flex items-center justify-between">
-                                                <div>
-                                                    <span class="block text-sm font-semibold text-gray-900">{{ $rental->name }}</span>
-                                                    <div class="mt-1">
-                                                         <span class="text-xs text-gray-500">
-                                                            Price Range: <span class="font-medium text-gray-900">₱{{ number_format($rental->price_range_min, 2) }} - ₱{{ number_format($rental->price_range_max, 2) }}</span>
-                                                         </span>
-                                                    </div>
-                                                </div>
-                                                <div x-show="formData.exclusive_resort_rental_id == '{{ $rental->id }}'" class="text-indigo-600">
-                                                    <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 20 20">
-                                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                                                    </svg>
+                                    <div @click="formData.exclusive_resort_rental_id = '{{ $rental->id }}'"
+                                        class="cursor-pointer border rounded-xl p-4 transition-all duration-200 relative group"
+                                        :class="formData.exclusive_resort_rental_id == '{{ $rental->id }}' ? 'border-indigo-500 bg-indigo-50 shadow-md ring-1 ring-indigo-500' : 'border-gray-200 bg-white hover:border-indigo-300 hover:shadow-sm'">
+
+                                        <div class="flex items-center justify-between">
+                                            <div>
+                                                <span class="block text-sm font-semibold text-gray-900">{{ $rental->name }}</span>
+                                                <div class="mt-1">
+                                                    <span class="text-xs text-gray-500">
+                                                        Price Range: <span class="font-medium text-gray-900">₱{{ number_format($rental->price_range_min, 2) }} - ₱{{ number_format($rental->price_range_max, 2) }}</span>
+                                                    </span>
                                                 </div>
                                             </div>
+                                            <div x-show="formData.exclusive_resort_rental_id == '{{ $rental->id }}'" class="text-indigo-600">
+                                                <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                                </svg>
+                                            </div>
                                         </div>
+                                    </div>
                                     @endforeach
                                 </div>
                                 <x-input-error for="exclusive_resort_rental_id" class="mt-2" />
@@ -316,12 +322,12 @@
             <div x-show="tab === 'online'" class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6" x-cloak>
                 <div class="flex flex-col md:flex-row justify-between items-center mb-6 space-y-4 md:space-y-0">
                     <h3 class="text-lg font-medium text-gray-900">All Bookings</h3>
-                    
+
                     <!-- Filters -->
                     <form method="GET" action="{{ route('resort-management.bookings') }}" class="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-4 w-full md:w-auto">
                         <input type="hidden" name="tab" value="online"> <!-- Keep tab active if possible, though this is JS based. We might need to persist tab state via URL param or just default to online if filters are present? -->
                         <!-- Actually, if we submit form, page reloads. JS defaults to 'walk-in'. We should fix that. -->
-                        
+
                         <div>
                             <x-input type="text" name="search" placeholder="Search Guest..." value="{{ request('search') }}" class="w-full md:w-48" />
                         </div>
@@ -329,9 +335,9 @@
                             <select name="status" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm w-full md:w-40">
                                 <option value="">All Status</option>
                                 @foreach(\App\Enums\BookingStatus::cases() as $status)
-                                    <option value="{{ $status->value }}" {{ request('status') == $status->value ? 'selected' : '' }}>
-                                        {{ ucfirst($status->value) }}
-                                    </option>
+                                <option value="{{ $status->value }}" {{ request('status') == $status->value ? 'selected' : '' }}>
+                                    {{ ucfirst($status->value) }}
+                                </option>
                                 @endforeach
                             </select>
                         </div>
@@ -341,9 +347,9 @@
                         <div class="flex space-x-2">
                             <x-button type="submit">Filter</x-button>
                             @if(request()->hasAny(['search', 'status', 'date']))
-                                <a href="{{ route('resort-management.bookings') }}" class="inline-flex items-center px-4 py-2 bg-gray-200 border border-transparent rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest hover:bg-gray-300 focus:bg-gray-300 active:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
-                                    Clear
-                                </a>
+                            <a href="{{ route('resort-management.bookings') }}" class="inline-flex items-center px-4 py-2 bg-gray-200 border border-transparent rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest hover:bg-gray-300 focus:bg-gray-300 active:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
+                                Clear
+                            </a>
                             @endif
                         </div>
                     </form>
@@ -373,13 +379,13 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     @if($booking->exclusiveResortRental)
-                                        <div class="text-sm text-purple-600 font-semibold">{{ $booking->exclusiveResortRental->name }}</div>
-                                        <div class="text-xs text-gray-500">Exclusive Rental</div>
+                                    <div class="text-sm text-purple-600 font-semibold">{{ $booking->exclusiveResortRental->name }}</div>
+                                    <div class="text-xs text-gray-500">Exclusive Rental</div>
                                     @elseif($booking->roomType)
-                                        <div class="text-sm text-gray-900">{{ $booking->roomType->name }}</div>
-                                        <div class="text-xs text-gray-500">Room Booking</div>
+                                    <div class="text-sm text-gray-900">{{ $booking->roomType->name }}</div>
+                                    <div class="text-xs text-gray-500">Room Booking</div>
                                     @else
-                                        <div class="text-sm text-gray-500">N/A</div>
+                                    <div class="text-sm text-gray-500">N/A</div>
                                     @endif
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -421,45 +427,45 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     @if($booking->status === \App\Enums\BookingStatus::PENDING)
-                                        <form action="{{ route('resort-management.bookings.approve', $booking) }}" method="POST" class="inline-block">
-                                            @csrf
-                                            @method('PATCH')
-                                            <button type="submit" class="text-indigo-600 hover:text-indigo-900 mr-3">Approve</button>
-                                        </form>
-                                        <form action="{{ route('resort-management.bookings.cancel', $booking) }}" method="POST" class="inline-block confirm-action"
-                                              data-confirm-title="Cancel Booking?"
-                                              data-confirm-text="Are you sure you want to cancel this booking?"
-                                              data-confirm-icon="warning"
-                                              data-confirm-button-text="Yes, cancel it!">
-                                            @csrf
-                                            @method('PATCH')
-                                            <button type="submit" class="text-red-600 hover:text-red-900">Cancel</button>
-                                        </form>
+                                    <form action="{{ route('resort-management.bookings.approve', $booking) }}" method="POST" class="inline-block">
+                                        @csrf
+                                        @method('PATCH')
+                                        <button type="submit" class="text-indigo-600 hover:text-indigo-900 mr-3">Approve</button>
+                                    </form>
+                                    <form action="{{ route('resort-management.bookings.cancel', $booking) }}" method="POST" class="inline-block confirm-action"
+                                        data-confirm-title="Cancel Booking?"
+                                        data-confirm-text="Are you sure you want to cancel this booking?"
+                                        data-confirm-icon="warning"
+                                        data-confirm-button-text="Yes, cancel it!">
+                                        @csrf
+                                        @method('PATCH')
+                                        <button type="submit" class="text-red-600 hover:text-red-900">Cancel</button>
+                                    </form>
                                     @elseif($booking->status === \App\Enums\BookingStatus::CONFIRMED)
-                                        <button type="button" 
-                                            @click="openCheckInModal('{{ $booking->id }}', '{{ $booking->room_type_id }}', '{{ $booking->check_in->format('Y-m-d') }}', '{{ $booking->check_out->format('Y-m-d') }}')" 
-                                            class="text-green-600 hover:text-green-900 mr-3">
-                                            Check In
-                                        </button>
-                                         <form action="{{ route('resort-management.bookings.cancel', $booking) }}" method="POST" class="inline-block confirm-action"
-                                               data-confirm-title="Cancel Booking?"
-                                               data-confirm-text="Are you sure you want to cancel this booking?"
-                                               data-confirm-icon="warning"
-                                               data-confirm-button-text="Yes, cancel it!">
-                                            @csrf
-                                            @method('PATCH')
-                                            <button type="submit" class="text-red-600 hover:text-red-900">Cancel</button>
-                                        </form>
+                                    <button type="button"
+                                        @click="openCheckInModal('{{ $booking->id }}', '{{ $booking->room_type_id }}', '{{ $booking->check_in->format('Y-m-d') }}', '{{ $booking->check_out->format('Y-m-d') }}')"
+                                        class="text-green-600 hover:text-green-900 mr-3">
+                                        Check In
+                                    </button>
+                                    <form action="{{ route('resort-management.bookings.cancel', $booking) }}" method="POST" class="inline-block confirm-action"
+                                        data-confirm-title="Cancel Booking?"
+                                        data-confirm-text="Are you sure you want to cancel this booking?"
+                                        data-confirm-icon="warning"
+                                        data-confirm-button-text="Yes, cancel it!">
+                                        @csrf
+                                        @method('PATCH')
+                                        <button type="submit" class="text-red-600 hover:text-red-900">Cancel</button>
+                                    </form>
                                     @elseif($booking->status === \App\Enums\BookingStatus::CHECKED_IN)
-                                        <form action="{{ route('resort-management.bookings.check-out', $booking) }}" method="POST" class="inline-block confirm-action"
-                                              data-confirm-title="Check Out Guest?"
-                                              data-confirm-text="Are you sure you want to check out this guest?"
-                                              data-confirm-icon="info"
-                                              data-confirm-button-text="Yes, check out!">
-                                            @csrf
-                                            @method('PATCH')
-                                            <button type="submit" class="text-gray-600 hover:text-gray-900 mr-3">Check Out</button>
-                                        </form>
+                                    <form action="{{ route('resort-management.bookings.check-out', $booking) }}" method="POST" class="inline-block confirm-action"
+                                        data-confirm-title="Check Out Guest?"
+                                        data-confirm-text="Are you sure you want to check out this guest?"
+                                        data-confirm-icon="info"
+                                        data-confirm-button-text="Yes, check out!">
+                                        @csrf
+                                        @method('PATCH')
+                                        <button type="submit" class="text-gray-600 hover:text-gray-900 mr-3">Check Out</button>
+                                    </form>
                                     @endif
                                 </td>
                             </tr>
@@ -473,7 +479,7 @@
                         </tbody>
                     </table>
                 </div>
-                
+
                 <div class="mt-4">
                     {{ $bookings->withQueryString()->links() }}
                 </div>
@@ -559,17 +565,20 @@
                     payment_method: oldData.payment_method || 'cash'
                 },
                 init() {
-                     if (this.bookingType === 'room' && this.formData.room_type_id) {
-                         this.fetchTiers().then(() => {
-                             if (this.formData.check_in && this.formData.check_out) {
-                                 this.fetchUnits();
-                             }
-                         });
-                     }
+                    if (this.bookingType === 'room' && this.formData.room_type_id) {
+                        this.fetchTiers().then(() => {
+                            if (this.formData.check_in && this.formData.check_out) {
+                                this.fetchUnits();
+                            }
+                        });
+                    }
                 },
                 availableUnits: [],
                 availableTiers: [],
                 allTiers: [],
+                currentRoomType: null,
+                maxCapacity: 0,
+                canAddExtraPerson: false,
                 totalPrice: 0,
                 errors: {},
                 showCheckInModal: false,
@@ -623,28 +632,46 @@
                             const response = await fetch(`/api/room-types/${this.formData.room_type_id}`);
                             if (response.ok) {
                                 const data = await response.json();
+                                this.currentRoomType = data;
                                 this.allTiers = data.pricing_tiers || [];
                                 this.filterTiers();
+                                this.calculateCapacity();
                             } else {
                                 this.allTiers = [];
                                 this.availableTiers = [];
+                                this.currentRoomType = null;
+                                this.maxCapacity = 0;
+                                this.canAddExtraPerson = false;
                             }
                         } catch (error) {
                             console.error('Error fetching tiers:', error);
                             this.allTiers = [];
                             this.availableTiers = [];
+                            this.currentRoomType = null;
                         }
                     } else {
                         this.allTiers = [];
                         this.availableTiers = [];
+                        this.currentRoomType = null;
+                        this.maxCapacity = 0;
+                        this.canAddExtraPerson = false;
+                    }
+                },
+                calculateCapacity() {
+                    if (this.allTiers.length > 0) {
+                        const maxTierCapacity = this.allTiers.reduce((max, tier) => Math.max(max, tier.max_guests), 0);
+                        const category = this.currentRoomType?.category?.toUpperCase() || '';
+                        this.canAddExtraPerson = ['DELUXE ROOM', 'GUEST HOUSE'].includes(category);
+                        this.maxCapacity = this.canAddExtraPerson ? maxTierCapacity + 1 : maxTierCapacity;
+                    } else {
+                        this.maxCapacity = 0;
+                        this.canAddExtraPerson = false;
                     }
                 },
                 filterTiers() {
                     if (this.formData.resort_unit_id) {
-                        // If unit selected, show unit-specific tiers AND global tiers
-                        // OR just unit-specific? Usually unit-specific overrides.
-                        // Let's show ALL valid tiers for this context.
-                        this.availableTiers = this.allTiers.filter(t => 
+                    
+                        this.availableTiers = this.allTiers.filter(t =>
                             t.resort_unit_id == this.formData.resort_unit_id || t.resort_unit_id === null
                         );
                     } else {
@@ -657,7 +684,7 @@
                         this.totalPrice = 0;
                         return;
                     }
-                    
+
                     if (this.bookingType === 'room' && !this.formData.room_type_id) return;
                     if (this.bookingType === 'exclusive' && !this.formData.exclusive_resort_rental_id) return;
 
@@ -724,8 +751,16 @@
                         hasError = true;
                     }
 
-                    if (!this.formData.pax_count || this.formData.pax_count < 1) {
+                    if (this.bookingType === 'room' && !this.canAddExtraPerson && !this.formData.pricing_tier_id) {
+                        this.errors.pricing_tier_id = 'Please select a pricing tier.';
+                        hasError = true;
+                    }
+
+                    if ((this.bookingType === 'exclusive' || this.canAddExtraPerson) && (!this.formData.pax_count || this.formData.pax_count < 1)) {
                         this.errors.pax_count = 'Pax Count must be at least 1';
+                        hasError = true;
+                    } else if (this.bookingType === 'room' && this.maxCapacity > 0 && this.formData.pax_count > this.maxCapacity) {
+                        this.errors.pax_count = `Pax count cannot exceed ${this.maxCapacity} guests for this room type${this.canAddExtraPerson ? ' (including 1 extra person)' : ''}.`;
                         hasError = true;
                     }
 

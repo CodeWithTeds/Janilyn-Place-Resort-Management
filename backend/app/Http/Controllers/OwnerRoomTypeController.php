@@ -29,6 +29,27 @@ class OwnerRoomTypeController extends Controller
             $data['image_path'] = $request->file('image')->store('room-types', 'public');
         }
 
+        // Calculate min/max pax from tiers if not provided
+        if (!empty($data['pricing_tiers'])) {
+            $tiers = collect($data['pricing_tiers']);
+            $data['min_pax'] = $tiers->min('min_guests');
+            $data['max_pax'] = $tiers->max('max_guests');
+            // Set base prices from the first tier as fallback/default
+            $firstTier = $tiers->first();
+            $data['base_price_weekday'] = $firstTier['price_weekday'];
+            $data['base_price_weekend'] = $firstTier['price_weekend'];
+        } else {
+            // Fallback defaults if no tiers (should not happen due to validation)
+            $data['min_pax'] = $data['min_pax'] ?? 1;
+            $data['max_pax'] = $data['max_pax'] ?? 2;
+            $data['base_price_weekday'] = $data['base_price_weekday'] ?? 0;
+            $data['base_price_weekend'] = $data['base_price_weekend'] ?? 0;
+        }
+        
+        // Ensure optional fees are set to 0 if null
+        $data['extra_person_charge'] = $data['extra_person_charge'] ?? 0;
+        $data['cooking_fee'] = $data['cooking_fee'] ?? 0;
+
         $roomType = RoomType::create($data);
 
         if (!empty($data['pricing_tiers'])) {
@@ -51,6 +72,21 @@ class OwnerRoomTypeController extends Controller
         if ($request->hasFile('image')) {
             $data['image_path'] = $request->file('image')->store('room-types', 'public');
         }
+
+        // Calculate min/max pax from tiers if not provided
+        if (!empty($data['pricing_tiers'])) {
+            $tiers = collect($data['pricing_tiers']);
+            $data['min_pax'] = $tiers->min('min_guests');
+            $data['max_pax'] = $tiers->max('max_guests');
+            // Set base prices from the first tier as fallback/default
+            $firstTier = $tiers->first();
+            $data['base_price_weekday'] = $firstTier['price_weekday'];
+            $data['base_price_weekend'] = $firstTier['price_weekend'];
+        }
+        
+        // Ensure optional fees are set to 0 if null
+        $data['extra_person_charge'] = $data['extra_person_charge'] ?? 0;
+        $data['cooking_fee'] = $data['cooking_fee'] ?? 0;
 
         $roomType->update($data);
 

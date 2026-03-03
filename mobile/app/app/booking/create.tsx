@@ -143,6 +143,18 @@ export default function CreateBookingScreen() {
         return;
     }
 
+    // Validate Max Capacity
+    if (type === 'room' && roomType) {
+        const maxTierCapacity = allTiers.reduce((max, tier) => Math.max(max, tier.max_guests), 0);
+        const canAddExtraPerson = ['DELUXE ROOM', 'GUEST HOUSE'].includes(roomType.category?.toUpperCase());
+        const absoluteMax = canAddExtraPerson ? maxTierCapacity + 1 : maxTierCapacity;
+        
+        if (Number(paxCount) > absoluteMax) {
+            Alert.alert('Capacity Exceeded', `Maximum capacity for this room is ${absoluteMax} guests${canAddExtraPerson ? ' (including 1 extra person)' : ''}.`);
+            return;
+        }
+    }
+
     try {
       setLoading(true);
       
@@ -223,6 +235,10 @@ export default function CreateBookingScreen() {
       setCheckOut(selectedDate);
     }
   };
+
+  const maxTierCapacity = allTiers.reduce((max, tier) => Math.max(max, tier.max_guests), 0);
+  const canAddExtraPerson = roomType && ['DELUXE ROOM', 'GUEST HOUSE'].includes(roomType.category?.toUpperCase());
+  const absoluteMax = canAddExtraPerson ? maxTierCapacity + 1 : maxTierCapacity;
 
   return (
     <ThemedView style={[styles.container, { paddingTop: insets.top }]}>
@@ -362,9 +378,15 @@ export default function CreateBookingScreen() {
           <Input
             value={paxCount}
             onChangeText={setPaxCount}
-            placeholder="e.g. 2"
+            placeholder={`Max ${absoluteMax} guests`}
             keyboardType="numeric"
           />
+          {canAddExtraPerson && (
+            <ThemedText style={styles.helperText}>
+              * You can add 1 extra person beyond standard capacity (Total Max: {absoluteMax}). 
+              Extra charges apply.
+            </ThemedText>
+          )}
         </View>
 
         <View style={styles.section}>
@@ -503,5 +525,11 @@ const styles = StyleSheet.create({
   roomTypePrice: {
     fontSize: 12,
     color: '#64748b',
+  },
+  helperText: {
+    fontSize: 12,
+    color: '#64748b',
+    marginTop: 4,
+    fontStyle: 'italic',
   },
 });

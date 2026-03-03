@@ -79,6 +79,20 @@ class ResortManagementService
                 $tier = $room->pricingTiers->first(function($tier) use ($pax) {
                     return $tier->resort_unit_id === null && $pax >= $tier->min_guests && $pax <= $tier->max_guests;
                 });
+
+                // 3. Handle Extra Person Logic (Deluxe Room & Guest House only, Max 1 extra)
+                if (!$tier && in_array(strtoupper($room->category), ['DELUXE ROOM', 'GUEST HOUSE'])) {
+                    // Find the tier with the highest max_guests
+                    $maxTier = $room->pricingTiers->where('resort_unit_id', null)->sortByDesc('max_guests')->first();
+                    
+                    if ($maxTier) {
+                        $extraPax = $pax - $maxTier->max_guests;
+                        // Allow only 1 extra person
+                        if ($extraPax === 1) {
+                            $tier = $maxTier;
+                        }
+                    }
+                }
             }
         }
 
@@ -109,8 +123,13 @@ class ResortManagementService
             $currentDate->addDay();
         }
 
-        // Extra person charge (only if no tier matched)
-        if (!$tier && $pax > $room->min_pax) {
+        // Extra person charge (Applicable if we are using a tier AND pax exceeds that tier's max)
+        if ($tier && $pax > $tier->max_guests) {
+            $extraPax = $pax - $tier->max_guests;
+            $totalPrice += ($extraPax * $room->extra_person_charge * $days);
+        }
+        // Fallback for old logic (if no tier matched, though tiers are required now)
+        elseif (!$tier && $pax > $room->min_pax) {
             $extraPax = $pax - $room->min_pax;
             $totalPrice += ($extraPax * $room->extra_person_charge * $days);
         }
