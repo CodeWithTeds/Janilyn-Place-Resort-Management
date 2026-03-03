@@ -78,13 +78,13 @@
                                 <div class="space-y-5">
                                     <div>
                                         <x-label for="name" value="{{ __('Package Name') }}" class="font-medium text-gray-700" />
-                                        <x-input id="name" class="block mt-2 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-lg shadow-sm transition-colors duration-200" type="text" name="name" :value="old('name')" required placeholder="e.g. Resort Rental + 3 Apartments" />
+                                        <x-input id="name" class="block mt-2 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-lg shadow-sm transition-colors duration-200" type="text" name="name" :value="old('name')" required placeholder="e.g. Entire Resort Exclusive" />
                                         <x-input-error for="name" class="mt-2" />
                                     </div>
 
                                     <div>
-                                        <x-label for="description" value="{{ __('Description (e.g., Bedrooms count)') }}" class="font-medium text-gray-700" />
-                                        <textarea id="description" name="description" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-lg shadow-sm block mt-2 w-full transition-colors duration-200" rows="3" placeholder="e.g. (6 Bedrooms)">{{ old('description') }}</textarea>
+                                        <x-label for="description" value="{{ __('Description') }}" class="font-medium text-gray-700" />
+                                        <textarea id="description" name="description" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-lg shadow-sm block mt-2 w-full transition-colors duration-200" rows="3" placeholder="Description of the exclusive rental package...">{{ old('description') }}</textarea>
                                         <x-input-error for="description" class="mt-2" />
                                     </div>
                                 </div>
@@ -93,66 +93,84 @@
 
                         <!-- Right Column: Pricing & Capacity -->
                         <div class="lg:col-span-2 space-y-6">
-                            <div class="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
+                            <!-- Pricing Tiers (Required) -->
+                            <div class="bg-white p-6 rounded-xl shadow-lg border border-gray-100" x-data="{ tiers: [{ min_guests: 1, max_guests: 20, price_weekday: '', price_weekend: '' }] }">
                                 <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-                                    <svg class="w-5 h-5 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg class="w-5 h-5 mr-2 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
-                                    Pricing Configuration
+                                    Pricing Tiers (Required)
                                 </h3>
+                                <p class="text-sm text-gray-500 mb-4">Define pricing based on guest count. At least one tier is required.</p>
 
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div>
-                                        <x-label for="price_range_min" value="{{ __('Min Price (₱)') }}" class="font-medium text-gray-700" />
-                                        <x-input id="price_range_min" class="block mt-2 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-lg shadow-sm" type="number" step="0.01" name="price_range_min" :value="old('price_range_min')" required placeholder="10000" />
-                                        <x-input-error for="price_range_min" class="mt-2" />
-                                    </div>
+                                <div class="space-y-4">
+                                    <template x-for="(tier, index) in tiers" :key="index">
+                                        <div class="border rounded-lg bg-gray-50 overflow-hidden" x-data="{ expanded: true }">
+                                            <!-- Tier Header / Summary -->
+                                            <div @click="expanded = !expanded" class="p-4 flex justify-between items-center cursor-pointer hover:bg-gray-100 transition-colors">
+                                                <div class="flex items-center space-x-4">
+                                                    <span class="font-medium text-gray-700">Tier <span x-text="index + 1"></span></span>
+                                                    <span class="text-sm text-gray-500" x-show="tier.min_guests && tier.max_guests">
+                                                        (<span x-text="tier.min_guests"></span> - <span x-text="tier.max_guests"></span> Guests)
+                                                    </span>
+                                                </div>
+                                                <div class="flex items-center space-x-2">
+                                                    <button type="button" @click.stop="tiers.length > 1 ? tiers.splice(index, 1) : alert('At least one tier is required.')" class="text-red-500 hover:text-red-700 p-1">
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                                    </button>
+                                                    <svg class="w-5 h-5 text-gray-400 transform transition-transform" :class="{ 'rotate-180': expanded }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                                    </svg>
+                                                </div>
+                                            </div>
 
-                                    <div>
-                                        <x-label for="price_range_max" value="{{ __('Max Price (₱)') }}" class="font-medium text-gray-700" />
-                                        <x-input id="price_range_max" class="block mt-2 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-lg shadow-sm" type="number" step="0.01" name="price_range_max" :value="old('price_range_max')" required placeholder="12000" />
-                                        <x-input-error for="price_range_max" class="mt-2" />
-                                    </div>
+                                            <!-- Expanded Details -->
+                                            <div x-show="expanded" x-collapse class="p-4 border-t border-gray-200 bg-white grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div>
+                                                    <label class="block font-medium text-xs text-gray-700">Min Guests</label>
+                                                    <input type="number" :name="`pricing_tiers[${index}][min_guests]`" x-model="tier.min_guests" class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm text-sm" required placeholder="1" min="1">
+                                                </div>
+                                                <div>
+                                                    <label class="block font-medium text-xs text-gray-700">Max Guests</label>
+                                                    <input type="number" :name="`pricing_tiers[${index}][max_guests]`" x-model="tier.max_guests" class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm text-sm" required placeholder="2" min="1">
+                                                </div>
+                                                <div>
+                                                    <label class="block font-medium text-xs text-gray-700">Weekday ₱</label>
+                                                    <input type="number" step="0.01" :name="`pricing_tiers[${index}][price_weekday]`" x-model="tier.price_weekday" class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm text-sm" required placeholder="0.00" min="0">
+                                                </div>
+                                                <div>
+                                                    <label class="block font-medium text-xs text-gray-700">Weekend ₱</label>
+                                                    <input type="number" step="0.01" :name="`pricing_tiers[${index}][price_weekend]`" x-model="tier.price_weekend" class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm text-sm" required placeholder="0.00" min="0">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </template>
 
-                                    <div>
-                                        <x-label for="cooking_fee" value="{{ __('Cooking Fee (₱)') }}" class="font-medium text-gray-700" />
-                                        <x-input id="cooking_fee" class="block mt-2 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-lg shadow-sm" type="number" step="0.01" name="cooking_fee" :value="old('cooking_fee', 300)" required placeholder="300" />
-                                        <x-input-error for="cooking_fee" class="mt-2" />
-                                    </div>
+                                    <button type="button" @click="tiers.push({ min_guests: '', max_guests: '', price_weekday: '', price_weekend: '' })" class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 active:bg-gray-900 focus:outline-none focus:border-gray-900 focus:ring ring-gray-300 disabled:opacity-25 transition ease-in-out duration-150">
+                                        + Add Tier
+                                    </button>
                                 </div>
                             </div>
 
                             <div class="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
                                 <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-                                    <svg class="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                    <svg class="w-5 h-5 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
-                                    Capacity Settings
+                                    Additional Fees (Optional)
                                 </h3>
 
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
-                                        <x-label for="capacity_overnight_min" value="{{ __('Overnight Min Pax') }}" class="font-medium text-gray-700" />
-                                        <x-input id="capacity_overnight_min" class="block mt-2 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-lg shadow-sm" type="number" name="capacity_overnight_min" :value="old('capacity_overnight_min')" placeholder="20" />
-                                        <x-input-error for="capacity_overnight_min" class="mt-2" />
+                                        <x-label for="extra_person_charge" value="{{ __('Extra Person Charge (₱)') }}" class="font-medium text-gray-700" />
+                                        <x-input id="extra_person_charge" class="block mt-2 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-lg shadow-sm" type="number" step="0.01" name="extra_person_charge" :value="old('extra_person_charge', 0)" placeholder="0.00" min="0" />
+                                        <x-input-error for="extra_person_charge" class="mt-2" />
                                     </div>
 
                                     <div>
-                                        <x-label for="capacity_overnight_max" value="{{ __('Overnight Max Pax') }}" class="font-medium text-gray-700" />
-                                        <x-input id="capacity_overnight_max" class="block mt-2 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-lg shadow-sm" type="number" name="capacity_overnight_max" :value="old('capacity_overnight_max')" placeholder="30" />
-                                        <x-input-error for="capacity_overnight_max" class="mt-2" />
-                                    </div>
-
-                                    <div>
-                                        <x-label for="capacity_day_min" value="{{ __('Day Guest Min Pax') }}" class="font-medium text-gray-700" />
-                                        <x-input id="capacity_day_min" class="block mt-2 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-lg shadow-sm" type="number" name="capacity_day_min" :value="old('capacity_day_min')" placeholder="30" />
-                                        <x-input-error for="capacity_day_min" class="mt-2" />
-                                    </div>
-
-                                    <div>
-                                        <x-label for="capacity_day_max" value="{{ __('Day Guest Max Pax') }}" class="font-medium text-gray-700" />
-                                        <x-input id="capacity_day_max" class="block mt-2 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-lg shadow-sm" type="number" name="capacity_day_max" :value="old('capacity_day_max')" placeholder="60" />
-                                        <x-input-error for="capacity_day_max" class="mt-2" />
+                                        <x-label for="cooking_fee" value="{{ __('Cooking Fee (₱)') }}" class="font-medium text-gray-700" />
+                                        <x-input id="cooking_fee" class="block mt-2 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-lg shadow-sm" type="number" step="0.01" name="cooking_fee" :value="old('cooking_fee', 0)" placeholder="0.00" min="0" />
+                                        <x-input-error for="cooking_fee" class="mt-2" />
                                     </div>
                                 </div>
                             </div>

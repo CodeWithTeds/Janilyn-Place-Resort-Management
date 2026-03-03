@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ExclusiveResortRental extends Model
 {
@@ -12,25 +13,28 @@ class ExclusiveResortRental extends Model
     protected $fillable = [
         'name',
         'description',
-        'price_range_min',
-        'price_range_max',
-        'capacity_overnight_min',
-        'capacity_overnight_max',
-        'capacity_day_min',
-        'capacity_day_max',
+        'min_pax',
+        'max_pax',
+        'base_price_weekday',
+        'base_price_weekend',
+        'extra_person_charge',
         'cooking_fee',
         'features',
         'image_path',
     ];
 
     protected $casts = [
-        'price_range_min' => 'decimal:2',
-        'price_range_max' => 'decimal:2',
-        'capacity_overnight_min' => 'integer',
-        'capacity_overnight_max' => 'integer',
-        'capacity_day_min' => 'integer',
-        'capacity_day_max' => 'integer',
+        'min_pax' => 'integer',
+        'max_pax' => 'integer',
+        'base_price_weekday' => 'decimal:2',
+        'base_price_weekend' => 'decimal:2',
+        'extra_person_charge' => 'decimal:2',
         'cooking_fee' => 'decimal:2',
         'features' => 'array',
     ];
+
+    public function pricingTiers(): HasMany
+    {
+        return $this->hasMany(ExclusiveResortRentalPricingTier::class);
+    }
 }

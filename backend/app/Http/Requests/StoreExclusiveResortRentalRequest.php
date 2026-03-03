@@ -24,15 +24,15 @@ class StoreExclusiveResortRentalRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
-            'price_range_min' => ['required', 'numeric', 'min:0'],
-            'price_range_max' => ['required', 'numeric', 'gte:price_range_min'],
-            'capacity_overnight_min' => ['nullable', 'integer', 'min:1'],
-            'capacity_overnight_max' => ['nullable', 'integer', 'gte:capacity_overnight_min'],
-            'capacity_day_min' => ['nullable', 'integer', 'min:1'],
-            'capacity_day_max' => ['nullable', 'integer', 'gte:capacity_day_min'],
-            'cooking_fee' => ['required', 'numeric', 'min:0'],
+            'cooking_fee' => ['nullable', 'numeric', 'min:0'],
+            'extra_person_charge' => ['nullable', 'numeric', 'min:0'],
             'image' => ['nullable', 'image', 'max:2048'], // 2MB Max
             'features' => ['nullable', 'array'],
+            'pricing_tiers' => ['required', 'array', 'min:1'],
+            'pricing_tiers.*.min_guests' => ['required', 'integer', 'min:1'],
+            'pricing_tiers.*.max_guests' => ['required', 'integer', 'gte:pricing_tiers.*.min_guests'],
+            'pricing_tiers.*.price_weekday' => ['required', 'numeric', 'min:0'],
+            'pricing_tiers.*.price_weekend' => ['required', 'numeric', 'min:0'],
         ];
     }
 }

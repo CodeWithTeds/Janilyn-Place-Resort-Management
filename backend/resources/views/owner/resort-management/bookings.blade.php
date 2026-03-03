@@ -41,13 +41,13 @@
                 <!-- Booking Type Selection -->
                 <div class="mb-6">
                     <div class="flex space-x-4">
-                        <label class="inline-flex items-center">
-                            <input type="radio" x-model="bookingType" value="room" class="form-radio text-indigo-600" name="booking_type_selector">
-                            <span class="ml-2">Room Booking</span>
+                        <label class="inline-flex items-center cursor-pointer">
+                            <input type="radio" x-model="bookingType" value="room" class="form-radio text-indigo-600 h-5 w-5" name="booking_type_selector">
+                            <span class="ml-2 text-gray-700 font-medium">Room Booking</span>
                         </label>
-                        <label class="inline-flex items-center">
-                            <input type="radio" x-model="bookingType" value="exclusive" class="form-radio text-indigo-600" name="booking_type_selector">
-                            <span class="ml-2">Exclusive Rental</span>
+                        <label class="inline-flex items-center cursor-pointer">
+                            <input type="radio" x-model="bookingType" value="exclusive" class="form-radio text-indigo-600 h-5 w-5" name="booking_type_selector">
+                            <span class="ml-2 text-gray-700 font-medium">Exclusive Rental</span>
                         </label>
                     </div>
                 </div>
@@ -80,9 +80,9 @@
                                 <span class="text-red-500 text-xs" x-show="errors.check_out" x-text="errors.check_out"></span>
                             </div>
 
-                            <div x-show="bookingType === 'exclusive' || canAddExtraPerson">
+                            <div x-show="bookingType === 'room' && canAddExtraPerson">
                                 <x-label for="pax_count" value="{{ __('Pax Count') }}" />
-                                <x-input id="pax_count" class="block mt-1 w-full" type="number" name="pax_count" min="1" :value="old('pax_count')" x-model="formData.pax_count" x-bind:required="bookingType === 'exclusive' || canAddExtraPerson"
+                                <x-input id="pax_count" class="block mt-1 w-full" type="number" name="pax_count" min="1" :value="old('pax_count')" x-model="formData.pax_count" x-bind:required="bookingType === 'room' && canAddExtraPerson"
                                     x-bind:placeholder="maxCapacity ? `Max ${maxCapacity} guests` : 'e.g. 2'" />
                                 <x-input-error for="pax_count" class="mt-2" />
                                 <span class="text-red-500 text-xs" x-show="errors.pax_count" x-text="errors.pax_count"></span>
@@ -210,80 +210,18 @@
                                         </template>
                                     </div>
                                 </div>
-
-                                <!-- Pricing Tier Selection (Modern UI) -->
-                                <div class="mt-6" x-show="availableTiers.length > 0 && availableUnits.length > 0">
-                                    <x-label class="mb-2" x-text="canAddExtraPerson ? '{{ __('Select Pricing Tier (Optional)') }}' : '{{ __('Select Pricing Tier') }}'" />
-                                    <input type="hidden" name="pricing_tier_id" :value="formData.pricing_tier_id">
-
-                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                        <!-- Auto-calculate Option -->
-                                        <div x-show="canAddExtraPerson" @click="formData.pricing_tier_id = ''; calculatePrice()"
-                                            class="cursor-pointer border rounded-xl p-4 transition-all duration-200 relative group"
-                                            :class="formData.pricing_tier_id === '' ? 'border-indigo-500 bg-indigo-50 shadow-md ring-1 ring-indigo-500' : 'border-gray-200 bg-white hover:border-indigo-300 hover:shadow-sm'">
-                                            <div class="flex justify-between items-start">
-                                                <div class="flex items-start">
-                                                    <div class="mt-0.5 h-5 w-5 rounded-full border flex items-center justify-center flex-shrink-0"
-                                                        :class="formData.pricing_tier_id === '' ? 'border-indigo-600 bg-indigo-600' : 'border-gray-300 bg-transparent'">
-                                                        <div class="h-2 w-2 rounded-full bg-white" x-show="formData.pricing_tier_id === ''"></div>
-                                                    </div>
-                                                    <div class="ml-3">
-                                                        <span class="block text-sm font-semibold text-gray-900">Auto-calculate</span>
-                                                        <span class="block text-xs text-gray-500 mt-0.5">Best price based on pax count</span>
-                                                    </div>
-                                                </div>
-                                                <div class="text-xs font-medium text-indigo-600 bg-indigo-100 px-2 py-1 rounded-full">
-                                                    Recommended
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <!-- Tiers -->
-                                        <template x-for="tier in availableTiers" :key="tier.id">
-                                            <div @click="formData.pricing_tier_id = tier.id; if(!canAddExtraPerson) { formData.pax_count = tier.max_guests; } calculatePrice()"
-                                                class="cursor-pointer border rounded-xl p-4 transition-all duration-200 relative group"
-                                                :class="formData.pricing_tier_id == tier.id ? 'border-indigo-500 bg-indigo-50 shadow-md ring-1 ring-indigo-500' : 'border-gray-200 bg-white hover:border-indigo-300 hover:shadow-sm'">
-
-                                                <div class="flex justify-between items-start">
-                                                    <div class="flex items-start">
-                                                        <div class="mt-0.5 h-5 w-5 rounded-full border flex items-center justify-center flex-shrink-0"
-                                                            :class="formData.pricing_tier_id == tier.id ? 'border-indigo-600 bg-indigo-600' : 'border-gray-300 bg-transparent'">
-                                                            <div class="h-2 w-2 rounded-full bg-white" x-show="formData.pricing_tier_id == tier.id"></div>
-                                                        </div>
-                                                        <div class="ml-3">
-                                                            <div class="flex items-center space-x-2">
-                                                                <span class="block text-sm font-semibold text-gray-900" x-text="tier.min_guests + '-' + tier.max_guests + ' Pax'"></span>
-                                                                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-blue-800" x-show="tier.resort_unit_id">
-                                                                    Unit Specific
-                                                                </span>
-                                                            </div>
-                                                            <div class="mt-1 flex flex-col space-y-1">
-                                                                <span class="text-xs text-gray-600">
-                                                                    Weekday: <span class="font-medium text-gray-900" x-text="'₱' + Number(tier.price_weekday).toLocaleString()"></span>
-                                                                </span>
-                                                                <span class="text-xs text-gray-600">
-                                                                    Weekend: <span class="font-medium text-gray-900" x-text="'₱' + Number(tier.price_weekend).toLocaleString()"></span>
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </template>
-                                    </div>
-                                    <x-input-error for="pricing_tier_id" class="mt-2" />
-                                    <span class="text-red-500 text-xs" x-show="errors.pricing_tier_id" x-text="errors.pricing_tier_id"></span>
-                                </div>
                             </div>
 
                             <!-- Exclusive Rental Selection (Modern UI) -->
-                            <div x-show="bookingType === 'exclusive'" style="display: none;">
+
+                            <!-- Exclusive Rental Selection (Modern UI) -->
+                            <div x-show="bookingType === 'exclusive'">
                                 <x-label value="{{ __('Select Rental Package') }}" class="mb-2" />
                                 <input type="hidden" name="exclusive_resort_rental_id" :value="formData.exclusive_resort_rental_id">
 
                                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                                     @foreach($exclusiveRentals as $rental)
-                                    <div @click="formData.exclusive_resort_rental_id = '{{ $rental->id }}'"
+                                    <div @click="formData.exclusive_resort_rental_id = '{{ $rental->id }}'; fetchExclusiveDetails();"
                                         class="cursor-pointer border rounded-xl p-4 transition-all duration-200 relative group"
                                         :class="formData.exclusive_resort_rental_id == '{{ $rental->id }}' ? 'border-indigo-500 bg-indigo-50 shadow-md ring-1 ring-indigo-500' : 'border-gray-200 bg-white hover:border-indigo-300 hover:shadow-sm'">
 
@@ -292,7 +230,10 @@
                                                 <span class="block text-sm font-semibold text-gray-900">{{ $rental->name }}</span>
                                                 <div class="mt-1">
                                                     <span class="text-xs text-gray-500">
-                                                        Price Range: <span class="font-medium text-gray-900">₱{{ number_format($rental->price_range_min, 2) }} - ₱{{ number_format($rental->price_range_max, 2) }}</span>
+                                                        Capacity: <span class="font-medium text-gray-900">{{ $rental->min_pax }} - {{ $rental->max_pax }} Pax</span>
+                                                    </span>
+                                                    <span class="block text-xs text-gray-500 mt-0.5">
+                                                        Starts from: <span class="font-medium text-gray-900">₱{{ number_format($rental->base_price_weekday, 2) }}</span>
                                                     </span>
                                                 </div>
                                             </div>
@@ -307,6 +248,88 @@
                                 </div>
                                 <x-input-error for="exclusive_resort_rental_id" class="mt-2" />
                                 <span class="text-red-500 text-xs" x-show="errors.exclusive_resort_rental_id" x-text="errors.exclusive_resort_rental_id"></span>
+                            </div>
+
+                            <!-- Pricing Tier Selection (Modern UI) -->
+                            <div class="mt-6" x-show="bookingType === 'exclusive' && availableTiers.length === 0 && formData.exclusive_resort_rental_id">
+                                <div class="rounded-md bg-yellow-50 p-4 border border-yellow-200">
+                                    <div class="flex">
+                                        <div class="flex-shrink-0">
+                                            <svg class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                            </svg>
+                                        </div>
+                                        <div class="ml-3">
+                                            <h3 class="text-sm font-medium text-yellow-800">Configuration Missing</h3>
+                                            <div class="mt-2 text-sm text-yellow-700">
+                                                <p>This rental package does not have any pricing tiers configured. Please edit the package to add pricing tiers.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mt-6" x-show="availableTiers.length > 0">
+                                <x-label class="mb-2" x-text="canAddExtraPerson && bookingType === 'room' ? '{{ __('Select Pricing Tier (Optional)') }}' : '{{ __('Select Pricing Tier') }}'" />
+                                <input type="hidden" name="pricing_tier_id" :value="formData.pricing_tier_id">
+
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <!-- Auto-calculate Option (Only for Room with Extra Person) -->
+                                    <div x-show="canAddExtraPerson && bookingType === 'room'" @click="formData.pricing_tier_id = ''; calculatePrice()"
+                                        class="cursor-pointer border rounded-xl p-4 transition-all duration-200 relative group"
+                                        :class="formData.pricing_tier_id === '' ? 'border-indigo-500 bg-indigo-50 shadow-md ring-1 ring-indigo-500' : 'border-gray-200 bg-white hover:border-indigo-300 hover:shadow-sm'">
+                                        <div class="flex justify-between items-start">
+                                            <div class="flex items-start">
+                                                <div class="mt-0.5 h-5 w-5 rounded-full border flex items-center justify-center flex-shrink-0"
+                                                    :class="formData.pricing_tier_id === '' ? 'border-indigo-600 bg-indigo-600' : 'border-gray-300 bg-transparent'">
+                                                    <div class="h-2 w-2 rounded-full bg-white" x-show="formData.pricing_tier_id === ''"></div>
+                                                </div>
+                                                <div class="ml-3">
+                                                    <span class="block text-sm font-semibold text-gray-900">Auto-calculate</span>
+                                                    <span class="block text-xs text-gray-500 mt-0.5">Best price based on pax count</span>
+                                                </div>
+                                            </div>
+                                            <div class="text-xs font-medium text-indigo-600 bg-indigo-100 px-2 py-1 rounded-full">
+                                                Recommended
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Tiers -->
+                                    <template x-for="tier in availableTiers" :key="tier.id">
+                                        <div @click="formData.pricing_tier_id = tier.id; if(bookingType === 'exclusive' || !canAddExtraPerson) { formData.pax_count = tier.max_guests; } calculatePrice()"
+                                            class="cursor-pointer border rounded-xl p-4 transition-all duration-200 relative group"
+                                            :class="formData.pricing_tier_id == tier.id ? 'border-indigo-500 bg-indigo-50 shadow-md ring-1 ring-indigo-500' : 'border-gray-200 bg-white hover:border-indigo-300 hover:shadow-sm'">
+
+                                            <div class="flex justify-between items-start">
+                                                <div class="flex items-start">
+                                                    <div class="mt-0.5 h-5 w-5 rounded-full border flex items-center justify-center flex-shrink-0"
+                                                        :class="formData.pricing_tier_id == tier.id ? 'border-indigo-600 bg-indigo-600' : 'border-gray-300 bg-transparent'">
+                                                        <div class="h-2 w-2 rounded-full bg-white" x-show="formData.pricing_tier_id == tier.id"></div>
+                                                    </div>
+                                                    <div class="ml-3">
+                                                        <div class="flex items-center space-x-2">
+                                                            <span class="block text-sm font-semibold text-gray-900" x-text="tier.min_guests + '-' + tier.max_guests + ' Pax'"></span>
+                                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-blue-800" x-show="tier.resort_unit_id">
+                                                                Unit Specific
+                                                            </span>
+                                                        </div>
+                                                        <div class="mt-1 flex flex-col space-y-1">
+                                                            <span class="text-xs text-gray-600">
+                                                                Weekday: <span class="font-medium text-gray-900" x-text="'₱' + Number(tier.price_weekday).toLocaleString()"></span>
+                                                            </span>
+                                                            <span class="text-xs text-gray-600">
+                                                                Weekend: <span class="font-medium text-gray-900" x-text="'₱' + Number(tier.price_weekend).toLocaleString()"></span>
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                                <x-input-error for="pricing_tier_id" class="mt-2" />
+                                <span class="text-red-500 text-xs" x-show="errors.pricing_tier_id" x-text="errors.pricing_tier_id"></span>
                             </div>
                         </div>
                     </div>
@@ -577,6 +600,22 @@
                     payment_method: oldData.payment_method || 'cash'
                 },
                 init() {
+                    this.$watch('bookingType', value => {
+                        if (value === 'room') {
+                            this.formData.exclusive_resort_rental_id = '';
+                            this.formData.resort_unit_id = '';
+                            this.availableTiers = [];
+                            this.allTiers = [];
+                        } else {
+                            this.formData.room_type_id = '';
+                            this.formData.resort_unit_id = '';
+                            this.availableTiers = [];
+                            this.allTiers = [];
+                        }
+                        this.totalPrice = 0;
+                        this.errors = {};
+                    });
+
                     if (this.bookingType === 'room' && this.formData.room_type_id) {
                         this.fetchTiers().then(() => {
                             if (this.formData.check_in && this.formData.check_out) {
@@ -584,11 +623,15 @@
                             }
                         });
                     }
+                    if (this.bookingType === 'exclusive' && this.formData.exclusive_resort_rental_id) {
+                        this.fetchExclusiveDetails();
+                    }
                 },
                 availableUnits: [],
                 availableTiers: [],
                 allTiers: [],
                 currentRoomType: null,
+                currentExclusiveRental: null,
                 maxCapacity: 0,
                 canAddExtraPerson: false,
                 totalPrice: 0,
@@ -621,6 +664,11 @@
                 },
                 async fetchUnits() {
                     this.fetchTiers();
+                    // If exclusive rental is selected, also re-calculate price
+                    if (this.bookingType === 'exclusive' && this.formData.exclusive_resort_rental_id) {
+                        this.calculatePrice();
+                    }
+
                     if (this.bookingType === 'room' && this.formData.room_type_id && this.formData.check_in && this.formData.check_out) {
                         try {
                             const response = await fetch(`{{ route('resort-management.bookings.available-units') }}?room_type_id=${this.formData.room_type_id}&check_in=${this.formData.check_in}&check_out=${this.formData.check_out}`);
@@ -637,6 +685,24 @@
                         this.availableUnits = [];
                     }
                     this.calculatePrice();
+                },
+                async fetchExclusiveDetails() {
+                    if (this.formData.exclusive_resort_rental_id) {
+                        try {
+                            const response = await fetch(`/api/exclusive-rentals/${this.formData.exclusive_resort_rental_id}`);
+                            if (response.ok) {
+                                const data = await response.json();
+                                this.currentExclusiveRental = data;
+                                // For Exclusive Rentals, we might use tiers for capacity calculation too
+                                this.allTiers = data.pricing_tiers || [];
+                                this.filterTiers();
+                                this.calculateCapacity();
+                                this.calculatePrice();
+                            }
+                        } catch (error) {
+                            console.error('Error fetching exclusive rental details:', error);
+                        }
+                    }
                 },
                 async fetchTiers() {
                     if (this.bookingType === 'room' && this.formData.room_type_id) {
@@ -661,7 +727,7 @@
                             this.availableTiers = [];
                             this.currentRoomType = null;
                         }
-                    } else {
+                    } else if (this.bookingType === 'room') {
                         this.allTiers = [];
                         this.availableTiers = [];
                         this.currentRoomType = null;
@@ -670,7 +736,16 @@
                     }
                 },
                 calculateCapacity() {
-                    if (this.allTiers.length > 0) {
+                    if (this.bookingType === 'exclusive' && this.currentExclusiveRental) {
+                        // Use max_pax from the rental model itself (which was calculated from tiers or set manually)
+                        this.maxCapacity = this.currentExclusiveRental.max_pax || 0;
+                        // Or if tiers exist, double check
+                        if (this.allTiers.length > 0) {
+                            const maxTierCapacity = this.allTiers.reduce((max, tier) => Math.max(max, tier.max_guests), 0);
+                            this.maxCapacity = Math.max(this.maxCapacity, maxTierCapacity);
+                        }
+                        this.canAddExtraPerson = true; // Usually exclusive rentals allow extra pax
+                    } else if (this.allTiers.length > 0) {
                         const maxTierCapacity = this.allTiers.reduce((max, tier) => Math.max(max, tier.max_guests), 0);
                         const category = this.currentRoomType?.category?.toUpperCase() || '';
                         this.canAddExtraPerson = ['DELUXE ROOM', 'GUEST HOUSE'].includes(category);
@@ -681,6 +756,11 @@
                     }
                 },
                 filterTiers() {
+                    if (this.bookingType === 'exclusive') {
+                        this.availableTiers = this.allTiers;
+                        return;
+                    }
+
                     if (this.formData.resort_unit_id) {
                     
                         this.availableTiers = this.allTiers.filter(t =>

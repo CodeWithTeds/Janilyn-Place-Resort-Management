@@ -150,24 +150,44 @@ class ResortManagementService
             return 0;
         }
 
-        // For exclusive rental, price is a range in DB (price_range_min, price_range_max).
-        // Usually max price is for max pax, min price for min pax.
-        // Let's assume a simple logic: if pax <= min_pax, use min_price.
-        // If pax >= max_pax, use max_price.
-        // If between, interpolate? Or just use max price if pax > min?
-        // Let's use max price for now if pax > min_overnight_capacity, else min price.
-        // Or simpler: Just take the min price as base for now, as exact logic isn't fully defined.
-        // Actually, let's look at the screenshot logic if available or just use max price as safe bet?
-        // "P10,000-P12,000/Night"
-        // Let's just use the max price for calculation safety, or maybe average?
-        // Let's stick to: use min_price if pax <= capacity_overnight_min, else max_price.
-        
-        $pricePerNight = $rental->price_range_min;
-        if ($rental->capacity_overnight_min && $pax > $rental->capacity_overnight_min) {
-            $pricePerNight = $rental->price_range_max;
-        }
+        // Find applicable pricing tier based on pax count
+        $tier = $rental->pricingTiers->first(function($tier) use ($pax) {
+            return $pax >= $tier->min_guests && $pax <= $tier->max_guests;
+        });
 
-        $totalPrice = $pricePerNight * $days;
+        $totalPrice = 0;
+        $currentDate = $start->copy();
+
+        for ($i = 0; $i < $days; $i++) {
+            $isWeekend = in_array($currentDate->dayOfWeek, [Carbon::FRIDAY, Carbon::SATURDAY, Carbon::SUNDAY]);
+            
+            if ($tier) {
+                if ($isWeekend) {
+                    $totalPrice += $tier->price_weekend;
+                } else {
+                    $totalPrice += $tier->price_weekday;
+                }
+            } else {
+                // Fallback if no tier matches (e.g., pax > max tier or pax < min tier)
+                // Use base price + extra person charge if applicable
+                // For now, let's use base prices from the rental model itself
+                if ($isWeekend) {
+                    $basePrice = $rental->base_price_weekend;
+                } else {
+                    $basePrice = $rental->base_price_weekday;
+                }
+
+                $totalPrice += $basePrice;
+
+                // Calculate extra person charge if pax exceeds max_pax
+                if ($pax > $rental->max_pax) {
+                    $extraPax = $pax - $rental->max_pax;
+                    $totalPrice += ($extraPax * $rental->extra_person_charge);
+                }
+            }
+            
+            $currentDate->addDay();
+        }
 
         // Cooking fee
         $totalPrice += $rental->cooking_fee;
@@ -301,9 +321,11 @@ class ResortManagementService
             }
         }
 
+        $bookingStatus = ($paymentStatus === PaymentStatus::PAID) ? BookingStatus::CONFIRMED : BookingStatus::PENDING;
+
         $bookingData = array_merge($data, [
             'total_price' => $totalPrice,
-            'status' => BookingStatus::CONFIRMED, // Walk-ins are usually immediate
+            'status' => $bookingStatus, 
             'payment_status' => $paymentStatus,
             'payment_id' => $paymentId,
             'payment_method' => $data['payment_method'] ?? null,

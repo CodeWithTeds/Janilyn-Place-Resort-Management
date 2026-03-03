@@ -28,13 +28,10 @@
                                     Rental Details
                                 </th>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Capacity (Overnight)
+                                    Pax (Min/Max)
                                 </th>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Capacity (Day)
-                                </th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Pricing Range
+                                    Base Price (Weekday/Weekend)
                                 </th>
                                 <th scope="col" class="relative px-6 py-3">
                                     <span class="sr-only">Actions</span>
@@ -70,20 +67,12 @@
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="text-sm text-gray-900 font-medium">
-                                            {{ $rental->capacity_overnight_min }} - {{ $rental->capacity_overnight_max }} Pax
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm text-gray-900 font-medium">
-                                            {{ $rental->capacity_day_min }} - {{ $rental->capacity_day_max }} Pax
-                                        </div>
-                                        <div class="text-xs text-gray-500">
-                                            (Until 10:00pm)
+                                            {{ $rental->min_pax }} - {{ $rental->max_pax }} Pax
                                         </div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="text-sm font-semibold text-gray-900">
-                                            ₱{{ number_format($rental->price_range_min, 2) }} - ₱{{ number_format($rental->price_range_max, 2) }}
+                                            ₱{{ number_format($rental->base_price_weekday, 2) }} / ₱{{ number_format($rental->base_price_weekend, 2) }}
                                         </div>
                                         <div class="text-xs text-gray-500">
                                             per Night

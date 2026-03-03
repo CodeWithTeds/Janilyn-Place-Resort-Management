@@ -11,6 +11,7 @@ Route::post('/register', [AuthController::class, 'register']);
 // Public Routes (or Session-based accessible)
 // Room Type Details (For UI dynamic loading)
 Route::get('/room-types/{roomType}', [App\Http\Controllers\Api\RoomTypeController::class, 'show']);
+Route::get('/exclusive-rentals/{exclusiveResortRental}', [App\Http\Controllers\Api\ExclusiveRentalController::class, 'show']);
 
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
