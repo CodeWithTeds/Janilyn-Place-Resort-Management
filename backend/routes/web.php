@@ -8,6 +8,7 @@ use App\Http\Controllers\OwnerResortManagementController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\OwnerRoomTypeController;
 use App\Http\Controllers\OwnerResortUnitController;
+use App\Http\Controllers\OwnerStaffManagementController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -127,6 +128,26 @@ Route::middleware([
         Route::get('/{roomInspection}/edit', [App\Http\Controllers\OwnerRoomInspectionController::class, 'edit'])->name('edit');
         Route::put('/{roomInspection}', [App\Http\Controllers\OwnerRoomInspectionController::class, 'update'])->name('update');
         Route::delete('/{roomInspection}', [App\Http\Controllers\OwnerRoomInspectionController::class, 'destroy'])->name('destroy');
+    });
+
+    // Owner Staff Management
+    Route::middleware(['can:access-owner-dashboard'])->prefix('owner/staff-management')->name('owner.staff-management.')->group(function () {
+        Route::get('/', [OwnerStaffManagementController::class, 'index'])->name('index');
+        Route::get('/create', [OwnerStaffManagementController::class, 'create'])->name('create');
+        Route::post('/', [OwnerStaffManagementController::class, 'store'])->name('store');
+        Route::get('/schedules', [OwnerStaffManagementController::class, 'schedules'])->name('schedules');
+        Route::post('/schedules', [OwnerStaffManagementController::class, 'storeSchedule'])->name('schedules.store');
+        Route::get('/attendance', [OwnerStaffManagementController::class, 'attendance'])->name('attendance');
+        Route::post('/attendance', [OwnerStaffManagementController::class, 'storeAttendance'])->name('attendance.store');
+        Route::get('/performance', [OwnerStaffManagementController::class, 'performance'])->name('performance');
+        Route::post('/performance', [OwnerStaffManagementController::class, 'storePerformance'])->name('performance.store');
+        Route::get('/tasks', [OwnerStaffManagementController::class, 'tasks'])->name('tasks');
+        Route::post('/tasks', [OwnerStaffManagementController::class, 'storeTask'])->name('tasks.store');
+        
+        // Specific staff routes (must be after other specific routes to avoid conflict with {staff})
+        Route::get('/{staff}/edit', [OwnerStaffManagementController::class, 'edit'])->name('edit');
+        Route::put('/{staff}', [OwnerStaffManagementController::class, 'update'])->name('update');
+        Route::delete('/{staff}', [OwnerStaffManagementController::class, 'destroy'])->name('destroy');
     });
 
     // Staff Dashboard

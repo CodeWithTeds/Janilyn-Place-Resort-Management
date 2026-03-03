@@ -1,17 +1,17 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Housekeeping Staff') }}
+            {{ __('Staff Management') }}
         </h2>
     </x-slot>
 
-    <div class="py-12" x-data="staffManagement('{{ route('owner.housekeeping.staff.destroy', 'PLACEHOLDER') }}')">
+    <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="flex justify-between mb-6">
-                <a href="{{ route('owner.housekeeping.index') }}" class="text-indigo-600 hover:text-indigo-900 font-medium">
-                    &larr; Back to Housekeeping
-                </a>
-                <a href="{{ route('owner.housekeeping.staff.create') }}" class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 active:bg-gray-900 focus:outline-none focus:border-gray-900 focus:ring ring-gray-300 disabled:opacity-25 transition ease-in-out duration-150">
+            
+            @include('owner.staff-management.nav')
+
+            <div class="flex justify-end mb-6">
+                <a href="{{ route('owner.staff-management.create') }}" class="inline-flex items-center px-4 py-2 bg-brand-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-brand-700 active:bg-brand-900 focus:outline-none focus:border-brand-900 focus:ring ring-brand-300 disabled:opacity-25 transition ease-in-out duration-150">
                     Add New Staff
                 </a>
             </div>
@@ -19,12 +19,6 @@
             @if (session('success'))
                 <div class="mb-4 font-medium text-sm text-green-600 bg-green-100 p-4 rounded-md">
                     {{ session('success') }}
-                </div>
-            @endif
-
-            @if (session('error'))
-                <div class="mb-4 font-medium text-sm text-red-600 bg-red-100 p-4 rounded-md">
-                    {{ session('error') }}
                 </div>
             @endif
 
@@ -58,7 +52,7 @@
                                         <div class="text-sm text-gray-500">{{ $staff->phone_number ?? 'N/A' }}</div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-indigo-100 text-indigo-800">
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
                                             {{ ucfirst($staff->role->value ?? 'Staff') }}
                                         </span>
                                     </td>
@@ -66,8 +60,12 @@
                                         {{ $staff->created_at->format('M d, Y') }}
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        <a href="{{ route('owner.housekeeping.staff.edit', $staff) }}" class="text-indigo-600 hover:text-indigo-900 mr-3">Edit</a>
-                                        <button @click="openDelete({{ $staff->id }})" class="text-red-600 hover:text-red-900">Delete</button>
+                                        <a href="{{ route('owner.staff-management.edit', $staff) }}" class="text-indigo-600 hover:text-indigo-900 mr-3">Edit</a>
+                                        <form method="POST" action="{{ route('owner.staff-management.destroy', $staff) }}" class="inline" onsubmit="return confirm('Are you sure you want to delete this staff member?');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="text-red-600 hover:text-red-900">Delete</button>
+                                        </form>
                                     </td>
                                 </tr>
                             @empty
@@ -82,33 +80,5 @@
                 </div>
             </div>
         </div>
-
-
-        <!-- Delete Staff Modal -->
-        <x-modal id="delete-staff-modal" focusable>
-            <div class="p-6">
-                <h2 class="text-lg font-medium text-gray-900">
-                    {{ __('Delete Staff Account') }}
-                </h2>
-
-                <p class="mt-1 text-sm text-gray-600">
-                    {{ __('Are you sure you want to delete this staff account? This action cannot be undone.') }}
-                </p>
-
-                <div class="mt-6 flex justify-end">
-                    <x-secondary-button x-on:click="$dispatch('close')" class="mr-3">
-                        {{ __('Cancel') }}
-                    </x-secondary-button>
-
-                    <form method="POST" :action="deleteUrl" class="inline">
-                        @csrf
-                        @method('DELETE')
-                        <x-danger-button type="submit">
-                            {{ __('Delete Staff') }}
-                        </x-danger-button>
-                    </form>
-                </div>
-            </div>
-        </x-modal>
     </div>
 </x-app-layout>

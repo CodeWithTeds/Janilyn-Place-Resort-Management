@@ -57,7 +57,36 @@
                             {{ __('Room Cleaning Schedules') }}
                         </x-sidebar-link>
                         <x-sidebar-link href="{{ route('owner.housekeeping.staff') }}" :active="request()->routeIs('owner.housekeeping.staff')" class="text-sm">
-                            {{ __('Staff Management') }}
+                            {{ __('Housekeeping Staff') }}
+                        </x-sidebar-link>
+                    </div>
+                </div>
+
+                <div x-data="{ open: {{ request()->routeIs('owner.staff-management.*') ? 'true' : 'false' }} }">
+                    <button @click="open = !open" class="flex items-center w-full px-4 py-2 text-brand-100 hover:bg-brand-700 hover:text-white rounded-md group focus:outline-none transition ease-in-out duration-150">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                        </svg>
+                        <span class="flex-1 text-left font-medium">{{ __('Staff Management') }}</span>
+                        <svg :class="{'rotate-90': open}" class="w-4 h-4 ml-auto transition-transform duration-200 transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                        </svg>
+                    </button>
+                    <div x-show="open" class="mt-1 space-y-1 pl-4" x-cloak>
+                        <x-sidebar-link href="{{ route('owner.staff-management.index') }}" :active="request()->routeIs('owner.staff-management.index')" class="text-sm">
+                            {{ __('Staff List') }}
+                        </x-sidebar-link>
+                        <x-sidebar-link href="{{ route('owner.staff-management.schedules') }}" :active="request()->routeIs('owner.staff-management.schedules')" class="text-sm">
+                            {{ __('Schedules') }}
+                        </x-sidebar-link>
+                        <x-sidebar-link href="{{ route('owner.staff-management.tasks') }}" :active="request()->routeIs('owner.staff-management.tasks')" class="text-sm">
+                            {{ __('Tasks') }}
+                        </x-sidebar-link>
+                        <x-sidebar-link href="{{ route('owner.staff-management.attendance') }}" :active="request()->routeIs('owner.staff-management.attendance')" class="text-sm">
+                            {{ __('Attendance') }}
+                        </x-sidebar-link>
+                        <x-sidebar-link href="{{ route('owner.staff-management.performance') }}" :active="request()->routeIs('owner.staff-management.performance')" class="text-sm">
+                            {{ __('Performance') }}
                         </x-sidebar-link>
                     </div>
                 </div>
