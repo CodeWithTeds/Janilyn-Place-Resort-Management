@@ -23,6 +23,7 @@ class StoreExclusiveResortRentalRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
+            'category' => ['nullable', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'cooking_fee' => ['nullable', 'numeric', 'min:0'],
             'extra_person_charge' => ['nullable', 'numeric', 'min:0'],

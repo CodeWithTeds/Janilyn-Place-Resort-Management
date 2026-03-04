@@ -12,6 +12,7 @@ class ExclusiveResortRental extends Model
 
     protected $fillable = [
         'name',
+        'category',
         'description',
         'min_pax',
         'max_pax',

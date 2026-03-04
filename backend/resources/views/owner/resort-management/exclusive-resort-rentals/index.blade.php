@@ -58,6 +58,11 @@
                                         <div class="text-sm font-bold text-gray-900 mb-1">
                                             {{ $rental->name }}
                                         </div>
+                                        @if($rental->category)
+                                            <div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mb-2">
+                                                {{ $rental->category }}
+                                            </div>
+                                        @endif
                                         <div class="text-sm text-gray-500 line-clamp-2">
                                             {{ $rental->description }}
                                         </div>

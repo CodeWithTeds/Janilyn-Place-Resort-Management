@@ -83,6 +83,18 @@
                                     </div>
 
                                     <div>
+                                        <x-label for="category" value="{{ __('Category') }}" class="font-medium text-gray-700" />
+                                        <select id="category" name="category" class="block mt-2 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-lg shadow-sm transition-colors duration-200">
+                                            <option value="">Select Category</option>
+                                            <option value="BAR AREA RENTAL" {{ old('category') == 'BAR AREA RENTAL' ? 'selected' : '' }}>BAR AREA RENTAL</option>
+                                            <option value="RESORT RENTAL" {{ old('category') == 'RESORT RENTAL' ? 'selected' : '' }}>RESORT RENTAL</option>
+                                            <option value="ENTIRE RESORT" {{ old('category') == 'ENTIRE RESORT' ? 'selected' : '' }}>ENTIRE RESORT</option>
+                                        </select>
+                                        <x-input-error for="category" class="mt-2" />
+                                        <p class="text-xs text-gray-500 mt-1">Used for conditional logic (e.g. Option 4)</p>
+                                    </div>
+
+                                    <div>
                                         <x-label for="description" value="{{ __('Description') }}" class="font-medium text-gray-700" />
                                         <textarea id="description" name="description" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-lg shadow-sm block mt-2 w-full transition-colors duration-200" rows="3" placeholder="Description of the exclusive rental package...">{{ old('description') }}</textarea>
                                         <x-input-error for="description" class="mt-2" />
