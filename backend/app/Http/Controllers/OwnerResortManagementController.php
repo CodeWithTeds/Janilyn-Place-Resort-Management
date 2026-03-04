@@ -39,14 +39,20 @@ class OwnerResortManagementController extends Controller
 
     public function storeBooking(StoreBookingRequest $request): RedirectResponse
     {
-        $booking = $this->resortService->createWalkInBooking($request->validated());
+        try {
+            $booking = $this->resortService->createWalkInBooking($request->validated());
 
-        if (isset($booking->checkout_url)) {
-            return redirect($booking->checkout_url);
+            if (isset($booking->checkout_url)) {
+                return redirect($booking->checkout_url);
+            }
+
+            return redirect()->route('resort-management.bookings')
+                ->with('success', 'Walk-in booking created successfully.');
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->withInput()
+                ->with('error', $e->getMessage());
         }
-
-        return redirect()->route('resort-management.bookings')
-            ->with('success', 'Walk-in booking created successfully.');
     }
 
     public function paymentSuccess(Request $request, $booking_id)

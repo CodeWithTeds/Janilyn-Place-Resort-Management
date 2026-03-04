@@ -100,7 +100,7 @@
                                         <x-input-error for="description" class="mt-2" />
                                     </div>
                                 </div>
-                            </div>
+                            </div> 
                         </div>
 
                         <!-- Right Column: Pricing & Capacity -->
