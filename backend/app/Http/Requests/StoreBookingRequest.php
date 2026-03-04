@@ -25,7 +25,7 @@ class StoreBookingRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
+        $rules = [
             'guest_name' => ['required', 'string', 'max:255'],
             'booking_type' => ['required', 'in:room,exclusive'],
             'room_type_id' => ['required_if:booking_type,room', 'nullable', 'exists:room_types,id'],
@@ -35,8 +35,15 @@ class StoreBookingRequest extends FormRequest
             'pax_count' => ['required', 'integer', 'min:1'],
             'payment_method' => ['nullable', 'string', 'in:cash,paymongo'],
             'resort_unit_id' => ['nullable', 'exists:resort_units,id'],
-            'pricing_tier_id' => ['nullable', 'exists:room_type_pricing_tiers,id'],
         ];
+
+        if ($this->input('booking_type') === 'exclusive') {
+            $rules['pricing_tier_id'] = ['nullable', 'exists:exclusive_resort_rental_pricing_tiers,id'];
+        } else {
+            $rules['pricing_tier_id'] = ['nullable', 'exists:room_type_pricing_tiers,id'];
+        }
+
+        return $rules;
     }
 
     /**
