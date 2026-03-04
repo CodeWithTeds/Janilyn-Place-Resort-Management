@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\OwnerRoomTypeController;
 use App\Http\Controllers\OwnerResortUnitController;
 use App\Http\Controllers\OwnerStaffManagementController;
+use App\Http\Controllers\OwnerGuestRelationshipController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -103,6 +104,12 @@ Route::middleware([
             Route::put('/exclusive-resort-rentals/{exclusive_resort_rental}', [OwnerExclusiveResortRentalController::class, 'update'])->name('exclusive-resort-rentals.update');
             Route::delete('/exclusive-resort-rentals/{exclusive_resort_rental}', [OwnerExclusiveResortRentalController::class, 'destroy'])->name('exclusive-resort-rentals.destroy');
         });
+
+
+
+        // Guest Relationship Management (GRM)
+        Route::get('/guest-management', [OwnerGuestRelationshipController::class, 'index'])->name('guest-management.index');
+        Route::get('/guest-management/loyalty', [OwnerGuestRelationshipController::class, 'loyalty'])->name('guest-management.loyalty');
     });
 
     // Owner Inventory

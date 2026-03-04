@@ -33,6 +33,9 @@ class User extends Authenticatable
         'phone_number',
         'role',
         'password',
+        'loyalty_points',
+        'loyalty_tier',
+        'guest_notes',
     ];
 
     /**
@@ -105,6 +108,61 @@ class User extends Authenticatable
     public function bookings()
     {
         return $this->hasMany(Booking::class);
+    }
+
+    public function loyaltyTransactions()
+    {
+        return $this->hasMany(LoyaltyTransaction::class);
+    }
+
+    public function rewards()
+    {
+        return $this->hasMany(UserReward::class);
+    }
+
+    public function addPoints(int $amount, string $description = null, $reference = null)
+    {
+        $this->increment('loyalty_points', $amount);
+        
+        $this->loyaltyTransactions()->create([
+            'points' => $amount,
+            'type' => 'earned',
+            'description' => $description,
+            'reference_id' => $reference ? $reference->id : null,
+            'reference_type' => $reference ? get_class($reference) : null,
+        ]);
+        
+        $this->checkTierUpgrade();
+    }
+
+    public function redeemPoints(int $amount, string $description = null, $reference = null)
+    {
+        if ($this->loyalty_points < $amount) {
+            return false;
+        }
+
+        $this->decrement('loyalty_points', $amount);
+        
+        $this->loyaltyTransactions()->create([
+            'points' => -$amount,
+            'type' => 'redeemed',
+            'description' => $description,
+            'reference_id' => $reference ? $reference->id : null,
+            'reference_type' => $reference ? get_class($reference) : null,
+        ]);
+
+        return true;
+    }
+
+    public function checkTierUpgrade()
+    {
+        if ($this->loyalty_points >= 1000) {
+            $this->update(['loyalty_tier' => 'Gold']);
+        } elseif ($this->loyalty_points >= 500) {
+            $this->update(['loyalty_tier' => 'Silver']);
+        } else {
+            $this->update(['loyalty_tier' => 'Bronze']);
+        }
     }
 
     /**

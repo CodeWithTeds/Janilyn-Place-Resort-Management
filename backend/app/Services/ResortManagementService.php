@@ -10,11 +10,12 @@ use App\Models\ExclusiveResortRental;
 use App\Models\Booking;
 use App\Enums\BookingStatus;
 use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Collection;
 
 use App\Enums\PaymentStatus;
 use App\Enums\PaymentMethod;
 use App\Models\ResortUnit;
+use App\Models\User;
 
 class ResortManagementService
 {
@@ -421,5 +422,54 @@ class ResortManagementService
     public function updateBookingStatus(Booking $booking, BookingStatus $status): bool
     {
         return $this->bookingRepository->updateStatus($booking->id, $status);
+    }
+
+    public function getGuestHistory(): Collection
+    {
+        // Get all users who have bookings
+        $registeredGuests = User::has('bookings')->with(['bookings' => function($query) {
+            $query->latest();
+        }])->get();
+
+        // Transform to match the view's expected format (or update the view)
+        // The view expects: name, email, phone, total_bookings, total_spend, last_booking
+        // User model has name, email, phone_number.
+        // We can append accessors or map the collection.
+        
+        return $registeredGuests->map(function($user) {
+            $bookings = $user->bookings;
+            $user->total_bookings = $bookings->count();
+            $user->total_spend = $bookings->whereIn('status', [BookingStatus::CONFIRMED, BookingStatus::CHECKED_IN, BookingStatus::COMPLETED])->sum('total_price');
+            $user->last_booking = $bookings->first()?->created_at;
+            // Phone number field in User is phone_number, view expects phone.
+            $user->phone = $user->phone_number; 
+            return $user;
+        })->sortByDesc('total_bookings')->values();
+    }
+
+    public function getLoyaltyProgramGuests(): Collection
+    {
+        // Return users who have loyalty points or are not Bronze
+        // Also include those with 5+ bookings (legacy support)
+        return User::with(['loyaltyTransactions', 'bookings'])
+            ->get()
+            ->filter(function($user) {
+                return $user->loyalty_points > 0 || 
+                       $user->loyalty_tier !== 'Bronze' || 
+                       $user->bookings->count() >= 5;
+            })
+            ->map(function($user) {
+                $user->total_bookings = $user->bookings->count();
+                $user->total_spend = $user->bookings->whereIn('status', [BookingStatus::CONFIRMED, BookingStatus::CHECKED_IN, BookingStatus::COMPLETED])->sum('total_price');
+                $user->phone = $user->phone_number;
+                
+                // Auto-calculate points if 0 and has spend (1 point per 10 PHP)
+                if ($user->loyalty_points == 0 && $user->total_spend > 0) {
+                    $user->loyalty_points = floor($user->total_spend / 10);
+                }
+                
+                return $user;
+            })
+            ->values();
     }
 }

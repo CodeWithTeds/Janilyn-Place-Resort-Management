@@ -41,12 +41,12 @@ class BookingFeatureTest extends TestCase
             'role' => UserRole::OWNER,
         ]);
 
-        $response = $this->actingAs($owner)->get(route('owner.resort-management.bookings'));
+        $response = $this->actingAs($owner)->get(route('resort-management.bookings'));
 
         $response->assertStatus(200);
         $response->assertViewIs('owner.resort-management.bookings');
         $response->assertViewHas('roomTypes');
-        $response->assertViewHas('pendingBookings');
+        $response->assertViewHas('bookings');
     }
 
     public function test_owner_can_create_walk_in_booking()
@@ -58,7 +58,8 @@ class BookingFeatureTest extends TestCase
         $checkIn = Carbon::today()->addDays(1)->format('Y-m-d'); // Tomorrow
         $checkOut = Carbon::today()->addDays(3)->format('Y-m-d'); // 2 days later
 
-        $response = $this->actingAs($owner)->post(route('owner.resort-management.bookings.store'), [
+        $response = $this->actingAs($owner)->post(route('resort-management.bookings.store'), [
+            'booking_type' => 'room',
             'guest_name' => 'Walk-in Guest',
             'room_type_id' => $this->room->id,
             'check_in' => $checkIn,
@@ -66,7 +67,7 @@ class BookingFeatureTest extends TestCase
             'pax_count' => 2,
         ]);
 
-        $response->assertRedirect(route('owner.resort-management.bookings'));
+        $response->assertRedirect(route('resort-management.bookings'));
         $response->assertSessionHas('success');
 
         $this->assertDatabaseHas('bookings', [
@@ -94,7 +95,7 @@ class BookingFeatureTest extends TestCase
             'payment_status' => \App\Enums\PaymentStatus::PAID,
         ]);
 
-        $response = $this->actingAs($owner)->patch(route('owner.resort-management.bookings.approve', $booking));
+        $response = $this->actingAs($owner)->patch(route('resort-management.bookings.approve', $booking));
 
         $response->assertRedirect();
         $response->assertSessionHas('success');
@@ -121,7 +122,7 @@ class BookingFeatureTest extends TestCase
             'status' => BookingStatus::PENDING,
         ]);
 
-        $response = $this->actingAs($owner)->patch(route('owner.resort-management.bookings.cancel', $booking));
+        $response = $this->actingAs($owner)->patch(route('resort-management.bookings.cancel', $booking));
 
         $response->assertRedirect();
         $response->assertSessionHas('success');
@@ -149,7 +150,8 @@ class BookingFeatureTest extends TestCase
         $monday = Carbon::parse('next monday');
         $tuesday = $monday->copy()->addDay();
         
-        $response = $this->actingAs($owner)->post(route('owner.resort-management.bookings.store'), [
+        $response = $this->actingAs($owner)->post(route('resort-management.bookings.store'), [
+            'booking_type' => 'room',
             'guest_name' => 'Weekday Guest',
             'room_type_id' => $this->room->id,
             'check_in' => $monday->format('Y-m-d'),
@@ -167,7 +169,8 @@ class BookingFeatureTest extends TestCase
         $saturday = Carbon::parse('next saturday');
         $sunday = $saturday->copy()->addDay();
 
-        $response = $this->actingAs($owner)->post(route('owner.resort-management.bookings.store'), [
+        $response = $this->actingAs($owner)->post(route('resort-management.bookings.store'), [
+            'booking_type' => 'room',
             'guest_name' => 'Weekend Guest',
             'room_type_id' => $this->room->id,
             'check_in' => $saturday->format('Y-m-d'),
