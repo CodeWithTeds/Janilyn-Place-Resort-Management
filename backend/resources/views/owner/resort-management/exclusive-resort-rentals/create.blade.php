@@ -91,7 +91,7 @@
                                             <option value="ENTIRE RESORT" {{ old('category') == 'ENTIRE RESORT' ? 'selected' : '' }}>ENTIRE RESORT</option>
                                         </select>
                                         <x-input-error for="category" class="mt-2" />
-                                        <p class="text-xs text-gray-500 mt-1">Used for conditional logic (e.g. Option 4)</p>
+                                       
                                     </div>
 
                                     <div>
