@@ -16,6 +16,13 @@
             </x-sidebar-link>
 
             @if(Auth::check() && Auth::user()->isOwner())
+                <x-sidebar-link href="{{ route('owner.analytics.index') }}" :active="request()->routeIs('owner.analytics.index')">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    </svg>
+                    {{ __('Analytics & Reporting') }}
+                </x-sidebar-link>
+
                 <div x-data="{ open: {{ request()->routeIs('owner.inventory.*') || request()->routeIs('owner.damage-reports.*') || request()->routeIs('owner.room-inspections.*') ? 'true' : 'false' }} }">
                     <button @click="open = !open" class="flex items-center w-full px-4 py-2 text-brand-100 hover:bg-brand-700 hover:text-white rounded-md group focus:outline-none transition ease-in-out duration-150">
                         <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">

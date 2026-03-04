@@ -129,8 +129,8 @@ class ResortManagementService
             $totalPrice += ($extraPax * $room->extra_person_charge * $days);
         }
         // Fallback for old logic (if no tier matched, though tiers are required now)
-        elseif (!$tier && $pax > $room->min_pax) {
-            $extraPax = $pax - $room->min_pax;
+        elseif (!$tier && $pax > $room->max_pax) {
+            $extraPax = $pax - $room->max_pax;
             $totalPrice += ($extraPax * $room->extra_person_charge * $days);
         }
 

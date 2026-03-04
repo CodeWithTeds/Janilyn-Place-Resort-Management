@@ -410,7 +410,9 @@
                                     <div class="text-xs text-gray-500">Exclusive Rental</div>
                                     @elseif($booking->roomType)
                                     <div class="text-sm text-gray-900">{{ $booking->roomType->name }}</div>
-                                    <div class="text-xs text-gray-500">Room Booking</div>
+                                    <div class="text-xs text-gray-500">
+                                        {{ $booking->roomType->category ?? 'Room Booking' }}
+                                    </div>
                                     @else
                                     <div class="text-sm text-gray-500">N/A</div>
                                     @endif

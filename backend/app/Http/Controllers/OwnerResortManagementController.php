@@ -100,6 +100,11 @@ class OwnerResortManagementController extends Controller
 
     public function approveBooking(Booking $booking): RedirectResponse
     {
+        if ($booking->payment_status !== PaymentStatus::PAID) {
+            return redirect()->back()
+                ->with('error', 'Cannot approve unpaid bookings.');
+        }
+
         $this->resortService->updateBookingStatus($booking, BookingStatus::CONFIRMED);
 
         return redirect()->back()

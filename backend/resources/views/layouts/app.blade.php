@@ -47,6 +47,7 @@
         @stack('modals')
 
         @livewireScripts
+        @stack('scripts')
 
         {{-- Flash Messages Data Container --}}
         <div id="flash-messages" 

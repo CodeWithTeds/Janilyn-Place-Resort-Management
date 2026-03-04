@@ -33,6 +33,11 @@ Route::middleware([
     Route::get('/owner/dashboard', [DashboardController::class, 'owner'])
         ->middleware('can:access-owner-dashboard')
         ->name('owner.dashboard');
+    
+    // Owner Analytics
+    Route::get('/owner/analytics', [App\Http\Controllers\OwnerAnalyticsController::class, 'index'])
+        ->middleware('can:access-owner-dashboard')
+        ->name('owner.analytics.index');
 
     // Owner Housekeeping
     Route::middleware(['can:access-owner-dashboard'])->prefix('owner/housekeeping')->name('owner.housekeeping.')->group(function () {

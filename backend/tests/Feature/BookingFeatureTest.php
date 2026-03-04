@@ -91,6 +91,7 @@ class BookingFeatureTest extends TestCase
             'pax_count' => 2,
             'total_price' => 1200,
             'status' => BookingStatus::PENDING,
+            'payment_status' => \App\Enums\PaymentStatus::PAID,
         ]);
 
         $response = $this->actingAs($owner)->patch(route('owner.resort-management.bookings.approve', $booking));
@@ -161,7 +162,7 @@ class BookingFeatureTest extends TestCase
         $this->assertEquals(1500, $booking->total_price);
 
         // Scenario 2: 1 Weekend (Saturday-Sunday), 3 Pax (1 Extra)
-        // Price = 1500 (weekend) + 300 (extra) + 300 (cooking) = 2100
+        // Price = 1500 (weekend) + 0 (extra, as max_pax is 4) + 300 (cooking) = 1800
         
         $saturday = Carbon::parse('next saturday');
         $sunday = $saturday->copy()->addDay();
@@ -175,6 +176,6 @@ class BookingFeatureTest extends TestCase
         ]);
 
         $booking = Booking::where('guest_name', 'Weekend Guest')->first();
-        $this->assertEquals(2100, $booking->total_price);
+        $this->assertEquals(1800, $booking->total_price);
     }
 }
