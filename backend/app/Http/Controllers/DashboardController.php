@@ -2,9 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\View\View;
 
 class DashboardController extends Controller
 {
@@ -15,9 +14,15 @@ class DashboardController extends Controller
     {
         /** @var \App\Models\User $user */
         $user = \Illuminate\Support\Facades\Auth::user();
-        if ($user && $user->can('access-owner-dashboard')) {
+
+        if ($user && $user->isAdmin()) {
+            return redirect()->route('admin.dashboard');
+        }
+
+        if ($user && $user->isOwner()) {
             return redirect()->route('owner.analytics.index');
         }
+
         return view('dashboard');
     }
 
@@ -34,6 +39,13 @@ class DashboardController extends Controller
      */
     public function owner(): RedirectResponse
     {
+        /** @var \App\Models\User $user */
+        $user = \Illuminate\Support\Facades\Auth::user();
+
+        if ($user && $user->isAdmin()) {
+            return redirect()->route('admin.dashboard');
+        }
+
         return redirect()->route('owner.analytics.index');
     }
 

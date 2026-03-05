@@ -12,18 +12,18 @@ class DashboardAccessTest extends TestCase
     use RefreshDatabase;
 
     // /dashboard
-    public function test_admin_can_access_dashboard()
+    public function test_admin_is_redirected_from_dashboard_to_admin_dashboard()
     {
         $user = User::factory()->create(['role' => UserRole::ADMIN]);
         $response = $this->actingAs($user)->get('/dashboard');
-        $response->assertStatus(200);
+        $response->assertRedirect('/admin/dashboard');
     }
 
-    public function test_owner_can_access_dashboard()
+    public function test_owner_is_redirected_from_dashboard_to_owner_analytics()
     {
         $user = User::factory()->create(['role' => UserRole::OWNER]);
         $response = $this->actingAs($user)->get('/dashboard');
-        $response->assertStatus(200);
+        $response->assertRedirect('/owner/analytics');
     }
 
     public function test_staff_cannot_access_dashboard()
@@ -56,18 +56,18 @@ class DashboardAccessTest extends TestCase
     }
 
     // /owner/dashboard
-    public function test_owner_can_access_owner_dashboard()
+    public function test_owner_is_redirected_from_owner_dashboard_to_owner_analytics()
     {
         $user = User::factory()->create(['role' => UserRole::OWNER]);
         $response = $this->actingAs($user)->get('/owner/dashboard');
-        $response->assertStatus(200);
+        $response->assertRedirect('/owner/analytics');
     }
 
-    public function test_admin_cannot_access_owner_dashboard()
+    public function test_admin_is_redirected_from_owner_dashboard_to_admin_dashboard()
     {
         $user = User::factory()->create(['role' => UserRole::ADMIN]);
         $response = $this->actingAs($user)->get('/owner/dashboard');
-        $response->assertStatus(403);
+        $response->assertRedirect('/admin/dashboard');
     }
 
     public function test_staff_cannot_access_owner_dashboard()

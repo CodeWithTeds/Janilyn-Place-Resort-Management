@@ -92,19 +92,21 @@
                                                     </svg>
                                                 </a>
                                                 
-                                                <form action="{{ route('resort-management.exclusive-resort-rentals.destroy', $rental) }}" method="POST" class="inline-block confirm-action" 
-                                                      data-confirm-title="Delete Exclusive Rental?" 
-                                                      data-confirm-text="Are you sure you want to delete this rental package? This action cannot be undone." 
-                                                      data-confirm-icon="warning" 
-                                                      data-confirm-button-text="Yes, delete it!">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 p-2 rounded-full transition-colors duration-200" title="Delete">
-                                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                        </svg>
-                                                    </button>
-                                                </form>
+                                                @can('delete-owner-resources')
+                                                    <form action="{{ route('resort-management.exclusive-resort-rentals.destroy', $rental) }}" method="POST" class="inline-block confirm-action" 
+                                                        data-confirm-title="Delete Exclusive Rental?" 
+                                                        data-confirm-text="Are you sure you want to delete this rental package? This action cannot be undone." 
+                                                        data-confirm-icon="warning" 
+                                                        data-confirm-button-text="Yes, delete it!">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 p-2 rounded-full transition-colors duration-200" title="Delete">
+                                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                            </svg>
+                                                        </button>
+                                                    </form>
+                                                @endcan
                                             </div>
                                         @endcan
                                     </td>
@@ -118,7 +120,7 @@
                                             </svg>
                                             <p class="text-gray-500 text-lg font-medium">No exclusive rentals found.</p>
                                             <p class="text-gray-400 text-sm mt-1">Get started by adding a new rental package.</p>
-                                            <a href="{{ route('owner.resort-management.exclusive-resort-rentals.create') }}" class="mt-4 inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:border-indigo-900 focus:ring ring-indigo-300 disabled:opacity-25 transition ease-in-out duration-150">
+                                            <a href="{{ route('resort-management.exclusive-resort-rentals.create') }}" class="mt-4 inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:border-indigo-900 focus:ring ring-indigo-300 disabled:opacity-25 transition ease-in-out duration-150">
                                                 Create First Package
                                             </a>
                                         </div>

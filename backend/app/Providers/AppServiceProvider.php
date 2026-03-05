@@ -30,7 +30,7 @@ class AppServiceProvider extends ServiceProvider
         });
 
         Gate::define('access-owner-dashboard', function (User $user) {
-            return $user->isOwner();
+            return $user->isOwner() || $user->isAdmin();
         });
 
         Gate::define('access-staff-dashboard', function (User $user) {
@@ -38,7 +38,11 @@ class AppServiceProvider extends ServiceProvider
         });
 
         Gate::define('access-resort-management', function (User $user) {
-            return $user->isOwner() || $user->isStaff();
+            return $user->isOwner() || $user->isAdmin() || $user->isStaff();
+        });
+
+        Gate::define('delete-owner-resources', function (User $user) {
+            return $user->isOwner();
         });
     }
 }

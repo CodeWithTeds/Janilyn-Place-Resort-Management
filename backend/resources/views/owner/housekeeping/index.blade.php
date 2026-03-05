@@ -125,11 +125,13 @@
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <div class="flex justify-end space-x-2">
-                                            <form action="{{ route('owner.housekeeping.tasks.destroy', $task) }}" method="POST" onsubmit="return confirm('Are you sure?');">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="text-red-600 hover:text-red-900">Delete</button>
-                                            </form>
+                                            @can('delete-owner-resources')
+                                                <form action="{{ route('owner.housekeeping.tasks.destroy', $task) }}" method="POST" onsubmit="return confirm('Are you sure?');">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="text-red-600 hover:text-red-900">Delete</button>
+                                                </form>
+                                            @endcan
                                         </div>
                                     </td>
                                 </tr>

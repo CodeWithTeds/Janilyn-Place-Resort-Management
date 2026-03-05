@@ -63,11 +63,13 @@
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <a href="{{ route('owner.room-inspections.edit', $inspection) }}" class="text-indigo-600 hover:text-indigo-900 mr-3">Edit</a>
-                                        <form action="{{ route('owner.room-inspections.destroy', $inspection) }}" method="POST" class="inline-block" onsubmit="return confirm('Are you sure you want to delete this inspection?');">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="text-red-600 hover:text-red-900">Delete</button>
-                                        </form>
+                                        @can('delete-owner-resources')
+                                            <form action="{{ route('owner.room-inspections.destroy', $inspection) }}" method="POST" class="inline-block" onsubmit="return confirm('Are you sure you want to delete this inspection?');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="text-red-600 hover:text-red-900">Delete</button>
+                                            </form>
+                                        @endcan
                                     </td>
                                 </tr>
                             @empty

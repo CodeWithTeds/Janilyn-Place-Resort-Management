@@ -67,7 +67,9 @@
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <a href="{{ route('owner.housekeeping.staff.edit', $staff) }}" class="text-indigo-600 hover:text-indigo-900 mr-3">Edit</a>
-                                        <button @click="openDelete({{ $staff->id }})" class="text-red-600 hover:text-red-900">Delete</button>
+                                        @can('delete-owner-resources')
+                                            <button @click="openDelete({{ $staff->id }})" class="text-red-600 hover:text-red-900">Delete</button>
+                                        @endcan
                                     </td>
                                 </tr>
                             @empty
@@ -85,30 +87,32 @@
 
 
         <!-- Delete Staff Modal -->
-        <x-modal id="delete-staff-modal" focusable>
-            <div class="p-6">
-                <h2 class="text-lg font-medium text-gray-900">
-                    {{ __('Delete Staff Account') }}
-                </h2>
+        @can('delete-owner-resources')
+            <x-modal id="delete-staff-modal" focusable>
+                <div class="p-6">
+                    <h2 class="text-lg font-medium text-gray-900">
+                        {{ __('Delete Staff Account') }}
+                    </h2>
 
-                <p class="mt-1 text-sm text-gray-600">
-                    {{ __('Are you sure you want to delete this staff account? This action cannot be undone.') }}
-                </p>
+                    <p class="mt-1 text-sm text-gray-600">
+                        {{ __('Are you sure you want to delete this staff account? This action cannot be undone.') }}
+                    </p>
 
-                <div class="mt-6 flex justify-end">
-                    <x-secondary-button x-on:click="$dispatch('close')" class="mr-3">
-                        {{ __('Cancel') }}
-                    </x-secondary-button>
+                    <div class="mt-6 flex justify-end">
+                        <x-secondary-button x-on:click="$dispatch('close')" class="mr-3">
+                            {{ __('Cancel') }}
+                        </x-secondary-button>
 
-                    <form method="POST" :action="deleteUrl" class="inline">
-                        @csrf
-                        @method('DELETE')
-                        <x-danger-button type="submit">
-                            {{ __('Delete Staff') }}
-                        </x-danger-button>
-                    </form>
+                        <form method="POST" :action="deleteUrl" class="inline">
+                            @csrf
+                            @method('DELETE')
+                            <x-danger-button type="submit">
+                                {{ __('Delete Staff') }}
+                            </x-danger-button>
+                        </form>
+                    </div>
                 </div>
-            </div>
-        </x-modal>
+            </x-modal>
+        @endcan
     </div>
 </x-app-layout>

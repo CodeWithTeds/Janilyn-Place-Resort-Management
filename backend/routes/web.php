@@ -1,15 +1,14 @@
 <?php
 
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\GuestAccommodationController;
 use App\Http\Controllers\OwnerExclusiveResortRentalController;
+use App\Http\Controllers\OwnerGuestRelationshipController;
 use App\Http\Controllers\OwnerHousekeepingController;
 use App\Http\Controllers\OwnerResortManagementController;
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\OwnerRoomTypeController;
 use App\Http\Controllers\OwnerResortUnitController;
+use App\Http\Controllers\OwnerRoomTypeController;
 use App\Http\Controllers\OwnerStaffManagementController;
-use App\Http\Controllers\OwnerGuestRelationshipController;
+use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('welcome');
@@ -30,11 +29,52 @@ Route::middleware([
         ->middleware('can:access-admin-dashboard')
         ->name('admin.dashboard');
 
+    Route::middleware(['can:access-admin-dashboard'])->prefix('admin')->name('admin.')->group(function () {
+        Route::get('/analytics', [App\Http\Controllers\OwnerAnalyticsController::class, 'index'])->name('analytics.index');
+
+        Route::prefix('inventory')->name('inventory.')->group(function () {
+            Route::get('/', [App\Http\Controllers\OwnerInventoryController::class, 'index'])->name('index');
+        });
+
+        Route::prefix('damage-reports')->name('damage-reports.')->group(function () {
+            Route::get('/', [App\Http\Controllers\OwnerDamageReportController::class, 'index'])->name('index');
+        });
+
+        Route::prefix('room-inspections')->name('room-inspections.')->group(function () {
+            Route::get('/', [App\Http\Controllers\OwnerRoomInspectionController::class, 'index'])->name('index');
+        });
+
+        Route::prefix('housekeeping')->name('housekeeping.')->group(function () {
+            Route::get('/', [OwnerHousekeepingController::class, 'index'])->name('index');
+            Route::get('/schedules', [OwnerHousekeepingController::class, 'schedules'])->name('schedules');
+        });
+
+        Route::prefix('staff-management')->name('staff-management.')->group(function () {
+            Route::get('/', [OwnerStaffManagementController::class, 'index'])->name('index');
+            Route::get('/schedules', [OwnerStaffManagementController::class, 'schedules'])->name('schedules');
+            Route::get('/tasks', [OwnerStaffManagementController::class, 'tasks'])->name('tasks');
+            Route::get('/attendance', [OwnerStaffManagementController::class, 'attendance'])->name('attendance');
+            Route::get('/performance', [OwnerStaffManagementController::class, 'performance'])->name('performance');
+        });
+
+        Route::prefix('resort-management')->name('resort-management.')->group(function () {
+            Route::get('/bookings', [OwnerResortManagementController::class, 'bookings'])->name('bookings');
+            Route::get('/calendar', [OwnerResortManagementController::class, 'calendar'])->name('calendar');
+            Route::get('/check-in-out', [OwnerResortManagementController::class, 'checkInOut'])->name('check-in-out');
+            Route::get('/cancellations', [OwnerResortManagementController::class, 'cancellations'])->name('cancellations');
+            Route::get('/room-types', [OwnerRoomTypeController::class, 'index'])->name('room-types.index');
+            Route::get('/resort-units', [OwnerResortUnitController::class, 'index'])->name('resort-units.index');
+            Route::get('/exclusive-resort-rentals', [OwnerExclusiveResortRentalController::class, 'index'])->name('exclusive-resort-rentals.index');
+            Route::get('/guest-management', [OwnerGuestRelationshipController::class, 'index'])->name('guest-management.index');
+            Route::get('/guest-management/loyalty', [OwnerGuestRelationshipController::class, 'loyalty'])->name('guest-management.loyalty');
+        });
+    });
+
     // Owner Dashboard
     Route::get('/owner/dashboard', [DashboardController::class, 'owner'])
         ->middleware('can:access-owner-dashboard')
         ->name('owner.dashboard');
-    
+
     // Owner Analytics
     Route::get('/owner/analytics', [App\Http\Controllers\OwnerAnalyticsController::class, 'index'])
         ->middleware('can:access-owner-dashboard')
@@ -45,16 +85,16 @@ Route::middleware([
         Route::get('/', [OwnerHousekeepingController::class, 'index'])->name('index');
         Route::post('/tasks', [OwnerHousekeepingController::class, 'store'])->name('tasks.store');
         Route::put('/tasks/{task}', [OwnerHousekeepingController::class, 'update'])->name('tasks.update');
-        Route::delete('/tasks/{task}', [OwnerHousekeepingController::class, 'destroy'])->name('tasks.destroy');
+        Route::delete('/tasks/{task}', [OwnerHousekeepingController::class, 'destroy'])->middleware('can:delete-owner-resources')->name('tasks.destroy');
         Route::patch('/units/{unit}/status', [OwnerHousekeepingController::class, 'updateUnitStatus'])->name('units.status');
-        
+
         Route::get('/staff', [OwnerHousekeepingController::class, 'staff'])->name('staff');
         Route::get('/schedules', [OwnerHousekeepingController::class, 'schedules'])->name('schedules');
         Route::get('/staff/create', [OwnerHousekeepingController::class, 'createStaff'])->name('staff.create');
         Route::post('/staff', [OwnerHousekeepingController::class, 'storeStaff'])->name('staff.store');
         Route::get('/staff/{staff}/edit', [OwnerHousekeepingController::class, 'editStaff'])->name('staff.edit');
         Route::put('/staff/{staff}', [OwnerHousekeepingController::class, 'updateStaff'])->name('staff.update');
-        Route::delete('/staff/{staff}', [OwnerHousekeepingController::class, 'destroyStaff'])->name('staff.destroy');
+        Route::delete('/staff/{staff}', [OwnerHousekeepingController::class, 'destroyStaff'])->middleware('can:delete-owner-resources')->name('staff.destroy');
     });
 
     // Owner Resort Management
@@ -83,7 +123,7 @@ Route::middleware([
             Route::post('/room-types', [OwnerRoomTypeController::class, 'store'])->name('room-types.store');
             Route::get('/room-types/{room_type}/edit', [OwnerRoomTypeController::class, 'edit'])->name('room-types.edit');
             Route::put('/room-types/{room_type}', [OwnerRoomTypeController::class, 'update'])->name('room-types.update');
-            Route::delete('/room-types/{room_type}', [OwnerRoomTypeController::class, 'destroy'])->name('room-types.destroy');
+            Route::delete('/room-types/{room_type}', [OwnerRoomTypeController::class, 'destroy'])->middleware('can:delete-owner-resources')->name('room-types.destroy');
         });
 
         // Resort Units Management
@@ -93,7 +133,7 @@ Route::middleware([
             Route::post('/resort-units', [OwnerResortUnitController::class, 'store'])->name('resort-units.store');
             Route::get('/resort-units/{resort_unit}/edit', [OwnerResortUnitController::class, 'edit'])->name('resort-units.edit');
             Route::put('/resort-units/{resort_unit}', [OwnerResortUnitController::class, 'update'])->name('resort-units.update');
-            Route::delete('/resort-units/{resort_unit}', [OwnerResortUnitController::class, 'destroy'])->name('resort-units.destroy');
+            Route::delete('/resort-units/{resort_unit}', [OwnerResortUnitController::class, 'destroy'])->middleware('can:delete-owner-resources')->name('resort-units.destroy');
         });
 
         // Exclusive Resort Rentals Management
@@ -103,10 +143,8 @@ Route::middleware([
             Route::post('/exclusive-resort-rentals', [OwnerExclusiveResortRentalController::class, 'store'])->name('exclusive-resort-rentals.store');
             Route::get('/exclusive-resort-rentals/{exclusive_resort_rental}/edit', [OwnerExclusiveResortRentalController::class, 'edit'])->name('exclusive-resort-rentals.edit');
             Route::put('/exclusive-resort-rentals/{exclusive_resort_rental}', [OwnerExclusiveResortRentalController::class, 'update'])->name('exclusive-resort-rentals.update');
-            Route::delete('/exclusive-resort-rentals/{exclusive_resort_rental}', [OwnerExclusiveResortRentalController::class, 'destroy'])->name('exclusive-resort-rentals.destroy');
+            Route::delete('/exclusive-resort-rentals/{exclusive_resort_rental}', [OwnerExclusiveResortRentalController::class, 'destroy'])->middleware('can:delete-owner-resources')->name('exclusive-resort-rentals.destroy');
         });
-
-
 
         // Guest Relationship Management (GRM)
         Route::get('/guest-management', [OwnerGuestRelationshipController::class, 'index'])->name('guest-management.index');
@@ -120,7 +158,7 @@ Route::middleware([
         Route::post('/', [App\Http\Controllers\OwnerInventoryController::class, 'store'])->name('store');
         Route::get('/{inventory}/edit', [App\Http\Controllers\OwnerInventoryController::class, 'edit'])->name('edit');
         Route::put('/{inventory}', [App\Http\Controllers\OwnerInventoryController::class, 'update'])->name('update');
-        Route::delete('/{inventory}', [App\Http\Controllers\OwnerInventoryController::class, 'destroy'])->name('destroy');
+        Route::delete('/{inventory}', [App\Http\Controllers\OwnerInventoryController::class, 'destroy'])->middleware('can:delete-owner-resources')->name('destroy');
     });
 
     // Owner Damage Reports
@@ -130,7 +168,7 @@ Route::middleware([
         Route::post('/', [App\Http\Controllers\OwnerDamageReportController::class, 'store'])->name('store');
         Route::get('/{damageReport}/edit', [App\Http\Controllers\OwnerDamageReportController::class, 'edit'])->name('edit');
         Route::put('/{damageReport}', [App\Http\Controllers\OwnerDamageReportController::class, 'update'])->name('update');
-        Route::delete('/{damageReport}', [App\Http\Controllers\OwnerDamageReportController::class, 'destroy'])->name('destroy');
+        Route::delete('/{damageReport}', [App\Http\Controllers\OwnerDamageReportController::class, 'destroy'])->middleware('can:delete-owner-resources')->name('destroy');
     });
 
     // Owner Room Inspections
@@ -140,7 +178,7 @@ Route::middleware([
         Route::post('/', [App\Http\Controllers\OwnerRoomInspectionController::class, 'store'])->name('store');
         Route::get('/{roomInspection}/edit', [App\Http\Controllers\OwnerRoomInspectionController::class, 'edit'])->name('edit');
         Route::put('/{roomInspection}', [App\Http\Controllers\OwnerRoomInspectionController::class, 'update'])->name('update');
-        Route::delete('/{roomInspection}', [App\Http\Controllers\OwnerRoomInspectionController::class, 'destroy'])->name('destroy');
+        Route::delete('/{roomInspection}', [App\Http\Controllers\OwnerRoomInspectionController::class, 'destroy'])->middleware('can:delete-owner-resources')->name('destroy');
     });
 
     // Owner Staff Management
@@ -156,11 +194,11 @@ Route::middleware([
         Route::post('/performance', [OwnerStaffManagementController::class, 'storePerformance'])->name('performance.store');
         Route::get('/tasks', [OwnerStaffManagementController::class, 'tasks'])->name('tasks');
         Route::post('/tasks', [OwnerStaffManagementController::class, 'storeTask'])->name('tasks.store');
-        
+
         // Specific staff routes (must be after other specific routes to avoid conflict with {staff})
         Route::get('/{staff}/edit', [OwnerStaffManagementController::class, 'edit'])->name('edit');
         Route::put('/{staff}', [OwnerStaffManagementController::class, 'update'])->name('update');
-        Route::delete('/{staff}', [OwnerStaffManagementController::class, 'destroy'])->name('destroy');
+        Route::delete('/{staff}', [OwnerStaffManagementController::class, 'destroy'])->middleware('can:delete-owner-resources')->name('destroy');
     });
 
     // Staff Dashboard
