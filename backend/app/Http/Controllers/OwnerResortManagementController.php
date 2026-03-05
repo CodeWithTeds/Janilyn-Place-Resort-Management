@@ -229,7 +229,7 @@ class OwnerResortManagementController extends Controller
     {
         $request->validate([
             'room_type_id' => 'required|exists:room_types,id',
-            'check_in' => 'required|date|after_or_equal:today',
+            'check_in' => 'required|date',
             'check_out' => 'required|date|after:check_in',
         ]);
 

@@ -1,5 +1,6 @@
 import './bootstrap';
 import './housekeeping-staff';
+import './checkin-sweet-alert';
 import Swal from 'sweetalert2';
 
 window.Swal = Swal;

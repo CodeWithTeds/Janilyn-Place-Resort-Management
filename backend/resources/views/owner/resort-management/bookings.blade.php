@@ -564,7 +564,7 @@
             </div>
             <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
             <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-                <form :action="checkInAction" method="POST">
+                <form x-ref="checkInForm" :action="checkInAction" method="POST" class="check-in-form">
                     @csrf
                     @method('PATCH')
                     <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
@@ -585,7 +585,7 @@
                                     <div class="mt-4">
                                         <div x-show="isRoomBooking">
                                             <label for="check_in_unit_id" class="block text-sm font-medium text-gray-700">Assign Unit (Required)</label>
-                                            <select id="check_in_unit_id" name="resort_unit_id" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md" :required="isRoomBooking">
+                                            <select id="check_in_unit_id" name="resort_unit_id" x-model="checkInFormData.resort_unit_id" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md" :required="isRoomBooking">
                                                 <option value="">Select a Unit</option>
                                                 <template x-for="unit in checkInAvailableUnits" :key="unit.id">
                                                     <option :value="unit.id" x-text="unit.name"></option>
@@ -603,7 +603,7 @@
                         </div>
                     </div>
                     <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                        <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:ml-3 sm:w-auto sm:text-sm" :disabled="isRoomBooking && checkInAvailableUnits.length === 0">
+                        <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:ml-3 sm:w-auto sm:text-sm" :class="{ 'opacity-60': loadingUnits }">
                             Confirm Check In
                         </button>
                         <button type="button" @click="showCheckInModal = false" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
@@ -748,6 +748,9 @@
                 checkInAction: '',
                 checkInAvailableUnits: [],
                 loadingUnits: false,
+                checkInFormData: {
+                    resort_unit_id: ''
+                },
                 showSummaryModal: false,
                 debugEnabled: false,
                 debug: {
@@ -762,6 +765,38 @@
                     cookingFee: 0,
                     total: 0,
                     missingFields: []
+                },
+                showAlert(type, title, message) {
+                    if (window.Swal) {
+                        window.Swal.fire({
+                            icon: type,
+                            title,
+                            text: message,
+                        });
+                        return;
+                    }
+                    alert(`${title}: ${message}`);
+                },
+                async extractResponseError(response, defaultMessage) {
+                    const contentType = response.headers.get('Content-Type') || '';
+                    if (contentType.includes('application/json')) {
+                        const payload = await response.json().catch(() => ({}));
+                        if (payload?.message) {
+                            return payload.message;
+                        }
+                        if (payload?.errors) {
+                            const firstError = Object.values(payload.errors)[0];
+                            if (Array.isArray(firstError) && firstError[0]) {
+                                return firstError[0];
+                            }
+                        }
+                    } else {
+                        const html = await response.text().catch(() => '');
+                        if (html.includes('The check in field must be a date after or equal to today')) {
+                            return 'Check-in date must be today or a future date.';
+                        }
+                    }
+                    return defaultMessage;
                 },
                 handleCreateBookingClick(event) {
                     if (event) {
@@ -797,6 +832,7 @@
                     this.showCheckInModal = true;
                     this.checkInAvailableUnits = [];
                     this.loadingUnits = true;
+                    this.checkInFormData.resort_unit_id = '';
 
                     if (roomTypeId && roomTypeId !== 'null') {
                         this.isRoomBooking = true;
@@ -807,13 +843,17 @@
                             const ct = response.headers.get('Content-Type') || '';
                             if (response.ok && ct.includes('application/json')) {
                                 this.checkInAvailableUnits = await response.json();
+                                if (this.checkInAvailableUnits.length === 0) {
+                                    this.showAlert('warning', 'Check-in Validation', 'No available units found for this booking dates.');
+                                }
                             } else {
                                 this.checkInAvailableUnits = [];
-                                const text = await response.text();
-                                console.warn('Non-JSON response for available-units (check-in):', text.slice(0, 200));
+                                const errorMessage = await this.extractResponseError(response, 'Unable to load available units for check-in.');
+                                this.showAlert('warning', 'Check-in Validation', errorMessage);
                             }
                         } catch (error) {
                             console.error('Error fetching units:', error);
+                            this.showAlert('error', 'Check-in Error', 'Unable to load units. Please try again.');
                         }
                     } else {
                         this.isRoomBooking = false;
@@ -837,12 +877,13 @@
                                 this.availableUnits = await response.json();
                             } else {
                                 this.availableUnits = [];
-                                const text = await response.text();
-                                console.warn('Non-JSON response for available-units:', text.slice(0, 200));
+                                const errorMessage = await this.extractResponseError(response, 'Unable to load available units.');
+                                this.showAlert('warning', 'Booking Validation', errorMessage);
                             }
                         } catch (error) {
                             console.error('Error fetching units:', error);
                             this.availableUnits = [];
+                            this.showAlert('error', 'Booking Error', 'Unable to load units. Please try again.');
                         }
                     } else {
                         this.availableUnits = [];
