@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\StaffTask;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
@@ -54,6 +56,12 @@ class DashboardController extends Controller
      */
     public function staff(): View
     {
-        return view('dashboard'); // Or a specific staff dashboard view
+        $assignedTasks = StaffTask::with('createdBy')
+            ->where('assigned_to', Auth::id())
+            ->orderByRaw("CASE WHEN status = 'in_progress' THEN 1 WHEN status = 'pending' THEN 2 ELSE 3 END")
+            ->orderBy('due_date')
+            ->paginate(10);
+
+        return view('dashboard', compact('assignedTasks'));
     }
 }
