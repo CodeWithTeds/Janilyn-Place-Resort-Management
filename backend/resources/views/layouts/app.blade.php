@@ -39,6 +39,59 @@
 
                 <!-- Page Content -->
                 <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100">
+                    @if(Auth::check() && Auth::user()->isStaff() && !request()->routeIs('staff.dashboard'))
+                        @php
+                            $staffAssignedTasks = \App\Models\StaffTask::with('createdBy')
+                                ->where('assigned_to', Auth::id())
+                                ->orderByRaw("CASE WHEN status = 'in_progress' THEN 1 WHEN status = 'pending' THEN 2 ELSE 3 END")
+                                ->orderBy('due_date')
+                                ->limit(3)
+                                ->get();
+                            $housekeepingAssignedTasks = \App\Models\HousekeepingTask::with('resortUnit')
+                                ->where('assigned_to', Auth::id())
+                                ->orderByRaw("CASE WHEN status = 'in_progress' THEN 1 WHEN status = 'pending' THEN 2 ELSE 3 END")
+                                ->orderBy('due_date')
+                                ->limit(3)
+                                ->get();
+                        @endphp
+                        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+                            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                                <div class="p-4 border-b border-gray-200 flex items-center justify-between">
+                                    <h3 class="text-sm font-semibold text-gray-900">My Assigned Work</h3>
+                                    <a href="{{ route('staff.dashboard') }}" class="text-sm text-indigo-600 hover:text-indigo-800">View all</a>
+                                </div>
+                                <div class="p-4">
+                                    @if($staffAssignedTasks->isEmpty() && $housekeepingAssignedTasks->isEmpty())
+                                        <p class="text-sm text-gray-500">No assigned work yet.</p>
+                                    @else
+                                        @if($staffAssignedTasks->isNotEmpty())
+                                            <h4 class="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">Staff Management</h4>
+                                            <div class="space-y-2 mb-4">
+                                                @foreach($staffAssignedTasks as $task)
+                                                    <div class="flex items-center justify-between text-sm">
+                                                        <div class="text-gray-800 truncate pr-4">{{ $task->title }}</div>
+                                                        <div class="text-gray-500 whitespace-nowrap">{{ ucfirst(str_replace('_', ' ', $task->status)) }}</div>
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        @endif
+
+                                        @if($housekeepingAssignedTasks->isNotEmpty())
+                                            <h4 class="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">Housekeeping</h4>
+                                            <div class="space-y-2">
+                                                @foreach($housekeepingAssignedTasks as $task)
+                                                    <div class="flex items-center justify-between text-sm">
+                                                        <div class="text-gray-800 truncate pr-4">{{ $task->title }}</div>
+                                                        <div class="text-gray-500 whitespace-nowrap">{{ $task->status->label() }}</div>
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        @endif
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                    @endif
                     {{ $slot }}
                 </main>
             </div>

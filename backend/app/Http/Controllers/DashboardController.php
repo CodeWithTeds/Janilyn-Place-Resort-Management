@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\HousekeepingTask;
 use App\Models\StaffTask;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
@@ -62,6 +63,12 @@ class DashboardController extends Controller
             ->orderBy('due_date')
             ->paginate(10);
 
-        return view('dashboard', compact('assignedTasks'));
+        $housekeepingAssignedTasks = HousekeepingTask::with('resortUnit')
+            ->where('assigned_to', Auth::id())
+            ->orderByRaw("CASE WHEN status = 'in_progress' THEN 1 WHEN status = 'pending' THEN 2 ELSE 3 END")
+            ->orderBy('due_date')
+            ->paginate(10, ['*'], 'housekeeping_page');
+
+        return view('dashboard', compact('assignedTasks', 'housekeepingAssignedTasks'));
     }
 }

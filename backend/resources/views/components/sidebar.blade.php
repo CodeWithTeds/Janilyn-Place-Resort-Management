@@ -10,7 +10,14 @@
         <nav class="flex-1 px-4 py-4 space-y-2">
             @php($isAdmin = Auth::check() && Auth::user()->isAdmin())
 
-           
+            @if(Auth::check() && Auth::user()->isStaff())
+                <x-sidebar-link href="{{ route('staff.dashboard') }}" :active="request()->routeIs('staff.dashboard')">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-8 7h8m-8 4h5"></path>
+                    </svg>
+                    {{ __('My Assigned Work') }}
+                </x-sidebar-link>
+            @endif
 
             @if(Auth::check() && (Auth::user()->isOwner() || Auth::user()->isAdmin()))
                 <x-sidebar-link href="{{ $isAdmin ? route('admin.analytics.index') : route('owner.analytics.index') }}" :active="request()->routeIs('owner.analytics.index') || request()->routeIs('admin.analytics.index')">
