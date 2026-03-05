@@ -25,6 +25,7 @@ class PriceCalculationController extends Controller
             'pax_count' => 'required|integer|min:1',
             'resort_unit_id' => 'nullable|integer',
             'pricing_tier_id' => 'nullable|integer',
+            'has_cooking_fee' => 'boolean',
         ]);
 
         try {
@@ -38,7 +39,8 @@ class PriceCalculationController extends Controller
                     $validated['check_out'],
                     $validated['pax_count'],
                     $validated['resort_unit_id'] ?? null,
-                    $validated['pricing_tier_id'] ?? null
+                    $validated['pricing_tier_id'] ?? null,
+                    $validated['has_cooking_fee'] ?? false
                 );
             } else {
                 $rental = ExclusiveResortRental::findOrFail($validated['id']);
@@ -46,7 +48,8 @@ class PriceCalculationController extends Controller
                     $rental,
                     $validated['check_in'],
                     $validated['check_out'],
-                    $validated['pax_count']
+                    $validated['pax_count'],
+                    $validated['has_cooking_fee'] ?? false
                 );
             }
 

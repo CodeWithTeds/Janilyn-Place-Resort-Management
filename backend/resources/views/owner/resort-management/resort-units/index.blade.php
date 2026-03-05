@@ -53,14 +53,25 @@
                                         </span>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                            @if($unit->cleaning_status?->value === 'clean') bg-green-100 text-green-800 
-                                            @elseif($unit->cleaning_status?->value === 'dirty') bg-yellow-100 text-yellow-800
-                                            @elseif($unit->cleaning_status?->value === 'cleaning') bg-blue-100 text-blue-800
-                                            @elseif($unit->cleaning_status?->value === 'inspection_ready') bg-purple-100 text-purple-800
-                                            @else bg-gray-100 text-gray-800 @endif">
-                                            {{ $unit->cleaning_status?->label() ?? ucfirst($unit->cleaning_status?->value ?? 'N/A') }}
-                                        </span>
+                                        <form action="{{ route('owner.housekeeping.units.status', $unit) }}" method="POST">
+                                            @csrf
+                                            @method('PATCH')
+                                            <select name="cleaning_status" onchange="this.form.submit()" class="text-xs rounded-full border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 py-1 pl-2 pr-6
+                                                {{ match($unit->cleaning_status?->value) {
+                                                    'clean' => 'bg-green-100 text-green-800',
+                                                    'dirty' => 'bg-red-100 text-red-800',
+                                                    'cleaning' => 'bg-blue-100 text-blue-800',
+                                                    'inspection_ready' => 'bg-indigo-100 text-indigo-800',
+                                                    'do_not_disturb' => 'bg-gray-100 text-gray-800',
+                                                    default => 'bg-gray-100 text-gray-800'
+                                                } }}">
+                                                @foreach(\App\Enums\UnitCleaningStatus::cases() as $status)
+                                                    <option value="{{ $status->value }}" {{ $unit->cleaning_status === $status ? 'selected' : '' }}>
+                                                        {{ $status->label() }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </form>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                         {{ Str::limit($unit->notes, 30) }}

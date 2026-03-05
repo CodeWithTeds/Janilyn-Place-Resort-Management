@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\RoomInspection;
 use App\Models\ResortUnit;
+use App\Enums\UnitCleaningStatus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -35,6 +36,13 @@ class OwnerRoomInspectionController extends Controller
 
         RoomInspection::create($validated);
 
+        if (in_array($validated['status'], ['Failed', 'Needs Cleaning'])) {
+            $unit = ResortUnit::find($validated['resort_unit_id']);
+            if ($unit) {
+                $unit->update(['cleaning_status' => UnitCleaningStatus::DIRTY]);
+            }
+        }
+
         return redirect()->route('owner.room-inspections.index')->with('success', 'Room inspection logged successfully.');
     }
 
@@ -54,6 +62,13 @@ class OwnerRoomInspectionController extends Controller
         ]);
 
         $roomInspection->update($validated);
+
+        if (in_array($validated['status'], ['Failed', 'Needs Cleaning'])) {
+            $unit = ResortUnit::find($validated['resort_unit_id']);
+            if ($unit) {
+                $unit->update(['cleaning_status' => UnitCleaningStatus::DIRTY]);
+            }
+        }
 
         return redirect()->route('owner.room-inspections.index')->with('success', 'Room inspection updated successfully.');
     }

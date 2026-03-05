@@ -55,6 +55,48 @@ class OwnerResortManagementController extends Controller
         }
     }
 
+    public function summary(StoreBookingRequest $request): View
+    {
+        $data = $request->validated();
+        
+        $totalPrice = 0;
+        $roomType = null;
+        $rental = null;
+        $unit = null;
+        $tier = null;
+
+        if ($data['booking_type'] === 'room') {
+            $roomType = \App\Models\RoomType::find($data['room_type_id']);
+            if (isset($data['resort_unit_id'])) {
+                $unit = \App\Models\ResortUnit::find($data['resort_unit_id']);
+            }
+            if (isset($data['pricing_tier_id'])) {
+                $tier = \App\Models\RoomTypePricingTier::find($data['pricing_tier_id']);
+            }
+            
+            $totalPrice = $this->resortService->calculateTotalPrice(
+                $roomType,
+                $data['check_in'],
+                $data['check_out'],
+                $data['pax_count'],
+                $data['resort_unit_id'] ?? null,
+                $data['pricing_tier_id'] ?? null,
+                $data['has_cooking_fee'] ?? false
+            );
+        } else {
+            $rental = \App\Models\ExclusiveResortRental::find($data['exclusive_resort_rental_id']);
+            $totalPrice = $this->resortService->calculateExclusiveRentalPrice(
+                $rental,
+                $data['check_in'],
+                $data['check_out'],
+                $data['pax_count'],
+                $data['has_cooking_fee'] ?? false
+            );
+        }
+
+        return view('owner.resort-management.booking-summary', compact('data', 'totalPrice', 'roomType', 'rental', 'unit', 'tier'));
+    }
+
     public function paymentSuccess(Request $request, $booking_id)
     {
         $booking = Booking::findOrFail($booking_id);

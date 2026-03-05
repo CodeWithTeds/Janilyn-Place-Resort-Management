@@ -17,7 +17,8 @@
             check_in: '{{ old('check_in', '') }}',
             check_out: '{{ old('check_out', '') }}',
             pax_count: '{{ old('pax_count', '') }}',
-            payment_method: '{{ old('payment_method', 'cash') }}'
+            payment_method: '{{ old('payment_method', 'cash') }}',
+            has_cooking_fee: {{ old('has_cooking_fee') ? 'true' : 'false' }}
         }
     )">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
@@ -52,9 +53,19 @@
                     </div>
                 </div>
 
-                <form action="{{ route('resort-management.bookings.store') }}" method="POST" @submit.prevent="submitForm">
+                <form x-ref="bookingForm" action="{{ route('resort-management.bookings.store') }}" method="POST">
                     @csrf
                     <input type="hidden" name="booking_type" :value="bookingType">
+                    @if ($errors->any())
+                        <div class="mb-4 rounded-md border border-red-200 bg-red-50 p-4">
+                            <p class="text-sm font-semibold text-red-800">Please fix the following before submitting:</p>
+                            <ul class="mt-2 list-disc pl-5 text-sm text-red-700">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
 
                     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                         <!-- Left Column: Guest & Date Details -->
@@ -105,6 +116,23 @@
                                     </label>
                                 </div>
                                 <x-input-error for="payment_method" class="mt-2" />
+                            </div>
+
+                            <!-- Optional Add-ons -->
+                            <div class="border-t pt-6" x-show="formData.room_type_id || formData.exclusive_resort_rental_id">
+                                <h4 class="text-sm font-medium text-gray-700 mb-3">Optional Add-ons</h4>
+                                <div class="space-y-3">
+                                    <label class="flex items-center p-3 border rounded-lg cursor-pointer transition-colors"
+                                        :class="formData.has_cooking_fee ? 'bg-indigo-50 border-indigo-200' : 'bg-white border-gray-200 hover:bg-gray-50'">
+                                        <input type="hidden" name="has_cooking_fee" value="0">
+                                        <input type="checkbox" name="has_cooking_fee" value="1" class="form-checkbox text-indigo-600 h-5 w-5 rounded"
+                                            x-model="formData.has_cooking_fee" @change="calculatePrice()">
+                                        <div class="ml-3">
+                                            <span class="block text-sm font-semibold text-gray-900">Cooking Fee</span>
+                                            <span class="block text-xs text-gray-500" x-text="'₱' + (bookingType === 'room' ? (currentRoomType?.cooking_fee || 0) : (currentExclusiveRental?.cooking_fee || 0)).toLocaleString() + ' (one-time)'"></span>
+                                        </div>
+                                    </label>
+                                </div>
                             </div>
 
                             <!-- Total Price Display -->
@@ -333,10 +361,12 @@
                             </div>
                         </div>
                     </div>
-                    <div class="mt-6 flex justify-end">
-                        <x-button>
+                    <div class="mt-6 flex items-center justify-end">
+                        <button type="submit"
+                                class="relative z-10 inline-flex items-center px-4 py-2 bg-brand-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-brand-700 focus:bg-brand-700 active:bg-brand-900 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 transition ease-in-out duration-150 cursor-pointer"
+                                onclick="return true;">
                             {{ __('Create Booking') }}
-                        </x-button>
+                        </button>
                     </div>
                 </form>
             </div>
@@ -585,6 +615,80 @@
         </div>
     </div>
 
+    <!-- Payment Summary Modal -->
+    <div x-show="showSummaryModal" class="fixed z-10 inset-0 overflow-y-auto" style="display: none;">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 transition-opacity" aria-hidden="true">
+                <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
+            </div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-indigo-100 sm:mx-0 sm:h-10 sm:w-10">
+                            <svg class="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2-1.343-2-3-2zm0 8c-2.21 0-4-1.343-4-3h2c0 .552.895 1 2 1s2-.448 2-1h2c0 1.657-1.79 3-4 3z" />
+                            </svg>
+                        </div>
+                        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900">
+                                Payment Summary
+                            </h3>
+                            <div class="mt-4">
+                                <div class="mb-4 p-3 rounded border border-yellow-200 bg-yellow-50" x-show="summary.missingFields && summary.missingFields.length > 0">
+                                    <div class="text-sm text-yellow-800 font-medium">Please complete the following before proceeding:</div>
+                                    <ul class="mt-2 list-disc list-inside text-sm text-yellow-800">
+                                        <template x-for="item in summary.missingFields" :key="item">
+                                            <li x-text="item"></li>
+                                        </template>
+                                    </ul>
+                                </div>
+                                <div class="bg-gray-50 p-4 rounded-md space-y-2">
+                                    <div class="flex justify-between text-sm">
+                                        <span>Dates</span>
+                                        <span x-text="new Date(formData.check_in).toLocaleDateString() + ' - ' + new Date(formData.check_out).toLocaleDateString()"></span>
+                                    </div>
+                                    <div class="flex justify-between text-sm">
+                                        <span>Nights</span>
+                                        <span x-text="summary.nights"></span>
+                                    </div>
+                                    <div class="flex justify-between text-sm">
+                                        <span>Tier Amount</span>
+                                        <span x-text="'₱' + Number(summary.tierAmount).toLocaleString('en-US', {minimumFractionDigits: 2})"></span>
+                                    </div>
+                                    <div class="flex justify-between text-sm">
+                                        <span>Add (Pax × Extra Pax Fee)</span>
+                                        <span x-text="'₱' + Number(summary.add).toLocaleString('en-US', {minimumFractionDigits: 2})"></span>
+                                    </div>
+                                    <div class="flex justify-between text-xs text-gray-500">
+                                        <span>Extra Pax Fee</span>
+                                        <span x-text="'₱' + Number(summary.extraFeePerPerson).toLocaleString('en-US', {minimumFractionDigits: 2}) + ' × ' + formData.pax_count"></span>
+                                    </div>
+                                    <div class="flex justify-between text-sm" x-show="summary.cookingFee > 0">
+                                        <span>Cooking Fee</span>
+                                        <span x-text="'₱' + Number(summary.cookingFee).toLocaleString('en-US', {minimumFractionDigits: 2})"></span>
+                                    </div>
+                                    <div class="flex justify-between mt-3 pt-3 border-t font-bold text-lg">
+                                        <span>Total</span>
+                                        <span class="text-indigo-600" x-text="'₱' + Number(summary.total).toLocaleString('en-US', {minimumFractionDigits: 2})"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="button" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed sm:ml-3 sm:w-auto sm:text-sm" :disabled="summary.missingFields && summary.missingFields.length > 0" @click="$refs.bookingForm.submit()">
+                        Confirm & Pay
+                    </button>
+                    <button type="button" @click="showSummaryModal = false" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         function bookingForm(initialTab = 'online', oldData = {}) {
             return {
@@ -599,7 +703,8 @@
                     check_in: oldData.check_in || '',
                     check_out: oldData.check_out || '',
                     pax_count: oldData.pax_count || '',
-                    payment_method: oldData.payment_method || 'cash'
+                    payment_method: oldData.payment_method || 'cash',
+                    has_cooking_fee: oldData.has_cooking_fee || false
                 },
                 init() {
                     this.$watch('bookingType', value => {
@@ -643,6 +748,50 @@
                 checkInAction: '',
                 checkInAvailableUnits: [],
                 loadingUnits: false,
+                showSummaryModal: false,
+                debugEnabled: false,
+                debug: {
+                    lastAction: '',
+                    clickCheck: { tag: '', classes: '', id: '', z: '' }
+                },
+                summary: {
+                    nights: 0,
+                    tierAmount: 0,
+                    extraFeePerPerson: 0,
+                    add: 0,
+                    cookingFee: 0,
+                    total: 0,
+                    missingFields: []
+                },
+                handleCreateBookingClick(event) {
+                    if (event) {
+                        event.preventDefault();
+                    }
+                    try {
+                        this.testClickTarget();
+                        this.openSummaryModal();
+                    } catch (e) {
+                        this.debug.lastAction = 'click:fallback-submit';
+                        this.$refs.bookingForm.submit();
+                    }
+                },
+                testClickTarget() {
+                    try {
+                        const el = this.$refs.createBtn;
+                        if (!el) return;
+                        const rect = el.getBoundingClientRect();
+                        const x = rect.left + rect.width / 2;
+                        const y = rect.top + rect.height / 2;
+                        const top = document.elementFromPoint(x, y);
+                        const cs = top ? window.getComputedStyle(top) : null;
+                        this.debug.clickCheck = {
+                            tag: top?.tagName || '',
+                            classes: top?.className || '',
+                            id: top?.id || '',
+                            z: cs ? cs.zIndex : ''
+                        };
+                    } catch (e) {}
+                },
                 async openCheckInModal(bookingId, roomTypeId, checkIn, checkOut) {
                     this.checkInAction = `{{ url('resort-management/bookings') }}/${bookingId}/check-in`;
                     this.showCheckInModal = true;
@@ -652,9 +801,16 @@
                     if (roomTypeId && roomTypeId !== 'null') {
                         this.isRoomBooking = true;
                         try {
-                            const response = await fetch(`{{ route('resort-management.bookings.available-units') }}?room_type_id=${roomTypeId}&check_in=${checkIn}&check_out=${checkOut}`);
-                            if (response.ok) {
+                            const response = await fetch(`{{ route('resort-management.bookings.available-units') }}?room_type_id=${roomTypeId}&check_in=${checkIn}&check_out=${checkOut}`, {
+                                headers: { 'Accept': 'application/json' }
+                            });
+                            const ct = response.headers.get('Content-Type') || '';
+                            if (response.ok && ct.includes('application/json')) {
                                 this.checkInAvailableUnits = await response.json();
+                            } else {
+                                this.checkInAvailableUnits = [];
+                                const text = await response.text();
+                                console.warn('Non-JSON response for available-units (check-in):', text.slice(0, 200));
                             }
                         } catch (error) {
                             console.error('Error fetching units:', error);
@@ -673,11 +829,16 @@
 
                     if (this.bookingType === 'room' && this.formData.room_type_id && this.formData.check_in && this.formData.check_out) {
                         try {
-                            const response = await fetch(`{{ route('resort-management.bookings.available-units') }}?room_type_id=${this.formData.room_type_id}&check_in=${this.formData.check_in}&check_out=${this.formData.check_out}`);
-                            if (response.ok) {
+                            const response = await fetch(`{{ route('resort-management.bookings.available-units') }}?room_type_id=${this.formData.room_type_id}&check_in=${this.formData.check_in}&check_out=${this.formData.check_out}`, {
+                                headers: { 'Accept': 'application/json' }
+                            });
+                            const ct = response.headers.get('Content-Type') || '';
+                            if (response.ok && ct.includes('application/json')) {
                                 this.availableUnits = await response.json();
                             } else {
                                 this.availableUnits = [];
+                                const text = await response.text();
+                                console.warn('Non-JSON response for available-units:', text.slice(0, 200));
                             }
                         } catch (error) {
                             console.error('Error fetching units:', error);
@@ -792,12 +953,13 @@
                             },
                             body: JSON.stringify({
                                 type: this.bookingType,
-                                id: this.bookingType === 'room' ? this.formData.room_type_id : this.formData.exclusive_resort_rental_id,
+                                id: this.bookingType === 'room' ? Number(this.formData.room_type_id) : Number(this.formData.exclusive_resort_rental_id),
                                 check_in: this.formData.check_in,
                                 check_out: this.formData.check_out,
-                                pax_count: this.formData.pax_count,
-                                resort_unit_id: this.formData.resort_unit_id,
-                                pricing_tier_id: this.formData.pricing_tier_id
+                                pax_count: Number(this.formData.pax_count),
+                                resort_unit_id: this.formData.resort_unit_id ? Number(this.formData.resort_unit_id) : null,
+                                pricing_tier_id: this.formData.pricing_tier_id ? Number(this.formData.pricing_tier_id) : null,
+                                has_cooking_fee: this.formData.has_cooking_fee
                             })
                         });
 
@@ -805,7 +967,8 @@
                             const data = await response.json();
                             this.totalPrice = data.total_price;
                         } else {
-                            console.error('Error calculating price');
+                            const data = await response.json().catch(() => ({}));
+                            console.error('Error calculating price', data);
                             this.totalPrice = 0;
                         }
                     } catch (error) {
@@ -813,7 +976,137 @@
                         this.totalPrice = 0;
                     }
                 },
+                async openSummaryModal() {
+                    this.debug.lastAction = 'openSummaryModal:start';
+                    this.errors = {};
+                    let hasError = false;
+                    const missing = [];
+
+                    if (!this.formData.guest_name) {
+                        this.errors.guest_name = 'Guest Name is required';
+                        hasError = true;
+                        missing.push('Guest Name');
+                    }
+                    if (this.bookingType === 'room' && !this.formData.room_type_id) {
+                        this.errors.room_type_id = 'Room Type is required';
+                        hasError = true;
+                        missing.push('Room Type');
+                    }
+                    if (this.bookingType === 'exclusive' && !this.formData.exclusive_resort_rental_id) {
+                        this.errors.exclusive_resort_rental_id = 'Exclusive Rental Package is required';
+                        hasError = true;
+                        missing.push('Rental Package');
+                    }
+                    if (!this.formData.check_in) {
+                        this.errors.check_in = 'Check-in Date is required';
+                        hasError = true;
+                        missing.push('Check-in Date');
+                    }
+                    if (!this.formData.check_out) {
+                        this.errors.check_out = 'Check-out Date is required';
+                        hasError = true;
+                        missing.push('Check-out Date');
+                    } else if (this.formData.check_in && this.formData.check_out <= this.formData.check_in) {
+                        this.errors.check_out = 'Check-out Date must be after Check-in Date';
+                        hasError = true;
+                    }
+                    if (this.bookingType === 'room' && !this.canAddExtraPerson && !this.formData.pricing_tier_id) {
+                        this.errors.pricing_tier_id = 'Please select a pricing tier.';
+                        hasError = true;
+                        missing.push('Pricing Tier');
+                    }
+                    if ((this.bookingType === 'exclusive' || this.canAddExtraPerson) && (!this.formData.pax_count || this.formData.pax_count < 1)) {
+                        this.errors.pax_count = 'Pax Count must be at least 1';
+                        hasError = true;
+                        missing.push('Pax Count');
+                    } else if (this.bookingType === 'room' && this.maxCapacity > 0 && this.formData.pax_count > this.maxCapacity) {
+                        this.errors.pax_count = `Pax count cannot exceed ${this.maxCapacity} guests for this room type${this.canAddExtraPerson ? ' (including 1 extra person)' : ''}.`;
+                        hasError = true;
+                    }
+
+                    if (hasError) {
+                        this.summary = {
+                            nights: 0,
+                            tierAmount: 0,
+                            extraFeePerPerson: 0,
+                            add: 0,
+                            cookingFee: 0,
+                            total: 0,
+                            missingFields: missing
+                        };
+                        this.showSummaryModal = true;
+                        this.debug.lastAction = 'openSummaryModal:missing';
+                        return;
+                    }
+
+                    try {
+                        const response = await fetch('/api/calculate-price', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                type: this.bookingType,
+                                id: this.bookingType === 'room' ? Number(this.formData.room_type_id) : Number(this.formData.exclusive_resort_rental_id),
+                                check_in: this.formData.check_in,
+                                check_out: this.formData.check_out,
+                                pax_count: Number(this.formData.pax_count),
+                                resort_unit_id: this.formData.resort_unit_id ? Number(this.formData.resort_unit_id) : null,
+                                pricing_tier_id: this.formData.pricing_tier_id ? Number(this.formData.pricing_tier_id) : null,
+                                has_cooking_fee: this.formData.has_cooking_fee
+                            })
+                        });
+                        if (response.ok) {
+                            const data = await response.json();
+                            const checkIn = new Date(this.formData.check_in);
+                            const checkOut = new Date(this.formData.check_out);
+                            const diffMs = checkOut - checkIn;
+                            const nights = Math.max(0, Math.round(diffMs / (1000 * 60 * 60 * 24)));
+                            const extraFeePerPerson = this.bookingType === 'room'
+                                ? (this.currentRoomType?.extra_person_charge || 0)
+                                : (this.currentExclusiveRental?.extra_person_charge || 0);
+                            const add = (Number(this.formData.pax_count) || 0) * extraFeePerPerson;
+                            const cookingFee = this.formData.has_cooking_fee
+                                ? (this.bookingType === 'room'
+                                    ? (this.currentRoomType?.cooking_fee || 0)
+                                    : (this.currentExclusiveRental?.cooking_fee || 0))
+                                : 0;
+                            const tierAmount = Math.max(0, Number(data.total_price) - add - cookingFee);
+                            this.summary = {
+                                nights,
+                                tierAmount,
+                                extraFeePerPerson,
+                                add,
+                                cookingFee,
+                                total: Number(data.total_price),
+                                missingFields: []
+                            };
+                            this.showSummaryModal = true;
+                            this.debug.lastAction = 'openSummaryModal:ready';
+                        } else {
+                            const data = await response.json().catch(() => ({}));
+                            console.warn('Validation error from calculate-price', data);
+                            this.totalPrice = 0;
+                            this.summary = {
+                                nights: 0,
+                                tierAmount: 0,
+                                extraFeePerPerson: 0,
+                                add: 0,
+                                cookingFee: 0,
+                                total: 0,
+                                missingFields: Object.keys(data.errors || {})
+                            };
+                            this.showSummaryModal = true;
+                            this.debug.lastAction = 'openSummaryModal:api-422';
+                        }
+                    } catch {
+                        this.totalPrice = 0;
+                        this.debug.lastAction = 'openSummaryModal:exception';
+                    }
+                },
                 submitForm() {
+                    this.debug.lastAction = 'submitForm:start';
                     this.errors = {};
                     let hasError = false;
 
@@ -859,7 +1152,8 @@
                     }
 
                     if (!hasError) {
-                        this.$el.submit();
+                        this.$refs.bookingForm.submit();
+                        this.debug.lastAction = 'submitForm:submitted';
                     }
                 }
             }

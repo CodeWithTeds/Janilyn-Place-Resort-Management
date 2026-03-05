@@ -60,6 +60,7 @@ Route::middleware([
     // Owner Resort Management
     Route::middleware(['can:access-resort-management'])->prefix('resort-management')->name('resort-management.')->group(function () {
         Route::get('/bookings', [OwnerResortManagementController::class, 'bookings'])->name('bookings');
+        Route::post('/bookings/summary', [OwnerResortManagementController::class, 'summary'])->name('bookings.summary');
         Route::post('/bookings', [OwnerResortManagementController::class, 'storeBooking'])->name('bookings.store');
         Route::get('/bookings/available-rooms', [OwnerResortManagementController::class, 'availableRooms'])->name('bookings.available-rooms');
         Route::get('/bookings/available-units', [OwnerResortManagementController::class, 'availableUnits'])->name('bookings.available-units');

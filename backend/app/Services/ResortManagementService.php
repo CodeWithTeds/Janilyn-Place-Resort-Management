@@ -36,7 +36,7 @@ class ResortManagementService
         return $this->exclusiveResortRentalRepository->getAll();
     }
 
-    public function calculateTotalPrice(RoomType $room, string $checkIn, string $checkOut, int $pax, ?int $resortUnitId = null, ?int $manualPricingTierId = null): float
+    public function calculateTotalPrice(RoomType $room, string $checkIn, string $checkOut, int $pax, ?int $resortUnitId = null, ?int $manualPricingTierId = null, bool $includeCookingFee = false): float
     {
         $start = Carbon::parse($checkIn);
         $end = Carbon::parse($checkOut);
@@ -124,24 +124,17 @@ class ResortManagementService
             $currentDate->addDay();
         }
 
-        // Extra person charge (Applicable if we are using a tier AND pax exceeds that tier's max)
-        if ($tier && $pax > $tier->max_guests) {
-            $extraPax = $pax - $tier->max_guests;
-            $totalPrice += ($extraPax * $room->extra_person_charge * $days);
-        }
-        // Fallback for old logic (if no tier matched, though tiers are required now)
-        elseif (!$tier && $pax > $room->max_pax) {
-            $extraPax = $pax - $room->max_pax;
-            $totalPrice += ($extraPax * $room->extra_person_charge * $days);
-        }
+        $totalPrice += ($pax * $room->extra_person_charge);
 
         // Cooking fee
-        $totalPrice += $room->cooking_fee;
+        if ($includeCookingFee) {
+            $totalPrice += $room->cooking_fee;
+        }
 
         return $totalPrice;
     }
 
-    public function calculateExclusiveRentalPrice(ExclusiveResortRental $rental, string $checkIn, string $checkOut, int $pax): float
+    public function calculateExclusiveRentalPrice(ExclusiveResortRental $rental, string $checkIn, string $checkOut, int $pax, bool $includeCookingFee = false): float
     {
         $start = Carbon::parse($checkIn);
         $end = Carbon::parse($checkOut);
@@ -179,19 +172,16 @@ class ResortManagementService
                 }
 
                 $totalPrice += $basePrice;
-
-                // Calculate extra person charge if pax exceeds max_pax
-                if ($pax > $rental->max_pax) {
-                    $extraPax = $pax - $rental->max_pax;
-                    $totalPrice += ($extraPax * $rental->extra_person_charge);
-                }
             }
             
             $currentDate->addDay();
         }
 
+        $totalPrice += ($pax * $rental->extra_person_charge);
         // Cooking fee
-        $totalPrice += $rental->cooking_fee;
+        if ($includeCookingFee) {
+            $totalPrice += $rental->cooking_fee;
+        }
 
         return $totalPrice;
     }
@@ -293,7 +283,8 @@ class ResortManagementService
                 $rental,
                 $data['check_in'],
                 $data['check_out'],
-                $data['pax_count'] ?? $rental->capacity_overnight_min
+                $data['pax_count'] ?? $rental->capacity_overnight_min,
+                $data['has_cooking_fee'] ?? false
             );
         } else {
             $room = $this->roomTypeRepository->find($data['room_type_id']);
@@ -304,7 +295,8 @@ class ResortManagementService
                 $data['check_out'], 
                 $data['pax_count'] ?? $room->min_pax,
                 $data['resort_unit_id'] ?? null,
-                $data['pricing_tier_id'] ?? null
+                $data['pricing_tier_id'] ?? null,
+                $data['has_cooking_fee'] ?? false
             );
         }
 

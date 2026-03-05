@@ -58,9 +58,7 @@
                         <x-sidebar-link href="{{ route('owner.housekeeping.schedules') }}" :active="request()->routeIs('owner.housekeeping.schedules')" class="text-sm">
                             {{ __('Room Cleaning Schedules') }}
                         </x-sidebar-link>
-                        <x-sidebar-link href="{{ route('owner.housekeeping.staff') }}" :active="request()->routeIs('owner.housekeeping.staff')" class="text-sm">
-                            {{ __('Housekeeping Staff') }}
-                        </x-sidebar-link>
+                    
                     </div>
                 </div>
 

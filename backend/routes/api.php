@@ -13,6 +13,9 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::get('/room-types/{roomType}', [App\Http\Controllers\Api\RoomTypeController::class, 'show']);
 Route::get('/exclusive-rentals/{exclusiveResortRental}', [App\Http\Controllers\Api\ExclusiveRentalController::class, 'show']);
 
+// Price Calculation (For Owner/Staff UI and potentially Mobile) - Allow public access or use web middleware if calling from frontend
+Route::post('/calculate-price', [App\Http\Controllers\Api\PriceCalculationController::class, 'calculate']);
+
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user', function (Request $request) {
@@ -30,7 +33,4 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // Guest Booking Routes
     Route::get('/bookings', [App\Http\Controllers\Api\GuestBookingController::class, 'index']);
     Route::post('/bookings', [App\Http\Controllers\Api\GuestBookingController::class, 'store']);
-
-    // Price Calculation (For Owner/Staff UI and potentially Mobile)
-    Route::post('/calculate-price', [App\Http\Controllers\Api\PriceCalculationController::class, 'calculate']);
 });

@@ -35,6 +35,7 @@ class StoreBookingRequest extends FormRequest
             'pax_count' => ['required', 'integer', 'min:1'],
             'payment_method' => ['nullable', 'string', 'in:cash,paymongo'],
             'resort_unit_id' => ['nullable', 'exists:resort_units,id'],
+            'has_cooking_fee' => ['boolean'],
         ];
 
         if ($this->input('booking_type') === 'exclusive') {
