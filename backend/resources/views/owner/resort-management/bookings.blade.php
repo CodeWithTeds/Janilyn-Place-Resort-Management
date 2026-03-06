@@ -494,6 +494,7 @@
                                     @if($booking->trashed())
                                         <!-- No actions for deleted bookings yet, or restore could be added -->
                                     @elseif($booking->status === \App\Enums\BookingStatus::PENDING)
+                                    <a href="{{ route('resort-management.bookings.receipt', $booking) }}" class="text-gray-600 hover:text-gray-900 mr-3">Receipt</a>
                                     <form action="{{ route('resort-management.bookings.approve', $booking) }}" method="POST" class="inline-block">
                                         @csrf
                                         @method('PATCH')
@@ -509,6 +510,7 @@
                                         <button type="submit" class="text-red-600 hover:text-red-900">Cancel</button>
                                     </form>
                                     @elseif($booking->status === \App\Enums\BookingStatus::CONFIRMED)
+                                    <a href="{{ route('resort-management.bookings.receipt', $booking) }}" class="text-gray-600 hover:text-gray-900 mr-3">Receipt</a>
                                     <button type="button"
                                         @click="openCheckInModal('{{ $booking->id }}', '{{ $booking->room_type_id }}', '{{ $booking->check_in->format('Y-m-d') }}', '{{ $booking->check_out->format('Y-m-d') }}')"
                                         class="text-green-600 hover:text-green-900 mr-3">
@@ -524,6 +526,7 @@
                                         <button type="submit" class="text-red-600 hover:text-red-900">Cancel</button>
                                     </form>
                                     @elseif($booking->status === \App\Enums\BookingStatus::CHECKED_IN)
+                                    <a href="{{ route('resort-management.bookings.receipt', $booking) }}" class="text-gray-600 hover:text-gray-900 mr-3">Receipt</a>
                                     <form action="{{ route('resort-management.bookings.check-out', $booking) }}" method="POST" class="inline-block confirm-action"
                                         data-confirm-title="Check Out Guest?"
                                         data-confirm-text="Are you sure you want to check out this guest?"
@@ -533,6 +536,8 @@
                                         @method('PATCH')
                                         <button type="submit" class="text-gray-600 hover:text-gray-900 mr-3">Check Out</button>
                                     </form>
+                                    @else
+                                    <a href="{{ route('resort-management.bookings.receipt', $booking) }}" class="text-gray-600 hover:text-gray-900 mr-3">Receipt</a>
                                     @endif
                                 </td>
                             </tr>

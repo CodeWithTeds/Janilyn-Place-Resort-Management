@@ -102,6 +102,7 @@ Route::middleware([
         Route::get('/bookings', [OwnerResortManagementController::class, 'bookings'])->name('bookings');
         Route::post('/bookings/summary', [OwnerResortManagementController::class, 'summary'])->name('bookings.summary');
         Route::post('/bookings', [OwnerResortManagementController::class, 'storeBooking'])->name('bookings.store');
+        Route::get('/bookings/{booking}/receipt', [OwnerResortManagementController::class, 'downloadReceipt'])->name('bookings.receipt');
         Route::get('/bookings/available-rooms', [OwnerResortManagementController::class, 'availableRooms'])->name('bookings.available-rooms');
         Route::get('/bookings/available-units', [OwnerResortManagementController::class, 'availableUnits'])->name('bookings.available-units');
         Route::patch('/bookings/{booking}/approve', [OwnerResortManagementController::class, 'approveBooking'])->name('bookings.approve');

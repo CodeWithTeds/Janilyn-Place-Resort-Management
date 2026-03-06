@@ -33,4 +33,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // Guest Booking Routes
     Route::get('/bookings', [App\Http\Controllers\Api\GuestBookingController::class, 'index']);
     Route::post('/bookings', [App\Http\Controllers\Api\GuestBookingController::class, 'store']);
+
+    // Booking Feedback Routes
+    Route::get('/bookings/{booking}/feedback', [App\Http\Controllers\Api\BookingFeedbackController::class, 'show']);
+    Route::post('/bookings/{booking}/feedback', [App\Http\Controllers\Api\BookingFeedbackController::class, 'store']);
 });

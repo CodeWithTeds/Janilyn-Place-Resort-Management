@@ -31,14 +31,20 @@ export default function ExploreScreen() {
       <View style={styles.cardContent}>
         <ThemedText type="subtitle" style={styles.cardTitle}>{item.name}</ThemedText>
         <ThemedText style={styles.cardPrice}>
-          {type === 'room' 
-            ? `₱${item.base_price_weekday.toLocaleString()}/night`
-            : `₱${item.price_range_min.toLocaleString()} - ₱${item.price_range_max.toLocaleString()}`}
+          {type === 'room'
+            ? (typeof item.base_price_weekday === 'number'
+                ? `₱${item.base_price_weekday.toLocaleString()}/night`
+                : `Price varies`)
+            : (typeof item.price_range_min === 'number' && typeof item.price_range_max === 'number'
+                ? `₱${item.price_range_min.toLocaleString()} - ₱${item.price_range_max.toLocaleString()}`
+                : `Price varies`)}
         </ThemedText>
         <View style={styles.badgeContainer}>
           <View style={styles.badge}>
             <ThemedText style={styles.badgeText}>
-              {type === 'room' ? `${item.min_pax}-${item.max_pax} Pax` : `${item.capacity_overnight_min}-${item.capacity_overnight_max} Pax`}
+              {type === 'room'
+                ? `${item.min_pax ?? '—'}-${item.max_pax ?? '—'} Pax`
+                : `${item.capacity_overnight_min ?? '—'}-${item.capacity_overnight_max ?? '—'} Pax`}
             </ThemedText>
           </View>
         </View>

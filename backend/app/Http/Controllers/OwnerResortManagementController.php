@@ -12,6 +12,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
 use App\Enums\PaymentStatus;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class OwnerResortManagementController extends Controller
 {
@@ -240,5 +241,13 @@ class OwnerResortManagementController extends Controller
         );
 
         return response()->json($units);
+    }
+
+    public function downloadReceipt(Booking $booking)
+    {
+        $booking->load(['roomType', 'exclusiveResortRental', 'resortUnit', 'user']);
+        $pdf = Pdf::loadView('owner.resort-management.receipts.official-receipt', ['booking' => $booking]);
+        $name = 'official-receipt-OR-' . $booking->id . '.pdf';
+        return $pdf->download($name);
     }
 }

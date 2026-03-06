@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, FlatList, View, TouchableOpacity, Image, RefreshControl, ActivityIndicator } from 'react-native';
+import { StyleSheet, FlatList, View, TouchableOpacity, Image, RefreshControl, ActivityIndicator, Modal, TextInput, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -10,6 +10,7 @@ import { Colors as ThemeColors, Spacing, Fonts, Palette } from '@/constants/them
 import { BookingService } from '@/services/booking.service';
 import { Booking } from '@/types/booking';
 import { useThemeColor } from '@/hooks/use-theme-color';
+import { Button } from '@/components/ui/Button';
 
 const STATUS_COLORS: Record<string, string> = {
   confirmed: Palette.success,
@@ -25,6 +26,16 @@ export default function MyBookingsScreen() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [feedbackVisible, setFeedbackVisible] = useState(false);
+  const [activeBookingId, setActiveBookingId] = useState<number | null>(null);
+  const [rating, setRating] = useState<number | null>(null);
+  const [comment, setComment] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [successVisible, setSuccessVisible] = useState(false);
+  const [infoVisible, setInfoVisible] = useState(false);
+  const [infoRating, setInfoRating] = useState<number | null>(null);
+  const [infoComment, setInfoComment] = useState('');
+  const [submitted, setSubmitted] = useState<Set<number>>(new Set());
   
   const primaryColor = useThemeColor({}, 'primary');
 
@@ -76,7 +87,7 @@ export default function MyBookingsScreen() {
             <View style={[styles.statusBadge, { backgroundColor: STATUS_COLORS[item.status] || Palette.gray }]}>
                 <ThemedText style={styles.statusText}>{item.status.toUpperCase()}</ThemedText>
             </View>
-            <ThemedText style={styles.dateText}>Ref: #{item.id}</ThemedText>
+            <ThemedText style={styles.dateText}>{formatDate(item.created_at)}</ThemedText>
         </View>
 
         <View style={styles.cardBody}>
@@ -114,7 +125,33 @@ export default function MyBookingsScreen() {
                 </View>
                 <ThemedText style={styles.paymentMethod}>{item.payment_method}</ThemedText>
              </View>
-             <Ionicons name="chevron-forward" size={20} color={Palette.gray} />
+            {item.status === 'confirmed' && item.payment_status === 'paid' ? (
+               <Pressable
+                 onPress={async () => {
+                   setActiveBookingId(item.id);
+                   try {
+                     const res = await BookingService.getFeedback(item.id);
+                     if (res.has_feedback) {
+                       setInfoRating(res.feedback?.rating ?? null);
+                       setInfoComment(res.feedback?.comment ?? '');
+                       setInfoVisible(true);
+                       return;
+                     }
+                     setRating(null);
+                     setComment('');
+                   } catch (e) {
+                     setRating(null);
+                     setComment('');
+                   }
+                   setFeedbackVisible(true);
+                 }}
+                 style={[styles.feedbackButton, { borderColor: primaryColor }]}
+               >
+                 <ThemedText style={[styles.feedbackButtonText, { color: primaryColor }]}>Leave Feedback</ThemedText>
+               </Pressable>
+             ) : (
+               <Ionicons name="chevron-forward" size={20} color={Palette.gray} />
+             )}
         </View>
       </TouchableOpacity>
     );
@@ -150,6 +187,116 @@ export default function MyBookingsScreen() {
             showsVerticalScrollIndicator={false}
         />
       )}
+
+      <Modal
+        visible={feedbackVisible}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setFeedbackVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <ThemedText type="subtitle" style={styles.modalTitle}>Your Feedback</ThemedText>
+            <View style={styles.starsRow}>
+              {[1,2,3,4,5].map((i) => (
+                <Pressable key={i} onPress={() => setRating(i)} style={styles.starWrapper}>
+                  <Ionicons name={i <= (rating ?? 0) ? 'star' : 'star-outline'} size={28} color={primaryColor} />
+                </Pressable>
+              ))}
+            </View>
+            <TextInput
+              value={comment}
+              onChangeText={setComment}
+              placeholder="Share your experience (required)"
+              placeholderTextColor="#9CA3AF"
+              multiline
+              style={styles.commentInput}
+            />
+            <View style={styles.modalActions}>
+              <Button
+                title="Cancel"
+                variant="outline"
+                onPress={() => {
+                  setFeedbackVisible(false);
+                  setActiveBookingId(null);
+                  setRating(null);
+                  setComment('');
+                }}
+                style={{ flex: 1, marginRight: Spacing.sm }}
+              />
+              <Button
+                title="Submit"
+                loading={submitting}
+                onPress={async () => {
+                  if (!activeBookingId) return;
+                  if (!comment.trim()) return;
+                  try {
+                    setSubmitting(true);
+                    await BookingService.submitFeedback(activeBookingId, { rating, comment: comment.trim() });
+                    setFeedbackVisible(false);
+                    setSuccessVisible(true);
+                    setSubmitted(prev => new Set([...Array.from(prev), activeBookingId]));
+                    setActiveBookingId(null);
+                    setRating(null);
+                    setComment('');
+                  } catch (e) {
+                    const err: any = e as any;
+                    const already = err?.response?.status === 409 || /already submitted/i.test(err?.response?.data?.message || '');
+                    if (already) {
+                      setFeedbackVisible(false);
+                      setInfoRating(null);
+                      setInfoComment('');
+                      setInfoVisible(true);
+                    }
+                  } finally {
+                    setSubmitting(false);
+                  }
+                }}
+                style={{ flex: 1 }}
+              />
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={successVisible}
+        animationType="fade"
+        transparent
+        onRequestClose={() => setSuccessVisible(false)}
+      >
+        <View style={styles.alertOverlay}>
+          <View style={styles.alertContent}>
+            <Ionicons name="checkmark-circle" size={56} color={primaryColor} style={styles.alertIcon} />
+            <ThemedText type="subtitle" style={styles.alertTitle}>Thank you!</ThemedText>
+            <ThemedText style={styles.alertMessage}>Your feedback has been submitted.</ThemedText>
+            <Button title="OK" onPress={() => setSuccessVisible(false)} style={{ marginTop: Spacing.md }} />
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={infoVisible}
+        animationType="fade"
+        transparent
+        onRequestClose={() => setInfoVisible(false)}
+      >
+        <View style={styles.alertOverlay}>
+          <View style={styles.alertContent}>
+            <Ionicons name="information-circle" size={56} color={Palette.info} style={styles.alertIcon} />
+            <ThemedText type="subtitle" style={styles.alertTitle}>Feedback already submitted</ThemedText>
+            {infoRating ? (
+              <View style={{ flexDirection: 'row', marginBottom: Spacing.sm }}>
+                {[1,2,3,4,5].map(i => (
+                  <Ionicons key={i} name={i <= (infoRating ?? 0) ? 'star' : 'star-outline'} size={22} color={primaryColor} />
+                ))}
+              </View>
+            ) : null}
+            {!!infoComment && <ThemedText style={styles.alertMessage}>{infoComment}</ThemedText>}
+            <Button title="Close" onPress={() => setInfoVisible(false)} style={{ marginTop: Spacing.md }} />
+          </View>
+        </View>
+      </Modal>
     </ThemedView>
   );
 }
@@ -288,6 +435,16 @@ const styles = StyleSheet.create({
     color: Palette.gray,
     textTransform: 'capitalize',
   },
+  feedbackButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  feedbackButtonText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -318,5 +475,65 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: '600',
     fontSize: 16,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    padding: Spacing.lg,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+  },
+  modalTitle: {
+    marginBottom: Spacing.md,
+  },
+  starsRow: {
+    flexDirection: 'row',
+    marginBottom: Spacing.md,
+  },
+  starWrapper: {
+    marginRight: 8,
+  },
+  commentInput: {
+    minHeight: 100,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 12,
+    padding: Spacing.md,
+    textAlignVertical: 'top',
+    marginBottom: Spacing.md,
+    color: '#111827',
+  },
+  modalActions: {
+    flexDirection: 'row',
+  },
+  alertOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: Spacing.lg,
+  },
+  alertContent: {
+    width: '100%',
+    maxWidth: 360,
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: Spacing.lg,
+    alignItems: 'center',
+  },
+  alertIcon: {
+    marginBottom: Spacing.sm,
+  },
+  alertTitle: {
+    marginBottom: Spacing.xs,
+    textAlign: 'center',
+  },
+  alertMessage: {
+    textAlign: 'center',
+    color: Palette.gray,
   },
 });
