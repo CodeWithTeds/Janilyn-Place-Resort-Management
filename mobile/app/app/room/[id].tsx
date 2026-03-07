@@ -19,6 +19,11 @@ export default function RoomDetailScreen() {
   const [item, setItem] = useState<RoomType | ExclusiveResortRental | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const formatPHP = (value: unknown) => {
+    const n = Number(value);
+    return Number.isFinite(n) ? `₱${n.toLocaleString('en-PH')}` : '₱—';
+  };
+
   useEffect(() => {
     const fetchDetails = async () => {
       try {
@@ -54,12 +59,12 @@ export default function RoomDetailScreen() {
   const rentalItem = !isRoom ? (item as ExclusiveResortRental) : null;
 
   const priceText = isRoom 
-    ? `₱${roomItem?.base_price_weekday.toLocaleString()}/night`
-    : `₱${rentalItem?.price_range_min.toLocaleString()} - ₱${rentalItem?.price_range_max.toLocaleString()}`;
+    ? `${formatPHP(roomItem?.base_price_weekday)}/night`
+    : `${formatPHP(rentalItem?.price_range_min)} - ${formatPHP(rentalItem?.price_range_max)}`;
 
   const capacityText = isRoom
-    ? `${roomItem?.min_pax}-${roomItem?.max_pax} Pax`
-    : `${rentalItem?.capacity_overnight_min}-${rentalItem?.capacity_overnight_max} Pax`;
+    ? `${roomItem?.min_pax ?? '—'}-${roomItem?.max_pax ?? '—'} Pax`
+    : `${rentalItem?.capacity_overnight_min ?? '—'}-${rentalItem?.capacity_overnight_max ?? '—'} Pax`;
 
   return (
     <View style={styles.container}>
@@ -87,9 +92,9 @@ export default function RoomDetailScreen() {
           {isRoom && (
              <View style={styles.section}>
                <ThemedText type="subtitle" style={styles.sectionTitle}>Pricing</ThemedText>
-               <ThemedText style={styles.text}>Weekday: ₱{roomItem?.base_price_weekday.toLocaleString()}</ThemedText>
-               <ThemedText style={styles.text}>Weekend: ₱{roomItem?.base_price_weekend.toLocaleString()}</ThemedText>
-               <ThemedText style={styles.text}>Extra Person: ₱{roomItem?.extra_person_charge.toLocaleString()}</ThemedText>
+               <ThemedText style={styles.text}>Weekday: {formatPHP(roomItem?.base_price_weekday)}</ThemedText>
+               <ThemedText style={styles.text}>Weekend: {formatPHP(roomItem?.base_price_weekend)}</ThemedText>
+               <ThemedText style={styles.text}>Extra Person: {formatPHP(roomItem?.extra_person_charge)}</ThemedText>
              </View>
           )}
         </View>
