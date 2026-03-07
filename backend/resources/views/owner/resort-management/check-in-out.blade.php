@@ -47,10 +47,10 @@
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <form action="{{ route('resort-management.bookings.check-in', $booking) }}" method="POST" class="inline-block">
+                                    <form action="{{ route('resort-management.bookings.check-in', $booking) }}" method="POST" class="inline-block check-in-form">
                                         @csrf
                                         @method('PATCH')
-                                        <button type="submit" class="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-3 rounded text-xs" onclick="return confirm('Check in this guest?')">Check In</button>
+                                        <button type="submit" class="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-3 rounded text-xs">Check In</button>
                                     </form>
                                 </td>
                             </tr>
@@ -100,10 +100,19 @@
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <form action="{{ route('resort-management.bookings.check-out', $booking) }}" method="POST" class="inline-block">
+                                    <form 
+                                        action="{{ route('resort-management.bookings.check-out', $booking) }}" 
+                                        method="POST" 
+                                        class="inline-block check-out-form"
+                                        @if($booking->resort_unit_id)
+                                            data-unit-status-url="{{ route('owner.housekeeping.units.status', $booking->resort_unit_id) }}"
+                                        @endif
+                                    >
                                         @csrf
                                         @method('PATCH')
-                                        <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded text-xs" onclick="return confirm('Check out this guest?')">Check Out</button>
+                                        <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded text-xs">
+                                            Check Out
+                                        </button>
                                     </form>
                                 </td>
                             </tr>
@@ -116,4 +125,5 @@
 
         </div>
     </div>
+
 </x-app-layout>

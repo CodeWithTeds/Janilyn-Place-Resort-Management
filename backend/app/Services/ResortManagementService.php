@@ -16,6 +16,7 @@ use App\Enums\PaymentStatus;
 use App\Enums\PaymentMethod;
 use App\Models\ResortUnit;
 use App\Models\User;
+use App\Enums\UnitCleaningStatus;
 
 class ResortManagementService
 {
@@ -391,7 +392,12 @@ class ResortManagementService
     public function checkOutBooking(Booking $booking): bool
     {
         if ($booking->status === BookingStatus::CHECKED_IN || $booking->status === BookingStatus::CONFIRMED) {
-            return $this->updateBookingStatus($booking, BookingStatus::COMPLETED);
+            $updated = $this->updateBookingStatus($booking, BookingStatus::COMPLETED);
+            if ($updated && $booking->resortUnit) {
+                $booking->resortUnit->cleaning_status = UnitCleaningStatus::DIRTY;
+                $booking->resortUnit->save();
+            }
+            return $updated;
         }
         return false;
     }
