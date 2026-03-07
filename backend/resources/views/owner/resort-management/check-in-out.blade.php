@@ -104,6 +104,8 @@
                                         action="{{ route('resort-management.bookings.check-out', $booking) }}" 
                                         method="POST" 
                                         class="inline-block check-out-form"
+                                        data-resort-unit-id="{{ $booking->resort_unit_id ?? '' }}"
+                                        data-booking-id="{{ $booking->id }}"
                                         @if($booking->resort_unit_id)
                                             data-unit-status-url="{{ route('owner.housekeeping.units.status', $booking->resort_unit_id) }}"
                                         @endif
@@ -126,4 +128,54 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        (function() {
+            function attachCheckoutHandlers() {
+                const forms = document.querySelectorAll('.check-out-form');
+                const tokenMeta = document.querySelector('meta[name="csrf-token"]');
+                const csrf = tokenMeta ? tokenMeta.getAttribute('content') : null;
+
+                forms.forEach(form => {
+                    if (form.dataset.bound === '1') return;
+                    form.dataset.bound = '1';
+                    form.addEventListener('submit', async function (e) {
+                        e.preventDefault();
+                        const unitId = form.dataset.resortUnitId || '';
+                        const bookingId = form.dataset.bookingId || '';
+                        if (window.Swal) {
+                            const result = await Swal.fire({
+                                icon: 'question',
+                                title: 'Create Incident Report?',
+                                text: 'Proceed to create an incident report for this check-out?',
+                                showCancelButton: true,
+                                confirmButtonText: 'Create Incident Report',
+                                cancelButtonText: 'Cancel',
+                            });
+                            if (result.isConfirmed) {
+                                const url = new URL("{{ route('owner.damage-reports.create') }}", window.location.origin);
+                                if (unitId) url.searchParams.set('resort_unit_id', unitId);
+                                if (bookingId) url.searchParams.set('booking_id', bookingId);
+                                url.searchParams.set('from_checkout', '1');
+                                window.location.href = url.toString();
+                            }
+                            return;
+                        }
+                        if (confirm('Create an incident report for this check-out?')) {
+                            const url = new URL("{{ route('owner.damage-reports.create') }}", window.location.origin);
+                            if (unitId) url.searchParams.set('resort_unit_id', unitId);
+                            if (bookingId) url.searchParams.set('booking_id', bookingId);
+                            url.searchParams.set('from_checkout', '1');
+                            window.location.href = url.toString();
+                        }
+                    });
+                });
+            }
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', attachCheckoutHandlers);
+            } else {
+                attachCheckoutHandlers();
+            }
+        })();
+    </script>
 </x-app-layout>

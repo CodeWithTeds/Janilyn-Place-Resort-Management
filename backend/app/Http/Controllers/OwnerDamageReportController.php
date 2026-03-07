@@ -4,11 +4,17 @@ namespace App\Http\Controllers;
 
 use App\Models\DamageReport;
 use App\Models\ResortUnit;
+use App\Models\Booking;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Services\ResortManagementService;
 
 class OwnerDamageReportController extends Controller
 {
+    public function __construct(protected ResortManagementService $resortService)
+    {
+    }
+
     public function index()
     {
         $reports = DamageReport::with(['resortUnit', 'reporter'])->latest()->paginate(10);
@@ -35,6 +41,13 @@ class OwnerDamageReportController extends Controller
         $validated['reported_by'] = Auth::id();
 
         DamageReport::create($validated);
+
+        if ($request->boolean('from_checkout') && $request->filled('booking_id')) {
+            $booking = Booking::find($request->input('booking_id'));
+            if ($booking) {
+                $this->resortService->checkOutBooking($booking);
+            }
+        }
 
         return redirect()->route('owner.damage-reports.index')->with('success', 'Damage report submitted successfully.');
     }

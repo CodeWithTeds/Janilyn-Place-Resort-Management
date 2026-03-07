@@ -10,6 +10,12 @@
             <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6">
                 <form action="{{ route('owner.damage-reports.store') }}" method="POST" enctype="multipart/form-data">
                     @csrf
+                    @if(request('from_checkout'))
+                        <input type="hidden" name="from_checkout" value="1" />
+                    @endif
+                    @if(request('booking_id'))
+                        <input type="hidden" name="booking_id" value="{{ request('booking_id') }}" />
+                    @endif
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="col-span-1 md:col-span-2">
@@ -17,7 +23,7 @@
                             <select id="resort_unit_id" name="resort_unit_id" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm block mt-1 w-full">
                                 <option value="">Select a Unit</option>
                                 @foreach($units as $unit)
-                                    <option value="{{ $unit->id }}" {{ old('resort_unit_id') == $unit->id ? 'selected' : '' }}>{{ $unit->name }}</option>
+                                    <option value="{{ $unit->id }}" {{ (old('resort_unit_id', request('resort_unit_id')) == $unit->id) ? 'selected' : '' }}>{{ $unit->name }}</option>
                                 @endforeach
                             </select>
                             <x-input-error for="resort_unit_id" class="mt-2" />
