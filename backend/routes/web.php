@@ -37,7 +37,9 @@ Route::middleware([
         });
 
         Route::prefix('damage-reports')->name('damage-reports.')->group(function () {
-            Route::get('/', [App\Http\Controllers\OwnerDamageReportController::class, 'index'])->name('index');
+            Route::get('/', [App\Http\Controllers\AdminDamageReportController::class, 'index'])->name('index');
+            Route::get('/{damageReport}/edit', [App\Http\Controllers\AdminDamageReportController::class, 'edit'])->name('edit');
+            Route::put('/{damageReport}', [App\Http\Controllers\AdminDamageReportController::class, 'update'])->name('update');
         });
 
         Route::prefix('room-inspections')->name('room-inspections.')->group(function () {
@@ -225,5 +227,12 @@ Route::middleware([
         // Special Requests
         Route::get('/requests', [App\Http\Controllers\StaffRequestController::class, 'index'])->name('requests.index');
         Route::post('/requests/{booking}', [App\Http\Controllers\StaffRequestController::class, 'store'])->name('requests.store');
+
+        // Damage & Incident Reports
+        Route::prefix('damage-reports')->name('damage-reports.')->group(function () {
+            Route::get('/', [App\Http\Controllers\StaffDamageReportController::class, 'index'])->name('index');
+            Route::get('/create', [App\Http\Controllers\StaffDamageReportController::class, 'create'])->name('create');
+            Route::post('/', [App\Http\Controllers\StaffDamageReportController::class, 'store'])->name('store');
+        });
     });
 });

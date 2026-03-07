@@ -17,6 +17,12 @@
                     </svg>
                     {{ __('My Assigned Work') }}
                 </x-sidebar-link>
+                <x-sidebar-link href="{{ route('staff.damage-reports.index') }}" :active="request()->routeIs('staff.damage-reports.*')">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-6a2 2 0 00-2-2H5m0 0l-2 2m2-2l7-7 7 7M5 9v10a2 2 0 002 2h10a2 2 0 002-2V9"></path>
+                    </svg>
+                    {{ __('Damage & Incident Reporting') }}
+                </x-sidebar-link>
             @endif
 
             @if(Auth::check() && (Auth::user()->isOwner() || Auth::user()->isAdmin()))
