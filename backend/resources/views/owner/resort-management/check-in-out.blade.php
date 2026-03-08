@@ -143,14 +143,41 @@
                         e.preventDefault();
                         const unitId = form.dataset.resortUnitId || '';
                         const bookingId = form.dataset.bookingId || '';
+
+                        // Always perform the check-out first
+                        try {
+                            const action = form.getAttribute('action');
+                            const fd = new FormData(form);
+                            if (!fd.has('_method')) fd.append('_method', 'PATCH');
+                            const response = await fetch(action, {
+                                method: 'POST',
+                                headers: {
+                                    'X-CSRF-TOKEN': csrf || '',
+                                    'Accept': 'application/json'
+                                },
+                                body: fd
+                            });
+
+                            if (!response.ok) {
+                                // Fallback: hard submit if JSON flow fails (e.g., session redirect)
+                                form.submit();
+                                return;
+                            }
+                        } catch (err) {
+                            // Fallback to regular submission on network/script error
+                            form.submit();
+                            return;
+                        }
+
+                        // Optional incident report (Skip should NOT cancel the checkout)
                         if (window.Swal) {
                             const result = await Swal.fire({
-                                icon: 'question',
+                                icon: 'info',
                                 title: 'Create Incident Report?',
-                                text: 'Proceed to create an incident report for this check-out?',
+                                text: 'Guest has been checked out and unit marked dirty. Do you want to create an incident report?',
                                 showCancelButton: true,
                                 confirmButtonText: 'Create Incident Report',
-                                cancelButtonText: 'Cancel',
+                                cancelButtonText: 'Skip'
                             });
                             if (result.isConfirmed) {
                                 const url = new URL("{{ route('owner.damage-reports.create') }}", window.location.origin);
@@ -158,15 +185,22 @@
                                 if (bookingId) url.searchParams.set('booking_id', bookingId);
                                 url.searchParams.set('from_checkout', '1');
                                 window.location.href = url.toString();
+                                return;
                             }
+                            // Reload to reflect checkout status if user skips
+                            window.location.reload();
                             return;
                         }
-                        if (confirm('Create an incident report for this check-out?')) {
+
+                        // No SweetAlert available: simple confirm
+                        if (confirm('Guest checked out. Create an incident report? Click OK to create, Cancel to skip.')) {
                             const url = new URL("{{ route('owner.damage-reports.create') }}", window.location.origin);
                             if (unitId) url.searchParams.set('resort_unit_id', unitId);
                             if (bookingId) url.searchParams.set('booking_id', bookingId);
                             url.searchParams.set('from_checkout', '1');
                             window.location.href = url.toString();
+                        } else {
+                            window.location.reload();
                         }
                     });
                 });
