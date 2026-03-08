@@ -64,6 +64,7 @@ Route::middleware([
             Route::get('/calendar', [OwnerResortManagementController::class, 'calendar'])->name('calendar');
             Route::get('/check-in-out', [OwnerResortManagementController::class, 'checkInOut'])->name('check-in-out');
             Route::get('/cancellations', [OwnerResortManagementController::class, 'cancellations'])->name('cancellations');
+            Route::get('/feedback', [App\Http\Controllers\OwnerFeedbackController::class, 'index'])->name('feedback');
             Route::get('/room-types', [OwnerRoomTypeController::class, 'index'])->name('room-types.index');
             Route::get('/resort-units', [OwnerResortUnitController::class, 'index'])->name('resort-units.index');
             Route::get('/exclusive-resort-rentals', [OwnerExclusiveResortRentalController::class, 'index'])->name('exclusive-resort-rentals.index');
@@ -123,6 +124,7 @@ Route::middleware([
         // Room Types Management
         Route::get('/room-types', [OwnerRoomTypeController::class, 'index'])->name('room-types.index');
         Route::middleware(['can:access-owner-dashboard'])->group(function () {
+            Route::get('/feedback', [App\Http\Controllers\OwnerFeedbackController::class, 'index'])->name('feedback');
             Route::get('/room-types/create', [OwnerRoomTypeController::class, 'create'])->name('room-types.create');
             Route::post('/room-types', [OwnerRoomTypeController::class, 'store'])->name('room-types.store');
             Route::get('/room-types/{room_type}/edit', [OwnerRoomTypeController::class, 'edit'])->name('room-types.edit');

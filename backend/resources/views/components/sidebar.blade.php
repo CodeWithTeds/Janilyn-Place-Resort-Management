@@ -132,6 +132,11 @@
                         <x-sidebar-link href="{{ $isAdmin ? route('admin.resort-management.cancellations') : route('resort-management.cancellations') }}" :active="request()->routeIs('resort-management.cancellations') || request()->routeIs('admin.resort-management.cancellations')" class="text-sm">
                             {{ __('Cancellations') }}
                         </x-sidebar-link>
+                        @if(Auth::check() && (Auth::user()->isOwner() || Auth::user()->isAdmin()))
+                        <x-sidebar-link href="{{ $isAdmin ? route('admin.resort-management.feedback') : route('resort-management.feedback') }}" :active="request()->routeIs('resort-management.feedback') || request()->routeIs('admin.resort-management.feedback')" class="text-sm">
+                            {{ __('Feedback') }}
+                        </x-sidebar-link>
+                        @endif
                         <x-sidebar-link href="{{ $isAdmin ? route('admin.resort-management.room-types.index') : route('resort-management.room-types.index') }}" :active="request()->routeIs('resort-management.room-types.*') || request()->routeIs('admin.resort-management.room-types.*')" class="text-sm">
                             {{ __('Room Types') }}
                         </x-sidebar-link>

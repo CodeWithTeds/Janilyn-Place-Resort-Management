@@ -62,10 +62,6 @@ export default function RoomDetailScreen() {
     ? `${formatPHP(roomItem?.base_price_weekday)}/night`
     : `${formatPHP(rentalItem?.price_range_min)} - ${formatPHP(rentalItem?.price_range_max)}`;
 
-  const capacityText = isRoom
-    ? `${roomItem?.min_pax ?? '—'}-${roomItem?.max_pax ?? '—'} Pax`
-    : `${rentalItem?.capacity_overnight_min ?? '—'}-${rentalItem?.capacity_overnight_max ?? '—'} Pax`;
-
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
@@ -84,10 +80,14 @@ export default function RoomDetailScreen() {
             <ThemedText style={styles.description}>{item.description}</ThemedText>
           </View>
 
-          <View style={styles.section}>
-            <ThemedText type="subtitle" style={styles.sectionTitle}>Capacity</ThemedText>
-            <ThemedText style={styles.text}>{capacityText}</ThemedText>
-          </View>
+          {isRoom && (
+            <View style={styles.section}>
+              <ThemedText type="subtitle" style={styles.sectionTitle}>Capacity</ThemedText>
+              <ThemedText style={styles.text}>
+                {`${roomItem?.min_pax ?? '—'}-${roomItem?.max_pax ?? '—'} Pax`}
+              </ThemedText>
+            </View>
+          )}
 
           {isRoom && (
              <View style={styles.section}>

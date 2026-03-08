@@ -37,6 +37,10 @@ class RoomType extends Model
         'cooking_fee' => 'decimal:2',
     ];
 
+    protected $appends = [
+        'image',
+    ];
+
     public function bookings(): HasMany
     {
         return $this->hasMany(Booking::class);
@@ -50,5 +54,10 @@ class RoomType extends Model
     public function pricingTiers(): HasMany
     {
         return $this->hasMany(RoomTypePricingTier::class);
+    }
+
+    public function getImageAttribute(): ?string
+    {
+        return $this->image_path;
     }
 }

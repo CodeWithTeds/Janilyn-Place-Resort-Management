@@ -39,15 +39,15 @@ export default function ExploreScreen() {
                 ? `₱${item.price_range_min.toLocaleString()} - ₱${item.price_range_max.toLocaleString()}`
                 : `Price varies`)}
         </ThemedText>
-        <View style={styles.badgeContainer}>
-          <View style={styles.badge}>
-            <ThemedText style={styles.badgeText}>
-              {type === 'room'
-                ? `${item.min_pax ?? '—'}-${item.max_pax ?? '—'} Pax`
-                : `${item.capacity_overnight_min ?? '—'}-${item.capacity_overnight_max ?? '—'} Pax`}
-            </ThemedText>
+        {type === 'room' && (
+          <View style={styles.badgeContainer}>
+            <View style={styles.badge}>
+              <ThemedText style={styles.badgeText}>
+                {`${item.min_pax ?? '—'}-${item.max_pax ?? '—'} Pax`}
+              </ThemedText>
+            </View>
           </View>
-        </View>
+        )}
       </View>
     </TouchableOpacity>
   );
