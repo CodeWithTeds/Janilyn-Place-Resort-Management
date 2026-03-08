@@ -226,6 +226,27 @@ class ResortManagementService
         return $units->whereNotIn('id', $occupiedUnitIds)->values();
     }
 
+    public function getAvailableUnitsForCategory(string $category, $checkIn, $checkOut): Collection
+    {
+        $category = strtoupper($category);
+        $roomTypeIds = RoomType::whereRaw('UPPER(category) = ?', [$category])->pluck('id');
+        if ($roomTypeIds->isEmpty()) {
+            return collect();
+        }
+
+        $units = ResortUnit::whereIn('room_type_id', $roomTypeIds)
+            ->where('status', 'available')
+            ->get();
+
+        $occupiedUnitIds = Booking::overlapping($checkIn, $checkOut)
+            ->whereIn('room_type_id', $roomTypeIds)
+            ->whereNotNull('resort_unit_id')
+            ->pluck('resort_unit_id')
+            ->unique();
+
+        return $units->whereNotIn('id', $occupiedUnitIds)->values();
+    }
+
     public function createWalkInBooking(array $data): Booking
     {
         // 1. Availability Check (Strict)
@@ -234,6 +255,7 @@ class ResortManagementService
             $checkOut = $data['check_out'];
             $roomTypeId = $data['room_type_id'];
             $resortUnitId = $data['resort_unit_id'] ?? null;
+            $roomType = RoomType::withCount('units')->find($roomTypeId);
 
             // Check specific unit availability if selected
             if ($resortUnitId) {
@@ -249,27 +271,129 @@ class ResortManagementService
                 if ($isUnitOccupied) {
                     throw new \Exception('The selected unit is already booked for these dates.');
                 }
+
+                // Group exclusivity across Deluxe Room and Guest House
+                $category = strtoupper($roomType->category ?? '');
+                $exclusiveGroup = ['DELUXE ROOM', 'GUEST HOUSE'];
+                if (in_array($category, $exclusiveGroup, true)) {
+                    $groupRoomTypeIds = RoomType::whereRaw('UPPER(category) IN (?, ?)', $exclusiveGroup)->pluck('id');
+                    $overlappingGroup = Booking::whereIn('room_type_id', $groupRoomTypeIds)
+                        ->whereIn('status', [BookingStatus::CONFIRMED->value, BookingStatus::PENDING->value])
+                        ->where(function ($query) use ($checkIn, $checkOut) {
+                             $query->where('check_in', '<', $checkOut)
+                                   ->where('check_out', '>', $checkIn);
+                        })
+                        ->count();
+                    if ($overlappingGroup >= 1) {
+                        throw new \Exception('No availability for the selected dates.');
+                    }
+                }
             } else {
                 // Check general room type availability (capacity)
-                $roomType = RoomType::withCount('units')->find($roomTypeId);
-                $totalUnits = $roomType->units_count;
-                
-                // Count bookings for this room type in this period
-                $overlappingBookingsCount = Booking::where('room_type_id', $roomTypeId)
-                    ->where('status', '!=', BookingStatus::CANCELLED->value)
+                $category = strtoupper($roomType->category ?? '');
+                $exclusiveGroup = ['DELUXE ROOM', 'GUEST HOUSE'];
+                if (in_array($category, $exclusiveGroup, true)) {
+                    // Cross-category exclusivity: allow only one booking across both groups
+                    $groupRoomTypeIds = RoomType::whereRaw('UPPER(category) IN (?, ?)', $exclusiveGroup)->pluck('id');
+                    $overlappingBookingsCount = Booking::whereIn('room_type_id', $groupRoomTypeIds)
+                        ->whereIn('status', [BookingStatus::CONFIRMED->value, BookingStatus::PENDING->value])
+                        ->where(function ($query) use ($checkIn, $checkOut) {
+                             $query->where('check_in', '<', $checkOut)
+                                   ->where('check_out', '>', $checkIn);
+                        })
+                        ->count();
+
+                    if ($overlappingBookingsCount >= 1) {
+                        throw new \Exception('No availability for the selected dates.');
+                    }
+                } else {
+                    $totalUnits = $roomType->units_count;
+                    
+                    $overlappingBookingsCount = Booking::where('room_type_id', $roomTypeId)
+                        ->whereIn('status', [BookingStatus::CONFIRMED->value, BookingStatus::PENDING->value])
+                        ->where(function ($query) use ($checkIn, $checkOut) {
+                             $query->where('check_in', '<', $checkOut)
+                                   ->where('check_out', '>', $checkIn);
+                        })
+                        ->count();
+
+                    if ($overlappingBookingsCount >= $totalUnits) {
+                        throw new \Exception('No rooms available for the selected dates.');
+                    }
+                }
+            }
+        } elseif (isset($data['booking_type']) && $data['booking_type'] === 'exclusive') {
+            $checkIn = $data['check_in'];
+            $checkOut = $data['check_out'];
+            $rental = $this->exclusiveResortRentalRepository->getAll()->where('id', $data['exclusive_resort_rental_id'])->first(); 
+            if (!$rental) {
+                $rental = ExclusiveResortRental::find($data['exclusive_resort_rental_id']);
+            }
+            $category = strtoupper($rental->category ?? '');
+
+            // Prevent double-booking the same exclusive rental
+            $sameRentalOverlap = Booking::where('exclusive_resort_rental_id', $rental->id)
+                ->whereIn('status', [BookingStatus::CONFIRMED->value, BookingStatus::PENDING->value])
+                ->where(function ($query) use ($checkIn, $checkOut) {
+                     $query->where('check_in', '<', $checkOut)
+                           ->where('check_out', '>', $checkIn);
+                })
+                ->exists();
+            if ($sameRentalOverlap) {
+                throw new \Exception('This exclusive rental is already booked for the selected dates.');
+            }
+
+            if ($category === 'ENTIRE RESORT') {
+                // No bookings anywhere in the resort
+                $anyOverlap = Booking::whereIn('status', [BookingStatus::CONFIRMED->value, BookingStatus::PENDING->value])
                     ->where(function ($query) use ($checkIn, $checkOut) {
                          $query->where('check_in', '<', $checkOut)
                                ->where('check_out', '>', $checkIn);
                     })
-                    ->count();
-
-                if ($overlappingBookingsCount >= $totalUnits) {
-                    throw new \Exception('No rooms available for the selected dates.');
+                    ->exists();
+                if ($anyOverlap) {
+                    throw new \Exception('Entire resort is not available: there are overlapping bookings.');
                 }
             }
-        } elseif (isset($data['booking_type']) && $data['booking_type'] === 'exclusive') {
-             // Exclusive rental check (assuming single instance or similar logic)
-             // ...
+
+            if ($category === 'RESORT RENTAL') {
+                // No bookings for any Apartment-Style units/room types
+                $apartmentRoomTypeIds = RoomType::whereRaw('UPPER(category) = ?', ['APARTMENT STYLE'])->pluck('id');
+                if ($apartmentRoomTypeIds->isNotEmpty()) {
+                    $overlapApartments = Booking::whereIn('status', [BookingStatus::CONFIRMED->value, BookingStatus::PENDING->value])
+                        ->whereIn('room_type_id', $apartmentRoomTypeIds)
+                        ->where(function ($query) use ($checkIn, $checkOut) {
+                             $query->where('check_in', '<', $checkOut)
+                                   ->where('check_out', '>', $checkIn);
+                        })
+                        ->exists();
+                    if ($overlapApartments) {
+                        throw new \Exception('Resort rental is not available: apartment-style units are booked in this period.');
+                    }
+                }
+            }
+
+            if ($category === 'BAR AREA RENTAL') {
+                // Must select Apartment-Style unit and ensure it's free
+                $unitId = $data['resort_unit_id'] ?? null;
+                if (!$unitId) {
+                    throw new \Exception('Please select an Apartment-Style unit for Bar Area Rental.');
+                }
+                $unit = ResortUnit::with('roomType')->find($unitId);
+                if (!$unit || strtoupper($unit->roomType->category ?? '') !== 'APARTMENT STYLE') {
+                    throw new \Exception('Selected unit must be an Apartment-Style unit.');
+                }
+                $unitOverlap = Booking::where('resort_unit_id', $unitId)
+                    ->whereIn('status', [BookingStatus::CONFIRMED->value, BookingStatus::PENDING->value])
+                    ->where(function ($query) use ($checkIn, $checkOut) {
+                         $query->where('check_in', '<', $checkOut)
+                               ->where('check_out', '>', $checkIn);
+                    })
+                    ->exists();
+                if ($unitOverlap) {
+                    throw new \Exception('Selected unit is already booked for the selected dates.');
+                }
+            }
         }
 
         $totalPrice = 0;

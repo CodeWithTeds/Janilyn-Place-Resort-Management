@@ -79,14 +79,14 @@
 
                             <div>
                                 <x-label for="check_in" value="{{ __('Check-in Date') }}" />
-                                <x-input id="check_in" class="block mt-1 w-full" type="date" name="check_in" :value="old('check_in')" x-model="formData.check_in" required @change="fetchUnits()" />
+                                <x-input id="check_in" class="block mt-1 w-full" type="date" name="check_in" :value="old('check_in')" x-model="formData.check_in" required @change="fetchUnits(); fetchBarUnits()" />
                                 <x-input-error for="check_in" class="mt-2" />
                                 <span class="text-red-500 text-xs" x-show="errors.check_in" x-text="errors.check_in"></span>
                             </div>
 
                             <div>
                                 <x-label for="check_out" value="{{ __('Check-out Date') }}" />
-                                <x-input id="check_out" class="block mt-1 w-full" type="date" name="check_out" :value="old('check_out')" x-model="formData.check_out" required @change="fetchUnits()" />
+                                <x-input id="check_out" class="block mt-1 w-full" type="date" name="check_out" :value="old('check_out')" x-model="formData.check_out" required @change="fetchUnits(); fetchBarUnits()" />
                                 <x-input-error for="check_out" class="mt-2" />
                                 <span class="text-red-500 text-xs" x-show="errors.check_out" x-text="errors.check_out"></span>
                             </div>
@@ -276,6 +276,58 @@
                                 </div>
                                 <x-input-error for="exclusive_resort_rental_id" class="mt-2" />
                                 <span class="text-red-500 text-xs" x-show="errors.exclusive_resort_rental_id" x-text="errors.exclusive_resort_rental_id"></span>
+                            </div>
+
+                            <!-- Apartment-Style Unit Selection for Bar Area Rental -->
+                            <div class="mt-6" x-show="bookingType === 'exclusive' && currentExclusiveRental && (currentExclusiveRental.category || '').toUpperCase() === 'BAR AREA RENTAL'">
+                                <x-label value="{{ __('Select Apartment-Style Unit (Required)') }}" class="mb-2" />
+                                <input type="hidden" name="resort_unit_id" x-model="formData.resort_unit_id">
+
+                                <div x-show="availableUnits.length === 0" class="rounded-md bg-yellow-50 p-4 border border-yellow-200 mb-3">
+                                    <div class="flex">
+                                        <div class="flex-shrink-0">
+                                            <svg class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                            </svg>
+                                        </div>
+                                        <div class="ml-3">
+                                            <h3 class="text-sm font-medium text-yellow-800">No Apartment-Style units available</h3>
+                                            <div class="mt-2 text-sm text-yellow-700">
+                                                <p>Create at least one resort unit under a Room Type with category “APARTMENT STYLE”, and ensure it’s not booked on the selected dates.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                    <template x-for="unit in availableUnits" :key="unit.id">
+                                        <div @click="formData.resort_unit_id = unit.id; calculatePrice()"
+                                            class="cursor-pointer border rounded-xl p-4 transition-all duration-200 relative group"
+                                            :class="formData.resort_unit_id == unit.id ? 'border-indigo-500 bg-indigo-50 shadow-md ring-1 ring-indigo-500' : 'border-gray-200 bg-white hover:border-indigo-300 hover:shadow-sm'">
+                                            <div class="flex items-center justify-between">
+                                                <div class="flex items-center">
+                                                    <div class="h-8 w-8 rounded-full flex items-center justify-center"
+                                                        :class="formData.resort_unit_id == unit.id ? 'bg-indigo-100 text-indigo-600' : 'bg-gray-100 text-gray-500 group-hover:bg-indigo-50 group-hover:text-indigo-500'">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                                                        </svg>
+                                                    </div>
+                                                    <div class="ml-3">
+                                                        <span class="block text-sm font-semibold text-gray-900" x-text="unit.name"></span>
+                                                        <span class="block text-xs text-gray-500">Apartment-Style</span>
+                                                    </div>
+                                                </div>
+                                                <div x-show="formData.resort_unit_id == unit.id" class="text-indigo-600">
+                                                    <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                                    </svg>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                                <x-input-error for="resort_unit_id" class="mt-2" />
+                                <span class="text-red-500 text-xs" x-show="errors.resort_unit_id" x-text="errors.resort_unit_id"></span>
                             </div>
 
                             <!-- Pricing Tier Selection (Modern UI) -->
@@ -907,10 +959,39 @@
                                 this.filterTiers();
                                 this.calculateCapacity();
                                 this.calculatePrice();
+                                this.fetchBarUnits();
                             }
                         } catch (error) {
                             console.error('Error fetching exclusive rental details:', error);
                         }
+                    }
+                },
+                async fetchBarUnits() {
+                    const cat = (this.currentExclusiveRental?.category || '').toUpperCase();
+                    if (this.bookingType === 'exclusive' && cat === 'BAR AREA RENTAL' && this.formData.check_in && this.formData.check_out) {
+                        try {
+                            const params = new URLSearchParams({
+                                check_in: this.formData.check_in,
+                                check_out: this.formData.check_out
+                            });
+                            const response = await fetch(`{{ route('resort-management.bookings.available-apartment-units') }}?${params.toString()}`, {
+                                headers: { 'Accept': 'application/json' }
+                            });
+                            const ct = response.headers.get('Content-Type') || '';
+                            if (response.ok && ct.includes('application/json')) {
+                                this.availableUnits = await response.json();
+                            } else {
+                                this.availableUnits = [];
+                                const errorMessage = await this.extractResponseError(response, 'Unable to load apartment units.');
+                                this.showAlert('warning', 'Booking Validation', errorMessage);
+                            }
+                        } catch (error) {
+                            console.error('Error fetching apartment units:', error);
+                            this.availableUnits = [];
+                            this.showAlert('error', 'Booking Error', 'Unable to load units. Please try again.');
+                        }
+                    } else if (this.bookingType === 'exclusive') {
+                        this.availableUnits = [];
                     }
                 },
                 async fetchTiers() {

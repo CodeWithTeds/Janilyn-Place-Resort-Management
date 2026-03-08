@@ -107,6 +107,7 @@ Route::middleware([
         Route::get('/bookings/{booking}/receipt', [OwnerResortManagementController::class, 'downloadReceipt'])->name('bookings.receipt');
         Route::get('/bookings/available-rooms', [OwnerResortManagementController::class, 'availableRooms'])->name('bookings.available-rooms');
         Route::get('/bookings/available-units', [OwnerResortManagementController::class, 'availableUnits'])->name('bookings.available-units');
+        Route::get('/bookings/available-apartment-units', [OwnerResortManagementController::class, 'availableApartmentUnits'])->name('bookings.available-apartment-units');
         Route::patch('/bookings/{booking}/approve', [OwnerResortManagementController::class, 'approveBooking'])->name('bookings.approve');
         Route::patch('/bookings/{booking}/cancel', [OwnerResortManagementController::class, 'cancelBooking'])->name('bookings.cancel');
 

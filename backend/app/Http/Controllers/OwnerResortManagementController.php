@@ -243,6 +243,22 @@ class OwnerResortManagementController extends Controller
         return response()->json($units);
     }
 
+    public function availableApartmentUnits(Request $request)
+    {
+        $request->validate([
+            'check_in' => 'required|date|after_or_equal:today',
+            'check_out' => 'required|date|after:check_in',
+        ]);
+
+        $units = $this->resortService->getAvailableUnitsForCategory(
+            'APARTMENT STYLE',
+            $request->check_in,
+            $request->check_out
+        );
+
+        return response()->json($units);
+    }
+
     public function downloadReceipt(Booking $booking)
     {
         $booking->load(['roomType', 'exclusiveResortRental', 'resortUnit', 'user']);

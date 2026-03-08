@@ -6,6 +6,8 @@ use Illuminate\Foundation\Http\FormRequest;
 use App\Models\Booking;
 use App\Enums\BookingStatus;
 use App\Models\RoomType;
+use App\Models\ExclusiveResortRental;
+use App\Models\ResortUnit;
 use Illuminate\Validation\Validator;
 
 class StoreBookingRequest extends FormRequest
@@ -74,6 +76,23 @@ class StoreBookingRequest extends FormRequest
             return; // Validated by 'exists' rule already
         }
 
+        $category = strtoupper($roomType->category ?? '');
+        $exclusiveGroup = ['DELUXE ROOM', 'GUEST HOUSE'];
+        if (in_array($category, $exclusiveGroup, true)) {
+            $groupRoomTypes = RoomType::whereRaw('UPPER(category) IN (?, ?)', $exclusiveGroup)->pluck('id');
+            $overlappingGroup = Booking::whereIn('room_type_id', $groupRoomTypes)
+                ->whereIn('status', [BookingStatus::CONFIRMED, BookingStatus::PENDING])
+                ->where(function ($query) {
+                    $query->where('check_in', '<', $this->check_out)
+                          ->where('check_out', '>', $this->check_in);
+                })
+                ->count();
+            if ($overlappingGroup >= 1) {
+                $validator->errors()->add('room_type_id', 'No availability for the selected dates.');
+                return;
+            }
+        }
+
         $totalUnits = $roomType->units_count;
 
         // If no units are defined, fallback to old logic (single booking per room type? or assume unlimited? 
@@ -112,19 +131,99 @@ class StoreBookingRequest extends FormRequest
 
     protected function validateExclusiveOverlap(Validator $validator)
     {
-        $overlap = Booking::where('exclusive_resort_rental_id', $this->exclusive_resort_rental_id)
+        $rental = ExclusiveResortRental::find($this->exclusive_resort_rental_id);
+        if (!$rental) {
+            return;
+        }
+
+        $category = strtoupper($rental->category ?? '');
+
+        // Always: prevent double-booking the same exclusive rental
+        $overlapSameRental = Booking::where('exclusive_resort_rental_id', $this->exclusive_resort_rental_id)
             ->whereIn('status', [BookingStatus::CONFIRMED, BookingStatus::PENDING])
             ->where(function ($query) {
                 $query->where('check_in', '<', $this->check_out)
                       ->where('check_out', '>', $this->check_in);
             })
             ->exists();
-
-        if ($overlap) {
+        if ($overlapSameRental) {
             $validator->errors()->add(
                 'exclusive_resort_rental_id',
                 'This exclusive rental is already booked for the selected dates.'
             );
+            return;
+        }
+
+        if ($category === 'ENTIRE RESORT') {
+            // No existing bookings at all (rooms or any other exclusives)
+            $anyOverlap = Booking::whereIn('status', [BookingStatus::CONFIRMED, BookingStatus::PENDING])
+                ->where(function ($query) {
+                    $query->where('check_in', '<', $this->check_out)
+                          ->where('check_out', '>', $this->check_in);
+                })
+                ->exists();
+            if ($anyOverlap) {
+                $validator->errors()->add(
+                    'exclusive_resort_rental_id',
+                    'Entire resort is not available: there are overlapping bookings for these dates.'
+                );
+                return;
+            }
+        }
+
+        if ($category === 'RESORT RENTAL') {
+            // No bookings for any Apartment-Style units/room types
+            $apartmentRoomTypeIds = RoomType::whereRaw('UPPER(category) = ?', ['APARTMENT STYLE'])->pluck('id');
+            if ($apartmentRoomTypeIds->isNotEmpty()) {
+                $overlapApartments = Booking::whereIn('status', [BookingStatus::CONFIRMED, BookingStatus::PENDING])
+                    ->whereIn('room_type_id', $apartmentRoomTypeIds)
+                    ->where(function ($query) {
+                        $query->where('check_in', '<', $this->check_out)
+                              ->where('check_out', '>', $this->check_in);
+                    })
+                    ->exists();
+                if ($overlapApartments) {
+                    $validator->errors()->add(
+                        'exclusive_resort_rental_id',
+                        'Resort rental is not available: apartment-style units are booked in this period.'
+                    );
+                    return;
+                }
+            }
+        }
+
+        if ($category === 'BAR AREA RENTAL') {
+            // Require selecting an Apartment-Style unit and ensure it is free
+            if (!$this->resort_unit_id) {
+                $validator->errors()->add(
+                    'resort_unit_id',
+                    'Please select an Apartment-Style unit for Bar Area Rental.'
+                );
+                return;
+            }
+            $unit = ResortUnit::with('roomType')->find($this->resort_unit_id);
+            if (!$unit || strtoupper($unit->roomType->category ?? '') !== 'APARTMENT STYLE') {
+                $validator->errors()->add(
+                    'resort_unit_id',
+                    'Selected unit must be an Apartment-Style unit.'
+                );
+                return;
+            }
+
+            $unitOverlap = Booking::where('resort_unit_id', $this->resort_unit_id)
+                ->whereIn('status', [BookingStatus::CONFIRMED, BookingStatus::PENDING])
+                ->where(function ($query) {
+                    $query->where('check_in', '<', $this->check_out)
+                          ->where('check_out', '>', $this->check_in);
+                })
+                ->exists();
+            if ($unitOverlap) {
+                $validator->errors()->add(
+                    'resort_unit_id',
+                    'Selected unit is already booked for the selected dates.'
+                );
+                return;
+            }
         }
     }
 }
