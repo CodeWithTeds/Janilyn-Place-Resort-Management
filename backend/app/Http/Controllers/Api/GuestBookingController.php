@@ -27,18 +27,41 @@ class GuestBookingController extends Controller
     {
         $user = $request->user();
 
-        // Validate request
-        $validated = $request->validate([
+        // Prepare input data and ensure booking_type is clean
+        $input = $request->all();
+        if (isset($input['booking_type'])) {
+            $type = $input['booking_type'];
+            if (is_array($type)) {
+                $type = $type[0] ?? null;
+            }
+            if (is_string($type)) {
+                $input['booking_type'] = strtolower(trim($type));
+            }
+        } elseif (isset($input['exclusive_resort_rental_id'])) {
+            $input['booking_type'] = 'exclusive';
+        }
+        $request->replace($input);
+
+        // Prepare rules
+        $rules = [
             'booking_type' => ['required', 'in:room,exclusive'],
             'room_type_id' => ['required_if:booking_type,room', 'nullable', 'exists:room_types,id'],
             'exclusive_resort_rental_id' => ['required_if:booking_type,exclusive', 'nullable', 'exists:exclusive_resort_rentals,id'],
             'resort_unit_id' => ['nullable', 'exists:resort_units,id'],
-            'pricing_tier_id' => ['nullable', 'exists:room_type_pricing_tiers,id'],
             'check_in' => ['required', 'date', 'after_or_equal:today'],
             'check_out' => ['required', 'date', 'after:check_in'],
             'pax_count' => ['required', 'integer', 'min:1'],
-            'payment_method' => ['required', 'in:paymongo,cash'], // Enforce enum values
-        ]);
+            'payment_method' => ['required', 'in:paymongo,cash'],
+        ];
+
+        // Conditional validation for pricing_tier_id
+        if ($request->input('booking_type') === 'exclusive') {
+            $rules['pricing_tier_id'] = ['nullable', 'exists:exclusive_resort_rental_pricing_tiers,id'];
+        } else {
+            $rules['pricing_tier_id'] = ['nullable', 'exists:room_type_pricing_tiers,id'];
+        }
+
+        $validated = $request->validate($rules);
 
         // Add user details
         $data = array_merge($validated, [

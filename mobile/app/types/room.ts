@@ -20,8 +20,11 @@ export interface ExclusiveResortRental {
   price_range_max: number;
   capacity_overnight_min: number;
   capacity_overnight_max: number;
+  extra_person_charge: number;
   cooking_fee: number;
   image: string | null;
+  category?: string;
+  pricing_tiers?: any[];
 }
 
 export interface RoomAvailability {

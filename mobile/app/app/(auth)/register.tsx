@@ -106,7 +106,7 @@ export default function RegisterScreen() {
             style={styles.logo}
             resizeMode="contain"
           />
-          <Text style={[styles.appName, { color: theme.primary }]}>Janilyn's Place</Text>
+          <Text style={[styles.appName, { color: theme.primary }]}>Janilyn’s Place</Text>
           <Text style={[styles.title, { color: theme.text }]}>Create Account</Text>
           <Text style={[styles.subtitle, { color: theme.icon }]}>Sign up to get started</Text>
         </View>

@@ -13,7 +13,7 @@ export const RoomService = {
   },
 
   async getRental(id: number) {
-    const response = await api.get<ExclusiveResortRental>(`/rentals/${id}`);
+    const response = await api.get<ExclusiveResortRental>(`/exclusive-rentals/${id}`);
     return response.data;
   },
 
@@ -24,6 +24,11 @@ export const RoomService = {
 
   async getAvailableUnits(params: { room_type_id: number; check_in: string; check_out: string }) {
     const response = await api.get<{ id: number; name: string }[]>('/available-units', { params });
+    return response.data;
+  },
+
+  async getAvailableApartmentUnits(params: { check_in: string; check_out: string }) {
+    const response = await api.get<{ id: number; name: string }[]>('/available-apartment-units', { params });
     return response.data;
   },
 };

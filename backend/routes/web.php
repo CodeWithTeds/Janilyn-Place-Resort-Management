@@ -14,6 +14,9 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+// Public Projects page
+Route::get('/projects', [\App\Http\Controllers\ProjectController::class, 'index']);
+
 Route::middleware([
     'auth:sanctum',
     config('jetstream.auth_session'),

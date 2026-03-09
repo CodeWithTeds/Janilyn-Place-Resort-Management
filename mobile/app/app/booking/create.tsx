@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/Input';
 import { Colors as ThemeColors, Spacing, Fonts, Palette as Colors } from '@/constants/theme';
 import { BookingService } from '@/services/booking.service';
 import { RoomService } from '@/services/room.service';
-import { RoomType } from '@/types/room';
+import { RoomType, ExclusiveResortRental } from '@/types/room';
 import { useRooms } from '@/hooks/use-rooms';
 
 interface Unit {
@@ -32,7 +32,7 @@ export default function CreateBookingScreen() {
   const { id, type } = useLocalSearchParams<{ id: string; type: 'room' | 'exclusive' }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { rooms, fetchRooms } = useRooms();
+  const { rooms, rentals, fetchRooms } = useRooms();
 
   const [checkIn, setCheckIn] = useState(new Date());
   const [checkOut, setCheckOut] = useState(new Date(new Date().setDate(new Date().getDate() + 1)));
@@ -52,6 +52,7 @@ export default function CreateBookingScreen() {
   const [selectedTierId, setSelectedTierId] = useState<number | null>(null);
   const [allTiers, setAllTiers] = useState<Tier[]>([]);
   const [roomType, setRoomType] = useState<RoomType | null>(null);
+  const [rental, setRental] = useState<ExclusiveResortRental | null>(null);
 
   useEffect(() => {
     fetchRooms();
@@ -69,6 +70,23 @@ export default function CreateBookingScreen() {
     }
   }, [checkIn, checkOut, selectedRoomTypeId, type]);
 
+  useEffect(() => {
+    if (type === 'exclusive' && id) {
+      loadRentalDetails(Number(id));
+    }
+  }, [type, id]);
+  
+  useEffect(() => {
+    if (
+      type === 'exclusive' &&
+      (rental?.category || '').toUpperCase() === 'BAR AREA RENTAL' &&
+      checkIn &&
+      checkOut
+    ) {
+      fetchApartmentUnits();
+    }
+  }, [type, rental?.category, checkIn, checkOut]);
+
   const loadRoomDetails = async (roomId: number) => {
     try {
       const room = await RoomService.getRoom(roomId);
@@ -77,6 +95,18 @@ export default function CreateBookingScreen() {
       filterTiers(null, room.pricing_tiers || []); // Initial filter with new tiers
     } catch (error) {
       console.error('Failed to load room details', error);
+    }
+  };
+
+  const loadRentalDetails = async (rentalId: number) => {
+    try {
+      const details = await RoomService.getRental(rentalId);
+      setRental(details);
+      const tiers = (details as any).pricing_tiers || [];
+      setAllTiers(tiers);
+      setAvailableTiers(tiers);
+    } catch (error) {
+      console.error('Failed to load rental details', error);
     }
   };
 
@@ -111,6 +141,23 @@ export default function CreateBookingScreen() {
     }
   };
 
+  const fetchApartmentUnits = async () => {
+    try {
+      setSelectedUnitId(null);
+      const checkInDate = checkIn.toISOString().split('T')[0];
+      const checkOutDate = checkOut.toISOString().split('T')[0];
+      if (checkInDate >= checkOutDate) return;
+      const units = await RoomService.getAvailableApartmentUnits({
+        check_in: checkInDate,
+        check_out: checkOutDate
+      });
+      setAvailableUnits(units);
+    } catch (error) {
+      console.error('Error fetching apartment units', error);
+      setAvailableUnits([]);
+    }
+  };
+
   const filterTiers = (unitId: number | null, tiers: Tier[] = allTiers) => {
     if (unitId) {
       setAvailableTiers(tiers.filter(t => t.resort_unit_id === unitId || t.resort_unit_id === null));
@@ -132,19 +179,93 @@ export default function CreateBookingScreen() {
     // Tiers will be updated by useEffect -> loadRoomDetails
   };
 
+  const calculateTotalPrice = () => {
+    let total = 0;
+    const nights = Math.max(1, Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 3600 * 24)));
+    
+    // Helper to calculate extra person charge
+    const calculateExtraPersonCharge = (pax: number, maxCapacity: number, charge: number) => {
+       if (pax > maxCapacity) {
+          const extra = pax - maxCapacity;
+          return extra * charge * nights;
+       }
+       return 0;
+    };
+
+    const bookingType = Array.isArray(type) ? type[0] : type;
+
+    if (bookingType === 'room' && roomType) {
+       const isWeekend = checkIn.getDay() === 5 || checkIn.getDay() === 6;
+       const basePrice = isWeekend ? Number(roomType.base_price_weekend) : Number(roomType.base_price_weekday);
+       total = basePrice * nights;
+       
+       const maxTierCapacity = allTiers.reduce((max, tier) => Math.max(max, tier.max_guests), 0);
+       const canAddExtraPerson = ['DELUXE ROOM', 'GUEST HOUSE'].includes(roomType.category?.toUpperCase());
+       if (canAddExtraPerson && Number(paxCount) > maxTierCapacity) {
+          total += calculateExtraPersonCharge(Number(paxCount), maxTierCapacity, Number(roomType.extra_person_charge));
+       }
+    } else if (bookingType === 'exclusive' && rental) {
+       let pricePerNight = 0;
+       const pax = Number(paxCount);
+       
+       // Determine max capacity from tiers
+       const maxTierCapacity = allTiers.reduce((max, tier) => Math.max(max, tier.max_guests || 0), 0);
+       const maxCap = Math.max(maxTierCapacity, rental.capacity_overnight_max || 0);
+
+       // Find Tier based on capped pax (to handle the +1 case)
+       const tierPax = Math.min(pax, maxCap);
+       const tier = availableTiers.find(t => tierPax >= t.min_guests && tierPax <= t.max_guests);
+       
+       if (tier) {
+          const isWeekend = checkIn.getDay() === 5 || checkIn.getDay() === 6;
+          pricePerNight = isWeekend ? Number(tier.price_weekend) : Number(tier.price_weekday);
+       } else {
+          // Fallback if no tier matches (shouldn't happen with capping, but just in case)
+          // Use rental base price (mapped from price_range_min for now as fallback)
+           const isWeekend = checkIn.getDay() === 5 || checkIn.getDay() === 6;
+           // Note: rental interface has range, but backend has base_price_weekday/weekend
+           // Since we don't have base_price in interface, let's use range min/max as proxy or 0
+           pricePerNight = Number(rental.price_range_min);
+       }
+       
+       total = pricePerNight * nights;
+
+       // Extra Person Charge
+       if (pax > maxCap) {
+          total += calculateExtraPersonCharge(pax, maxCap, Number(rental.extra_person_charge || 0));
+       }
+    }
+    
+    return total;
+  };
+
   const handleBooking = async () => {
+    // Ensure booking type is a string
+    const bookingType = Array.isArray(type) ? type[0] : type;
+
     if (!paxCount) {
       Alert.alert('Error', 'Please enter number of guests');
       return;
     }
 
-    if (type === 'room' && !selectedRoomTypeId) {
+    if (bookingType === 'room' && !selectedRoomTypeId) {
         Alert.alert('Error', 'Please select a room type');
         return;
     }
 
+    if (bookingType === 'exclusive') {
+      if (!id) {
+        Alert.alert('Error', 'Missing rental information');
+        return;
+      }
+      if ((rental?.category || '').toUpperCase() === 'BAR AREA RENTAL' && !selectedUnitId) {
+        Alert.alert('Error', 'Please select an Apartment-Style unit');
+        return;
+      }
+    }
+
     // Validate Max Capacity
-    if (type === 'room' && roomType) {
+    if (bookingType === 'room' && roomType) {
         const maxTierCapacity = allTiers.reduce((max, tier) => Math.max(max, tier.max_guests), 0);
         const canAddExtraPerson = ['DELUXE ROOM', 'GUEST HOUSE'].includes(roomType.category?.toUpperCase());
         const absoluteMax = canAddExtraPerson ? maxTierCapacity + 1 : maxTierCapacity;
@@ -154,6 +275,16 @@ export default function CreateBookingScreen() {
             return;
         }
     }
+    if (bookingType === 'exclusive' && rental) {
+      const maxTierCapacity = allTiers.reduce((max, tier) => Math.max(max, tier.max_guests || 0), 0);
+      const maxCap = Math.max(maxTierCapacity, rental.capacity_overnight_max || 0);
+      const absoluteMax = maxCap + 1; // Allow 1 extra pax for exclusive rentals
+
+      if (maxCap > 0 && Number(paxCount) > absoluteMax) {
+        Alert.alert('Capacity Exceeded', `Maximum capacity for this package is ${maxCap} guests (plus 1 extra person allowed).`);
+        return;
+      }
+    }
 
     try {
       setLoading(true);
@@ -162,8 +293,8 @@ export default function CreateBookingScreen() {
       const availabilityCheck = await RoomService.checkAvailability({
         check_in: checkIn.toISOString().split('T')[0],
         check_out: checkOut.toISOString().split('T')[0],
-        type: type,
-        id: selectedRoomTypeId || Number(id)
+        type: bookingType,
+        id: bookingType === 'room' ? (selectedRoomTypeId || Number(id)) : Number(id)
       });
 
       if (!availabilityCheck.available) {
@@ -173,7 +304,7 @@ export default function CreateBookingScreen() {
        }
 
        // Check Unit Availability if specific unit selected
-       if (selectedUnitId) {
+       if (bookingType === 'room' && selectedUnitId) {
          const units = await RoomService.getAvailableUnits({
             room_type_id: selectedRoomTypeId || Number(id),
             check_in: checkIn.toISOString().split('T')[0],
@@ -187,10 +318,22 @@ export default function CreateBookingScreen() {
              return;
          }
        }
+       if (bookingType === 'exclusive' && (rental?.category || '').toUpperCase() === 'BAR AREA RENTAL' && selectedUnitId) {
+         const units = await RoomService.getAvailableApartmentUnits({
+           check_in: checkIn.toISOString().split('T')[0],
+           check_out: checkOut.toISOString().split('T')[0]
+         });
+         const isUnitAvailable = units.some(u => u.id === selectedUnitId);
+         if (!isUnitAvailable) {
+           Alert.alert('Unit Unavailable', 'The selected unit is no longer available. Please select another unit.');
+           setLoading(false);
+           return;
+         }
+       }
  
        const bookingData = {
-        booking_type: type,
-        [type === 'room' ? 'room_type_id' : 'exclusive_resort_rental_id']: selectedRoomTypeId || Number(id),
+        booking_type: bookingType,
+        [bookingType === 'room' ? 'room_type_id' : 'exclusive_resort_rental_id']: bookingType === 'room' ? (selectedRoomTypeId || Number(id)) : Number(id),
         check_in: checkIn.toISOString().split('T')[0],
         check_out: checkOut.toISOString().split('T')[0],
         pax_count: Number(paxCount),
@@ -236,7 +379,7 @@ export default function CreateBookingScreen() {
     }
   };
 
-  const maxTierCapacity = allTiers.reduce((max, tier) => Math.max(max, tier.max_guests), 0);
+  const maxTierCapacity = allTiers.reduce((max, tier) => Math.max(max, tier.max_guests || 0), 0);
   const canAddExtraPerson = roomType && ['DELUXE ROOM', 'GUEST HOUSE'].includes(roomType.category?.toUpperCase());
   const absoluteMax = canAddExtraPerson ? maxTierCapacity + 1 : maxTierCapacity;
 
@@ -311,6 +454,13 @@ export default function CreateBookingScreen() {
           </View>
         )}
 
+        {type === 'exclusive' && rental && (
+          <View style={styles.section}>
+            <ThemedText type="subtitle" style={styles.label}>{rental.name}</ThemedText>
+            <ThemedText style={styles.helperText}>Category: {rental.category}</ThemedText>
+          </View>
+        )}
+
         {/* Unit Selection (Optional) - Only if we had units to show */}
         {availableUnits.length > 0 && type === 'room' && (
           <View style={styles.section}>
@@ -333,6 +483,26 @@ export default function CreateBookingScreen() {
                   <ThemedText style={[styles.optionTitle, selectedUnitId === unit.id && styles.selectedText]}>{unit.name}</ThemedText>
                 </TouchableOpacity>
               ))}
+            </View>
+          </View>
+        )}
+
+        {type === 'exclusive' && rental && (rental.category || '').toUpperCase() === 'BAR AREA RENTAL' && (
+          <View style={styles.section}>
+            <ThemedText type="subtitle" style={styles.label}>Select Apartment-Style Unit (Required)</ThemedText>
+            <View style={styles.optionsGrid}>
+              {availableUnits.length === 0 ? (
+                <ThemedText style={styles.helperText}>No Apartment-Style units available for the selected dates.</ThemedText>
+              ) : (
+              availableUnits.map(unit => (
+                <TouchableOpacity
+                  key={unit.id}
+                  style={[styles.optionCard, selectedUnitId === unit.id && styles.selectedOption]}
+                  onPress={() => setSelectedUnitId(unit.id)}
+                >
+                  <ThemedText style={[styles.optionTitle, selectedUnitId === unit.id && styles.selectedText]}>{unit.name}</ThemedText>
+                </TouchableOpacity>
+              )))}
             </View>
           </View>
         )}
@@ -373,12 +543,41 @@ export default function CreateBookingScreen() {
           </View>
         )}
 
+        {/* Pricing Tier Selection for Exclusive Rentals */}
+        {availableTiers.length > 0 && type === 'exclusive' && (
+          <View style={styles.section}>
+            <ThemedText type="subtitle" style={styles.label}>Select Pricing Tier</ThemedText>
+            <View style={styles.optionsGrid}>
+              {availableTiers.map(tier => (
+                <TouchableOpacity 
+                  key={tier.id}
+                  style={[styles.optionCard, selectedTierId === tier.id && styles.selectedOption]}
+                  onPress={() => {
+                    setSelectedTierId(tier.id);
+                    setPaxCount(String(tier.max_guests));
+                  }}
+                >
+                  <ThemedText style={[styles.optionTitle, selectedTierId === tier.id && styles.selectedText]}>
+                    {tier.min_guests}-{tier.max_guests} Pax
+                  </ThemedText>
+                  <ThemedText style={[styles.optionSub, selectedTierId === tier.id && styles.selectedText]}>
+                    ₱{Number(tier.price_weekday).toLocaleString()} / ₱{Number(tier.price_weekend).toLocaleString()}
+                  </ThemedText>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        )}
+
         <View style={styles.section}>
           <ThemedText type="subtitle" style={styles.label}>Number of Guests</ThemedText>
           <Input
             value={paxCount}
             onChangeText={setPaxCount}
-            placeholder={`Max ${absoluteMax} guests`}
+            placeholder={type === 'room'
+              ? `Max ${absoluteMax} guests`
+              : `Enter guests${maxTierCapacity > 0 ? ` (Max ${maxTierCapacity})` : ''}`
+            }
             keyboardType="numeric"
           />
           {canAddExtraPerson && (
@@ -395,6 +594,17 @@ export default function CreateBookingScreen() {
             <ThemedText style={styles.paymentText}>PayMongo (Card/GCash)</ThemedText>
             <ThemedText style={styles.paymentSubtext}>Secure payment via PayMongo</ThemedText>
           </View>
+        </View>
+
+        <View style={styles.section}>
+          <ThemedText type="subtitle" style={styles.label}>Estimated Total</ThemedText>
+          <ThemedView style={styles.totalCard}>
+             <ThemedText style={styles.totalPrice}>₱{calculateTotalPrice().toLocaleString()}</ThemedText>
+             <ThemedText style={styles.totalSubtext}>
+               {Math.max(1, Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 3600 * 24)))} Night(s)
+               {Number(paxCount) > maxTierCapacity && ` • Includes Extra Person Charge`}
+             </ThemedText>
+          </ThemedView>
         </View>
 
       </ScrollView>
@@ -444,6 +654,29 @@ const styles = StyleSheet.create({
   paymentSubtext: {
     color: Colors.gray,
     fontSize: 12,
+    marginTop: 4,
+  },
+  helperText: {
+    color: Colors.gray,
+    fontSize: 12,
+    marginTop: 4,
+  },
+  totalCard: {
+    padding: Spacing.lg,
+    backgroundColor: Colors.primary,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginBottom: Spacing.md,
+  },
+  totalPrice: {
+    color: '#fff',
+    fontSize: 24,
+    fontWeight: 'bold',
+    fontFamily: Fonts.rounded,
+  },
+  totalSubtext: {
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontSize: 14,
     marginTop: 4,
   },
   optionsGrid: {
@@ -525,11 +758,5 @@ const styles = StyleSheet.create({
   roomTypePrice: {
     fontSize: 12,
     color: '#64748b',
-  },
-  helperText: {
-    fontSize: 12,
-    color: '#64748b',
-    marginTop: 4,
-    fontStyle: 'italic',
   },
 });

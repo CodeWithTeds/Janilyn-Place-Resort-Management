@@ -169,7 +169,7 @@ export default function MyBookingsScreen() {
         <View style={styles.centerContainer}>
             <Image source={require('@/assets/images/reservation/cozyreminders1.png')} style={styles.emptyImage} />
             <ThemedText type="subtitle" style={styles.emptyTitle}>No bookings yet</ThemedText>
-            <ThemedText style={styles.emptyText}>Looks like you haven't booked your stay yet.</ThemedText>
+            <ThemedText style={styles.emptyText}>Looks like you haven’t booked your stay yet.</ThemedText>
             <TouchableOpacity 
                 style={[styles.bookButton, { backgroundColor: primaryColor }]}
                 onPress={() => router.push('/(tabs)/explore')}

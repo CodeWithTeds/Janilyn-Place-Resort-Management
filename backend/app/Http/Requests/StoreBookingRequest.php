@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Log;
 use App\Models\Booking;
 use App\Enums\BookingStatus;
 use App\Models\RoomType;
@@ -21,12 +22,38 @@ class StoreBookingRequest extends FormRequest
     }
 
     /**
+     * Prepare the data for validation.
+     */
+    protected function prepareForValidation()
+    {
+        $type = $this->input('booking_type');
+
+        // Handle array input (e.g. from query params array)
+        if (is_array($type)) {
+            $type = $type[0] ?? null;
+        }
+
+        if ($type && is_string($type)) {
+            $this->merge([
+                'booking_type' => strtolower(trim($type)),
+            ]);
+        } elseif ($this->has('exclusive_resort_rental_id')) {
+            $this->merge([
+                'booking_type' => 'exclusive',
+            ]);
+        }
+    }
+
+    /**
      * Get the validation rules that apply to the request.
      *
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
+        $input = $this->all();
+        Log::info('StoreBookingRequest Payload:', $input);
+
         $rules = [
             'guest_name' => ['required', 'string', 'max:255'],
             'booking_type' => ['required', 'in:room,exclusive'],
@@ -43,7 +70,12 @@ class StoreBookingRequest extends FormRequest
         if ($this->input('booking_type') === 'exclusive') {
             $rules['pricing_tier_id'] = ['nullable', 'exists:exclusive_resort_rental_pricing_tiers,id'];
         } else {
-            $rules['pricing_tier_id'] = ['nullable', 'exists:room_type_pricing_tiers,id'];
+            // Check if we have exclusive ID, which strongly implies exclusive booking
+            if ($this->has('exclusive_resort_rental_id')) {
+                $rules['pricing_tier_id'] = ['nullable', 'exists:exclusive_resort_rental_pricing_tiers,id'];
+            } else {
+                $rules['pricing_tier_id'] = ['nullable', 'exists:room_type_pricing_tiers,id'];
+            }
         }
 
         return $rules;
@@ -71,7 +103,7 @@ class StoreBookingRequest extends FormRequest
     {
         // Get total units for this room type
         $roomType = RoomType::withCount('units')->find($this->room_type_id);
-        
+
         if (!$roomType) {
             return; // Validated by 'exists' rule already
         }
@@ -84,7 +116,7 @@ class StoreBookingRequest extends FormRequest
                 ->whereIn('status', [BookingStatus::CONFIRMED, BookingStatus::PENDING])
                 ->where(function ($query) {
                     $query->where('check_in', '<', $this->check_out)
-                          ->where('check_out', '>', $this->check_in);
+                        ->where('check_out', '>', $this->check_in);
                 })
                 ->count();
             if ($overlappingGroup >= 1) {
@@ -109,15 +141,15 @@ class StoreBookingRequest extends FormRequest
         // I will assume strictly following units. But to be safe for existing data, 
         // I'll check if units are > 0. If 0, I'll warn or assume 1? 
         // Let's assume 1 if count is 0, to act as a "virtual unit".
-        
-        $capacity = $totalUnits > 0 ? $totalUnits : 1; 
+
+        $capacity = $totalUnits > 0 ? $totalUnits : 1;
 
         // Check overlap count
         $overlappingBookingsCount = Booking::where('room_type_id', $this->room_type_id)
             ->whereIn('status', [BookingStatus::CONFIRMED, BookingStatus::PENDING])
             ->where(function ($query) {
                 $query->where('check_in', '<', $this->check_out)
-                      ->where('check_out', '>', $this->check_in);
+                    ->where('check_out', '>', $this->check_in);
             })
             ->count();
 
@@ -143,7 +175,7 @@ class StoreBookingRequest extends FormRequest
             ->whereIn('status', [BookingStatus::CONFIRMED, BookingStatus::PENDING])
             ->where(function ($query) {
                 $query->where('check_in', '<', $this->check_out)
-                      ->where('check_out', '>', $this->check_in);
+                    ->where('check_out', '>', $this->check_in);
             })
             ->exists();
         if ($overlapSameRental) {
@@ -159,7 +191,7 @@ class StoreBookingRequest extends FormRequest
             $anyOverlap = Booking::whereIn('status', [BookingStatus::CONFIRMED, BookingStatus::PENDING])
                 ->where(function ($query) {
                     $query->where('check_in', '<', $this->check_out)
-                          ->where('check_out', '>', $this->check_in);
+                        ->where('check_out', '>', $this->check_in);
                 })
                 ->exists();
             if ($anyOverlap) {
@@ -179,7 +211,7 @@ class StoreBookingRequest extends FormRequest
                     ->whereIn('room_type_id', $apartmentRoomTypeIds)
                     ->where(function ($query) {
                         $query->where('check_in', '<', $this->check_out)
-                              ->where('check_out', '>', $this->check_in);
+                            ->where('check_out', '>', $this->check_in);
                     })
                     ->exists();
                 if ($overlapApartments) {
@@ -214,7 +246,7 @@ class StoreBookingRequest extends FormRequest
                 ->whereIn('status', [BookingStatus::CONFIRMED, BookingStatus::PENDING])
                 ->where(function ($query) {
                     $query->where('check_in', '<', $this->check_out)
-                          ->where('check_out', '>', $this->check_in);
+                        ->where('check_out', '>', $this->check_in);
                 })
                 ->exists();
             if ($unitOverlap) {

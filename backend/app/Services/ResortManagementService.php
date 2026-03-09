@@ -145,9 +145,19 @@ class ResortManagementService
             return 0;
         }
 
-        // Find applicable pricing tier based on pax count
-        $tier = $rental->pricingTiers->first(function($tier) use ($pax) {
-            return $pax >= $tier->min_guests && $pax <= $tier->max_guests;
+        // Determine max capacity from tiers to handle "1 extra pax" logic
+        $maxTierPax = $rental->pricingTiers->max('max_guests');
+        if (!$maxTierPax) {
+            $maxTierPax = $rental->max_pax;
+        }
+
+        // Cap the pax used for tier selection to the max tier capacity
+        // This allows finding the highest tier even if pax is max + 1
+        $tierPax = min($pax, $maxTierPax);
+
+        // Find applicable pricing tier based on tierPax
+        $tier = $rental->pricingTiers->first(function($tier) use ($tierPax) {
+            return $tierPax >= $tier->min_guests && $tierPax <= $tier->max_guests;
         });
 
         $totalPrice = 0;
@@ -163,22 +173,24 @@ class ResortManagementService
                     $totalPrice += $tier->price_weekday;
                 }
             } else {
-                // Fallback if no tier matches (e.g., pax > max tier or pax < min tier)
-                // Use base price + extra person charge if applicable
-                // For now, let's use base prices from the rental model itself
+                // Fallback if no tier matches
                 if ($isWeekend) {
                     $basePrice = $rental->base_price_weekend;
                 } else {
                     $basePrice = $rental->base_price_weekday;
                 }
-
                 $totalPrice += $basePrice;
             }
             
             $currentDate->addDay();
         }
 
-        $totalPrice += ($pax * $rental->extra_person_charge);
+        // Calculate extra person charge if pax exceeds max tier capacity
+        $extraPax = max(0, $pax - $maxTierPax);
+        if ($extraPax > 0) {
+            $totalPrice += ($extraPax * $rental->extra_person_charge * $days);
+        }
+
         // Cooking fee
         if ($includeCookingFee) {
             $totalPrice += $rental->cooking_fee;

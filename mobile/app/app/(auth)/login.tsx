@@ -74,7 +74,7 @@ export default function LoginScreen() {
             style={styles.logo}
             resizeMode="contain"
           />
-          <Text style={[styles.appName, { color: theme.primary }]}>Janilyn's Place</Text>
+          <Text style={[styles.appName, { color: theme.primary }]}>Janilyn’s Place</Text>
           <Text style={[styles.title, { color: theme.text }]}>Welcome Back</Text>
           <Text style={[styles.subtitle, { color: theme.icon }]}>Sign in to your account</Text>
         </View>
@@ -130,7 +130,7 @@ export default function LoginScreen() {
         </View>
 
         <View style={styles.footer}>
-          <Text style={[styles.footerText, { color: theme.icon }]}>Don't have an account?</Text>
+          <Text style={[styles.footerText, { color: theme.icon }]}>Don’t have an account?</Text>
           <Link href="/(auth)/register" asChild>
             <TouchableOpacity>
               <Text style={[styles.footerLink, { color: theme.primary }]}>Sign Up</Text>

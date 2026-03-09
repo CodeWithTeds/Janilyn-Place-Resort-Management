@@ -28,6 +28,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/rooms/{id}', [App\Http\Controllers\Api\GuestRoomController::class, 'showRoom']);
     Route::get('/rentals/{id}', [App\Http\Controllers\Api\GuestRoomController::class, 'showRental']);
     Route::get('/available-units', [App\Http\Controllers\Api\GuestRoomController::class, 'getAvailableUnits']);
+    Route::get('/available-apartment-units', [App\Http\Controllers\Api\GuestRoomController::class, 'getAvailableApartmentUnits']);
     Route::post('/check-availability', [App\Http\Controllers\Api\GuestRoomController::class, 'checkAvailability']);
 
     // Guest Booking Routes
