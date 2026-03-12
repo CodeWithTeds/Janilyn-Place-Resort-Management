@@ -143,7 +143,7 @@
                 <x-responsive-nav-link href="{{ route('staff.guests.index') }}" :active="request()->routeIs('staff.guests.*')">
                     {{ __('Guest Registration') }}
                 </x-responsive-nav-link>
-                <x-responsive-nav-link href="{{ route('staff.rooms.index') }}" :active="request()->routeIs('staff.rooms.*')">
+                <x-responsive-nav-link href="{{ route('staff.rooms.allocation') }}" :active="request()->routeIs('staff.rooms.*')">
                     {{ __('Room Allocation') }}
                 </x-responsive-nav-link>
                 <x-responsive-nav-link href="{{ route('staff.check-in.index') }}" :active="request()->routeIs('staff.check-in.*')">

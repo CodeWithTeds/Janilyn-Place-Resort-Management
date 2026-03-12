@@ -55,14 +55,14 @@
 
                     @if($availableUnits->isNotEmpty())
                         <div class="flex items-center justify-end">
-                            <a href="{{ route('staff.rooms.index') }}" class="text-gray-600 hover:text-gray-900 mr-4">Cancel</a>
+                            <a href="{{ route('staff.rooms.allocation') }}" class="text-gray-600 hover:text-gray-900 mr-4">Cancel</a>
                             <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
                                 Confirm Allocation
                             </button>
                         </div>
                     @else
                         <div class="flex items-center justify-end">
-                            <a href="{{ route('staff.rooms.index') }}" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                            <a href="{{ route('staff.rooms.allocation') }}" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
                                 Back to List
                             </a>
                         </div>
