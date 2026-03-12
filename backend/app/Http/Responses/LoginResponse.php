@@ -22,7 +22,7 @@ class LoginResponse implements LoginResponseContract
 
         if ($user instanceof User) {
             if ($user->isAdmin()) {
-                return $this->redirectForUser($user, $intendedUrl, '/admin/dashboard');
+                return $this->redirectForUser($user, $intendedUrl, '/admin/analytics');
             }
 
             if ($user->isOwner()) {

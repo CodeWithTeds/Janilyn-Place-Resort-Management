@@ -250,9 +250,11 @@ class ResortManagementService
             ->where('status', 'available')
             ->get();
 
+        // Get occupied unit IDs from ANY booking that has one of these units assigned
+        // We do NOT filter by room_type_id on the booking, because Exclusive bookings might have room_type_id=null
         $occupiedUnitIds = Booking::overlapping($checkIn, $checkOut)
-            ->whereIn('room_type_id', $roomTypeIds)
             ->whereNotNull('resort_unit_id')
+            ->whereIn('resort_unit_id', $units->pluck('id'))
             ->pluck('resort_unit_id')
             ->unique();
 

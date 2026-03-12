@@ -19,7 +19,7 @@ class DashboardController extends Controller
         $user = \Illuminate\Support\Facades\Auth::user();
 
         if ($user && $user->isAdmin()) {
-            return redirect()->route('admin.dashboard');
+            return redirect()->route('admin.analytics.index');
         }
 
         if ($user && $user->isOwner()) {
@@ -32,9 +32,9 @@ class DashboardController extends Controller
     /**
      * Display the admin specific dashboard.
      */
-    public function admin(): View
+    public function admin(): RedirectResponse
     {
-        return view('dashboard'); // Or a specific admin dashboard view
+        return redirect()->route('admin.analytics.index');
     }
 
     /**

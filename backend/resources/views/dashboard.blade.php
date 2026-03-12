@@ -106,13 +106,18 @@
                                             {{ $task->priority->label() }}
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
-                                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
-                                                {{ $task->status->value === 'pending' ? 'bg-gray-100 text-gray-800' : '' }}
-                                                {{ $task->status->value === 'in_progress' ? 'bg-blue-100 text-blue-800' : '' }}
-                                                {{ $task->status->value === 'completed' ? 'bg-green-100 text-green-800' : '' }}
-                                                {{ $task->status->value === 'cancelled' ? 'bg-red-100 text-red-800' : '' }}">
-                                                {{ $task->status->label() }}
-                                            </span>
+                                            <form action="{{ route('staff.tasks.update-status', $task->id) }}" method="POST" class="inline-flex items-center">
+                                                @csrf
+                                                @method('PATCH')
+                                                <select name="status" onchange="this.form.submit()" class="text-xs font-semibold rounded-full border-0 py-1 pl-2 pr-6 cursor-pointer focus:ring-0
+                                                    {{ $task->status === 'pending' ? 'bg-gray-100 text-gray-800' : '' }}
+                                                    {{ $task->status === 'in_progress' ? 'bg-blue-100 text-blue-800' : '' }}
+                                                    {{ $task->status === 'completed' ? 'bg-green-100 text-green-800' : '' }}">
+                                                    <option value="pending" {{ $task->status === 'pending' ? 'selected' : '' }}>Pending</option>
+                                                    <option value="in_progress" {{ $task->status === 'in_progress' ? 'selected' : '' }}>In Progress</option>
+                                                    <option value="completed" {{ $task->status === 'completed' ? 'selected' : '' }}>Completed</option>
+                                                </select>
+                                            </form>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                             {{ $task->due_date ? $task->due_date->format('M d, Y') : 'No due date' }}

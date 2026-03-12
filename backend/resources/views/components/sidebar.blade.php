@@ -50,9 +50,6 @@
                         <x-sidebar-link href="{{ $isAdmin ? route('admin.damage-reports.index') : route('owner.damage-reports.index') }}" :active="request()->routeIs('owner.damage-reports.*') || request()->routeIs('admin.damage-reports.*')" class="text-sm">
                             {{ __('Damage & Incident Reporting') }}
                         </x-sidebar-link>
-                        <x-sidebar-link href="{{ $isAdmin ? route('admin.room-inspections.index') : route('owner.room-inspections.index') }}" :active="request()->routeIs('owner.room-inspections.*') || request()->routeIs('admin.room-inspections.*')" class="text-sm">
-                            {{ __('Room Inspection Checklists') }}
-                        </x-sidebar-link>
                     </div>
                 </div>
 

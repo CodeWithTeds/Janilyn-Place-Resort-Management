@@ -45,10 +45,6 @@ Route::middleware([
             Route::put('/{damageReport}', [App\Http\Controllers\AdminDamageReportController::class, 'update'])->name('update');
         });
 
-        Route::prefix('room-inspections')->name('room-inspections.')->group(function () {
-            Route::get('/', [App\Http\Controllers\OwnerRoomInspectionController::class, 'index'])->name('index');
-        });
-
         Route::prefix('housekeeping')->name('housekeeping.')->group(function () {
             Route::get('/', [OwnerHousekeepingController::class, 'index'])->name('index');
             Route::get('/schedules', [OwnerHousekeepingController::class, 'schedules'])->name('schedules');
@@ -180,16 +176,6 @@ Route::middleware([
         Route::delete('/{damageReport}', [App\Http\Controllers\OwnerDamageReportController::class, 'destroy'])->middleware('can:delete-owner-resources')->name('destroy');
     });
 
-    // Owner Room Inspections
-    Route::middleware(['can:access-owner-dashboard'])->prefix('owner/room-inspections')->name('owner.room-inspections.')->group(function () {
-        Route::get('/', [App\Http\Controllers\OwnerRoomInspectionController::class, 'index'])->name('index');
-        Route::get('/create', [App\Http\Controllers\OwnerRoomInspectionController::class, 'create'])->name('create');
-        Route::post('/', [App\Http\Controllers\OwnerRoomInspectionController::class, 'store'])->name('store');
-        Route::get('/{roomInspection}/edit', [App\Http\Controllers\OwnerRoomInspectionController::class, 'edit'])->name('edit');
-        Route::put('/{roomInspection}', [App\Http\Controllers\OwnerRoomInspectionController::class, 'update'])->name('update');
-        Route::delete('/{roomInspection}', [App\Http\Controllers\OwnerRoomInspectionController::class, 'destroy'])->middleware('can:delete-owner-resources')->name('destroy');
-    });
-
     // Owner Staff Management
     Route::middleware(['can:access-owner-dashboard'])->prefix('owner/staff-management')->name('owner.staff-management.')->group(function () {
         Route::get('/', [OwnerStaffManagementController::class, 'index'])->name('index');
@@ -210,25 +196,24 @@ Route::middleware([
         Route::delete('/{staff}', [OwnerStaffManagementController::class, 'destroy'])->middleware('can:delete-owner-resources')->name('destroy');
     });
 
-    // Staff Dashboard
-    Route::get('/staff/dashboard', [DashboardController::class, 'staff'])
-        ->middleware('can:access-staff-dashboard')
-        ->name('staff.dashboard');
-
     // Staff Routes
     Route::middleware(['can:access-staff-dashboard'])->prefix('staff')->name('staff.')->group(function () {
-        // Guest Management
-        Route::resource('guests', App\Http\Controllers\StaffGuestController::class)->except(['show', 'destroy']);
+        Route::get('/dashboard', [DashboardController::class, 'staff'])->name('dashboard');
 
-        // Room Allocation
-        Route::get('/rooms', [App\Http\Controllers\StaffRoomController::class, 'index'])->name('rooms.index');
-        Route::get('/rooms/{booking}/allocate', [App\Http\Controllers\StaffRoomController::class, 'allocate'])->name('rooms.allocate');
-        Route::post('/rooms/{booking}', [App\Http\Controllers\StaffRoomController::class, 'storeAllocation'])->name('rooms.store');
+        // Staff Task Management
+        Route::patch('/tasks/{task}/status', [App\Http\Controllers\StaffTaskController::class, 'updateStatus'])->name('tasks.update-status');
 
-        // Check-in / Check-out
+        // Staff Check-In/Out Management
         Route::get('/check-in', [App\Http\Controllers\StaffCheckInController::class, 'index'])->name('check-in.index');
         Route::post('/check-in/{booking}', [App\Http\Controllers\StaffCheckInController::class, 'checkIn'])->name('check-in.store');
         Route::post('/check-out/{booking}', [App\Http\Controllers\StaffCheckInController::class, 'checkOut'])->name('check-out.store');
+
+        // Staff Room Allocation
+        Route::get('/rooms/allocation', [App\Http\Controllers\StaffRoomController::class, 'index'])->name('rooms.allocation');
+        Route::post('/rooms/allocation/{booking}', [App\Http\Controllers\StaffRoomController::class, 'allocate'])->name('rooms.allocate');
+
+        // Guest Management
+        Route::resource('guests', App\Http\Controllers\StaffGuestController::class)->except(['show', 'destroy']);
 
         // Special Requests
         Route::get('/requests', [App\Http\Controllers\StaffRequestController::class, 'index'])->name('requests.index');

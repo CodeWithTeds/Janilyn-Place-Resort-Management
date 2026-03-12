@@ -39,7 +39,7 @@ class OwnerHousekeepingController extends Controller
     }
 
     public function store(StoreHousekeepingTaskRequest $request): RedirectResponse
-    {
+    {  
         $this->housekeepingService->createTask($request->validated());
 
         return redirect()->back()->with('success', 'Task created successfully.');

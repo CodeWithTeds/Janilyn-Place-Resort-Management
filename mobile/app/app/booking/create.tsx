@@ -53,10 +53,17 @@ export default function CreateBookingScreen() {
   const [allTiers, setAllTiers] = useState<Tier[]>([]);
   const [roomType, setRoomType] = useState<RoomType | null>(null);
   const [rental, setRental] = useState<ExclusiveResortRental | null>(null);
+  const [estimatedPrice, setEstimatedPrice] = useState(0);
 
   useEffect(() => {
     fetchRooms();
   }, [fetchRooms]);
+
+  // Force re-render/update when dependencies change
+  useEffect(() => {
+    const price = calculateTotalPrice();
+    setEstimatedPrice(price);
+  }, [checkIn, checkOut, paxCount, selectedTierId, availableTiers, roomType, rental, type]);
 
   useEffect(() => {
     if (type === 'room' && selectedRoomTypeId) {
@@ -599,7 +606,7 @@ export default function CreateBookingScreen() {
         <View style={styles.section}>
           <ThemedText type="subtitle" style={styles.label}>Estimated Total</ThemedText>
           <ThemedView style={styles.totalCard}>
-             <ThemedText style={styles.totalPrice}>₱{calculateTotalPrice().toLocaleString()}</ThemedText>
+             <ThemedText style={styles.totalPrice}>₱{estimatedPrice.toLocaleString()}</ThemedText>
              <ThemedText style={styles.totalSubtext}>
                {Math.max(1, Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 3600 * 24)))} Night(s)
                {Number(paxCount) > maxTierCapacity && ` • Includes Extra Person Charge`}
